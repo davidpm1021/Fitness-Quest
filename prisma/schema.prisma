@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  username      String   @unique
+  displayName   String   @map("display_name")
+  timezone      String   @default("America/New_York")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  goals                Goal[]
+  partyMemberships     PartyMember[]
+  encouragementsSent   Encouragement[]
+  healingActionsSent   HealingAction[]      @relation("HealingFrom")
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+model Party {
+  id                 String   @id @default(uuid())
+  name               String
+  inviteCode         String   @unique @map("invite_code")
+  checkInStartHour   Int      @default(18) @map("check_in_start_hour")
+  checkInEndHour     Int      @default(24) @map("check_in_end_hour")
+  morningReportHour  Int      @default(6) @map("morning_report_hour")
+  activeMonsterId    String?  @map("active_monster_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  members            PartyMember[]
+  partyMonsters      PartyMonster[]
+  checkIns           CheckIn[]
+
+  @@index([inviteCode])
+  @@map("parties")
+}
+
+model PartyMember {
+  id             String   @id @default(uuid())
+  partyId        String   @map("party_id")
+  userId         String   @map("user_id")
+  currentHp      Int      @default(100) @map("current_hp")
+  maxHp          Int      @default(100) @map("max_hp")
+  currentDefense Int      @default(0) @map("current_defense")
+  currentStreak  Int      @default(0) @map("current_streak")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+
+  party                  Party           @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkIns               CheckIn[]
+  encouragementsReceived Encouragement[]
+  healingActionsReceived HealingAction[] @relation("HealingTo")
+  healingActionsSent     HealingAction[] @relation("HealingFromMember")
+
+  @@unique([partyId, userId])
+  @@map("party_members")
+}
+
+enum GoalType {
+  WEIGHT
+  CARDIO
+  STRENGTH
+  PROTEIN
+  SLEEP
+  CUSTOM
+}
+
+model Goal {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  goalType        GoalType @map("goal_type")
+  name            String
+  targetValue     Float?   @map("target_value")
+  targetUnit      String?  @map("target_unit")
+  flexPercentage  Int      @default(10) @map("flex_percentage")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goalCheckIns    GoalCheckIn[]
+
+  @@map("goals")
+}
+
+model CheckIn {
+  id               String   @id @default(uuid())
+  partyMemberId    String   @map("party_member_id")
+  partyId          String   @map("party_id")
+  checkInDate      DateTime @map("check_in_date") @db.Date
+  goalsMet         Int      @default(0) @map("goals_met")
+  isRestDay        Boolean  @default(false) @map("is_rest_day")
+  attackRoll       Int      @map("attack_roll")
+  attackBonus      Int      @map("attack_bonus")
+  damageDealt      Int      @map("damage_dealt")
+  wasHitByMonster  Boolean  @default(false) @map("was_hit_by_monster")
+  damageTaken      Int      @default(0) @map("damage_taken")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  partyMember      PartyMember      @relation(fields: [partyMemberId], references: [id], onDelete: Cascade)
+  party            Party            @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  goalCheckIns     GoalCheckIn[]
+  encouragements   Encouragement[]
+
+  @@unique([partyMemberId, checkInDate])
+  @@index([checkInDate])
+  @@map("check_ins")
+}
+
+model GoalCheckIn {
+  id           String   @id @default(uuid())
+  checkInId    String   @map("check_in_id")
+  goalId       String   @map("goal_id")
+  actualValue  Float?   @map("actual_value")
+  targetValue  Float?   @map("target_value")
+  wasMet       Boolean  @map("was_met")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  checkIn      CheckIn  @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  goal         Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@map("goal_check_ins")
+}
+
+enum MonsterType {
+  TANK
+  BALANCED
+  GLASS_CANNON
+}
+
+model Monster {
+  id                  String      @id @default(uuid())
+  name                String
+  description         String      @db.Text
+  monsterType         MonsterType @map("monster_type")
+  maxHp               Int         @map("max_hp")
+  currentHp           Int         @map("current_hp")
+  armorClass          Int         @map("armor_class")
+  baseDamage          Int[]       @map("base_damage")
+  counterattackChance Int         @map("counterattack_chance")
+  isDefeated          Boolean     @default(false) @map("is_defeated")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  defeatedAt          DateTime?   @map("defeated_at")
+
+  partyMonsters       PartyMonster[]
+
+  @@map("monsters")
+}
+
+model PartyMonster {
+  id         String   @id @default(uuid())
+  partyId    String   @map("party_id")
+  monsterId  String   @map("monster_id")
+  isActive   Boolean  @default(false) @map("is_active")
+  votes      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  party      Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  monster    Monster  @relation(fields: [monsterId], references: [id], onDelete: Cascade)
+
+  @@map("party_monsters")
+}
+
+enum ReactionType {
+  MUSCLE
+  FIRE
+  STAR
+  CLAP
+}
+
+model Encouragement {
+  id              String       @id @default(uuid())
+  fromUserId      String       @map("from_user_id")
+  toPartyMemberId String       @map("to_party_member_id")
+  checkInId       String?      @map("check_in_id")
+  reactionType    ReactionType @map("reaction_type")
+  message         String?      @db.Text
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  fromUser        User         @relation(fields: [fromUserId], references: [id], onDelete: Cascade)
+  toPartyMember   PartyMember  @relation(fields: [toPartyMemberId], references: [id], onDelete: Cascade)
+  checkIn         CheckIn?     @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+
+  @@map("encouragements")
+}
+
+enum HealingType {
+  QUICK
+  DEEP
+}
+
+model HealingAction {
+  id                 String      @id @default(uuid())
+  fromPartyMemberId  String      @map("from_party_member_id")
+  toPartyMemberId    String      @map("to_party_member_id")
+  healingType        HealingType @map("healing_type")
+  hpRestored         Int         @map("hp_restored")
+  actionDate         DateTime    @map("action_date") @db.Date
+  createdAt          DateTime    @default(now()) @map("created_at")
+
+  fromPartyMember    PartyMember @relation("HealingFromMember", fields: [fromPartyMemberId], references: [id], onDelete: Cascade)
+  toPartyMember      PartyMember @relation("HealingTo", fields: [toPartyMemberId], references: [id], onDelete: Cascade)
+  fromUser           User        @relation("HealingFrom", fields: [fromPartyMemberId], references: [id])
+
+  @@map("healing_actions")
+}
