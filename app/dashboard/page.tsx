@@ -66,13 +66,26 @@ export default function DashboardPage() {
                 <strong>Timezone:</strong> {user.timezone}
               </p>
             </div>
-            <div className="mt-8">
-              <p className="text-gray-600 dark:text-gray-400">
-                Sprint 1: User Management - Complete! ✅
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                Next up: Sprint 2 will add Goals & Parties functionality.
-              </p>
+            <div className="mt-8 space-y-4">
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Sprint 1: User Management - Complete! ✅
+                </p>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => router.push("/goals")}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+                  >
+                    Set Up Goals
+                  </button>
+                  <button
+                    onClick={() => router.push("/party")}
+                    className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+                  >
+                    Join/Create Party
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
