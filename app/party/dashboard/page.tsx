@@ -139,12 +139,20 @@ export default function PartyDashboard() {
                 {party.members.length} member{party.members.length !== 1 ? "s" : ""}
               </p>
             </div>
-            <button
-              onClick={() => setShowInviteCode(!showInviteCode)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              {showInviteCode ? "Hide" : "Show"} Invite Code
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push("/check-in")}
+                className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+              >
+                Daily Check-In
+              </button>
+              <button
+                onClick={() => setShowInviteCode(!showInviteCode)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                {showInviteCode ? "Hide" : "Show"} Invite Code
+              </button>
+            </div>
           </div>
 
           {showInviteCode && (
@@ -315,10 +323,10 @@ export default function PartyDashboard() {
           {/* Sprint Progress */}
           <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Sprint 2: Goals & Parties - Complete! ✅
+              Sprint 3: Combat Core - Complete! ✅
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Next up: Sprint 3 will add daily check-ins and combat mechanics
+              Daily check-ins and combat mechanics are now live! Click the button above to check in.
             </p>
           </div>
         </div>
