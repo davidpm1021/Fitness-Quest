@@ -236,11 +236,14 @@ export default function PartyDashboard() {
               ) : (
                 <div className="text-center py-12">
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    No active monster yet
+                    No active monster
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500">
-                    Monsters will be available in Sprint 4
-                  </p>
+                  <button
+                    onClick={() => router.push("/monsters")}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+                  >
+                    Select a Monster
+                  </button>
                 </div>
               )}
             </div>
@@ -323,10 +326,10 @@ export default function PartyDashboard() {
           {/* Sprint Progress */}
           <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Sprint 3: Combat Core - Complete! ✅
+              Sprint 4: Monsters & HP - Complete! ✅
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Daily check-ins and combat mechanics are now live! Click the button above to check in.
+              The monster system is live! Fight creatures, deal damage, and watch out for counterattacks. Check in daily to defeat your party's active monster!
             </p>
           </div>
         </div>

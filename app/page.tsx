@@ -34,7 +34,11 @@ export default function Home() {
             <p>✅ Sprint 0: Foundation & Setup</p>
             <p>✅ Sprint 1: User Management</p>
             <p>✅ Sprint 2: Goals & Parties</p>
-            <p className="text-gray-500 dark:text-gray-500">⏳ Sprint 3: Combat Core (Next)</p>
+            <p>✅ Sprint 3: Combat Core</p>
+            <p>✅ Sprint 4: Monsters & HP</p>
+            <p className="font-semibold text-indigo-600 dark:text-indigo-400">
+              🎮 Core MVP Complete! Ready for testing
+            </p>
           </div>
         </div>
       </div>

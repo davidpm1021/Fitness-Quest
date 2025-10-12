@@ -25,6 +25,8 @@ interface AttackResult {
   baseDamage: number;
   totalDamage: number;
   hit: boolean;
+  wasCounterattacked?: boolean;
+  counterattackDamage?: number;
 }
 
 export default function CheckInPage() {
@@ -229,6 +231,23 @@ export default function CheckInPage() {
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Base {attackResult.baseDamage} + Bonuses {attackResult.bonuses.totalBonus}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {attackResult.wasCounterattacked && (
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6 border-2 border-red-200 dark:border-red-800">
+                <h3 className="text-lg font-semibold text-red-900 dark:text-red-200 mb-4 flex items-center justify-center">
+                  <span className="mr-2">⚠️</span>
+                  Counterattack!
+                </h3>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-red-600 dark:text-red-400 mb-2">
+                    -{attackResult.counterattackDamage}
+                  </div>
+                  <p className="text-sm text-red-800 dark:text-red-300">
+                    The monster struck back and damaged your HP!
                   </p>
                 </div>
               </div>
