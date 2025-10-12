@@ -23,7 +23,6 @@ model User {
   goals                Goal[]
   partyMemberships     PartyMember[]
   encouragementsSent   Encouragement[]
-  healingActionsSent   HealingAction[]      @relation("HealingFrom")
 
   @@index([email])
   @@index([username])
@@ -214,7 +213,6 @@ model HealingAction {
 
   fromPartyMember    PartyMember @relation("HealingFromMember", fields: [fromPartyMemberId], references: [id], onDelete: Cascade)
   toPartyMember      PartyMember @relation("HealingTo", fields: [toPartyMemberId], references: [id], onDelete: Cascade)
-  fromUser           User        @relation("HealingFrom", fields: [fromPartyMemberId], references: [id])
 
   @@map("healing_actions")
 }
