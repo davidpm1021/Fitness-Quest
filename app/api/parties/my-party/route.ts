@@ -54,10 +54,24 @@ export async function GET(request: NextRequest) {
       } as ApiResponse);
     }
 
+    // Get active monster for the party
+    const activeMonster = await prisma.partyMonster.findFirst({
+      where: {
+        partyId: membership.partyId,
+        isActive: true,
+      },
+      include: {
+        monster: true,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       data: {
-        party: membership.party,
+        party: {
+          ...membership.party,
+          activeMonster: activeMonster?.monster || null,
+        },
         membership: {
           id: membership.id,
           currentHp: membership.currentHp,

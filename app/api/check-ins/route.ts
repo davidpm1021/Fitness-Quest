@@ -9,6 +9,8 @@ import {
   calculateDamage,
   updateStreak,
   calculateDefense,
+  rollCounterattack,
+  calculateCounterattackDamage,
 } from "@/lib/combat";
 
 interface ApiResponse<T = unknown> {
@@ -144,6 +146,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Get active monster for the party
+    const activeMonster = await prisma.partyMonster.findFirst({
+      where: {
+        partyId: partyMember.partyId,
+        isActive: true,
+      },
+      include: {
+        monster: true,
+      },
+    });
+
     // Calculate attack bonuses
     const bonuses = calculateAttackBonuses({
       goalsMet,
@@ -156,15 +169,33 @@ export async function POST(request: NextRequest) {
     // Roll d20 and calculate damage
     const attackRoll = rollD20();
     const baseDamage = rollBaseDamage();
+
+    // Use active monster's AC or default to 12
+    const monsterAC = activeMonster?.monster.armorClass || 12;
     const result = calculateDamage(
       attackRoll,
       bonuses.totalBonus,
       baseDamage,
-      12 // Monster AC placeholder
+      monsterAC
     );
 
     // Calculate new defense
     const newDefense = calculateDefense(newStreak);
+
+    // Roll for counterattack if there's an active monster and player hit
+    let wasCounterattacked = false;
+    let counterattackDamage = 0;
+    if (activeMonster && result.hit) {
+      wasCounterattacked = rollCounterattack(
+        activeMonster.monster.counterattackChance,
+        newDefense
+      );
+      if (wasCounterattacked) {
+        counterattackDamage = calculateCounterattackDamage(
+          activeMonster.monster.baseDamage
+        );
+      }
+    }
 
     // Create check-in with transaction
     const checkInResult = await prisma.$transaction(async (tx) => {
@@ -179,8 +210,8 @@ export async function POST(request: NextRequest) {
           attackRoll,
           attackBonus: bonuses.totalBonus,
           damageDealt: result.damage,
-          wasHitByMonster: false,
-          damageTaken: 0,
+          wasHitByMonster: wasCounterattacked,
+          damageTaken: counterattackDamage,
         },
       });
 
@@ -196,13 +227,41 @@ export async function POST(request: NextRequest) {
       });
 
       // Update party member stats
+      const newHp = Math.max(0, partyMember.currentHp - counterattackDamage);
       await tx.partyMember.update({
         where: { id: partyMember.id },
         data: {
           currentStreak: newStreak,
           currentDefense: newDefense,
+          currentHp: newHp,
         },
       });
+
+      // Update monster HP if hit
+      if (activeMonster && result.hit) {
+        const newMonsterHp = Math.max(
+          0,
+          activeMonster.monster.currentHp - result.damage
+        );
+        const isDefeated = newMonsterHp === 0;
+
+        await tx.monster.update({
+          where: { id: activeMonster.monster.id },
+          data: {
+            currentHp: newMonsterHp,
+            isDefeated,
+            defeatedAt: isDefeated ? new Date() : undefined,
+          },
+        });
+
+        // Deactivate the party monster if defeated
+        if (isDefeated) {
+          await tx.partyMonster.update({
+            where: { id: activeMonster.id },
+            data: { isActive: false },
+          });
+        }
+      }
 
       return checkIn;
     });
@@ -218,12 +277,19 @@ export async function POST(request: NextRequest) {
             baseDamage,
             totalDamage: result.damage,
             hit: result.hit,
+            wasCounterattacked,
+            counterattackDamage,
           },
+          monsterDefeated: activeMonster
+            ? activeMonster.monster.currentHp - result.damage <= 0 && result.hit
+            : false,
           streakUpdated: newStreak,
           defenseUpdated: newDefense,
         },
         message: result.hit
-          ? `Hit! You dealt ${result.damage} damage!`
+          ? wasCounterattacked
+            ? `Hit! You dealt ${result.damage} damage but the monster counterattacked for ${counterattackDamage} damage!`
+            : `Hit! You dealt ${result.damage} damage!`
           : "Miss! Better luck tomorrow!",
       } as ApiResponse,
       { status: 201 }

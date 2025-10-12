@@ -113,3 +113,26 @@ export function calculateDamage(
   const damage = baseDamage + bonuses;
   return { hit: true, damage };
 }
+
+/**
+ * Roll for monster counterattack
+ * Counterattack chance is reduced by player defense
+ */
+export function rollCounterattack(
+  counterattackChance: number,
+  playerDefense: number
+): boolean {
+  const adjustedChance = Math.max(0, counterattackChance - playerDefense);
+  const roll = Math.random() * 100;
+  return roll < adjustedChance;
+}
+
+/**
+ * Calculate monster counterattack damage
+ */
+export function calculateCounterattackDamage(
+  baseDamage: number[]
+): number {
+  const [min, max] = baseDamage;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
