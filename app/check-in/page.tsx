@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
+import CombatAnimation from "@/app/components/CombatAnimation";
+import { CharacterCustomization } from "@/app/components/CustomizablePixelCharacter";
 
 interface Goal {
   id: string;
@@ -29,6 +31,12 @@ interface AttackResult {
   counterattackDamage?: number;
 }
 
+interface Monster {
+  name: string;
+  currentHp: number;
+  maxHp: number;
+}
+
 export default function CheckInPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
@@ -38,7 +46,11 @@ export default function CheckInPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [attackResult, setAttackResult] = useState<AttackResult | null>(null);
+  const [monster, setMonster] = useState<Monster | null>(null);
+  const [showAnimation, setShowAnimation] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [characterCustomization, setCharacterCustomization] = useState<CharacterCustomization | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -49,6 +61,7 @@ export default function CheckInPage() {
   useEffect(() => {
     if (user && token) {
       fetchGoals();
+      fetchCharacterAppearance();
     }
   }, [user, token]);
 
@@ -73,6 +86,23 @@ export default function CheckInPage() {
       console.error("Error fetching goals:", err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchCharacterAppearance() {
+    try {
+      const response = await fetch('/api/character', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success && data.data.appearance) {
+        setCharacterCustomization(data.data.appearance);
+      }
+    } catch (err) {
+      console.error('Error fetching character appearance:', err);
     }
   }
 
@@ -105,7 +135,8 @@ export default function CheckInPage() {
 
       if (data.success) {
         setAttackResult(data.data.attackResult);
-        setShowResult(true);
+        setMonster(data.data.monster);
+        setShowAnimation(true); // Show animation first
       } else {
         setError(data.error || "Failed to submit check-in");
       }
@@ -133,6 +164,35 @@ export default function CheckInPage() {
     });
   }
 
+  async function handleResetCheckIn() {
+    setResetting(true);
+    try {
+      const response = await fetch('/api/check-ins/reset', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Reset the UI back to check-in form
+        setShowResult(false);
+        setShowAnimation(false);
+        setAttackResult(null);
+        setMonster(null);
+        setError('');
+      } else {
+        alert('Failed to reset: ' + data.error);
+      }
+    } catch (err) {
+      alert('Failed to reset check-in');
+    } finally {
+      setResetting(false);
+    }
+  }
+
   if (isLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -143,6 +203,35 @@ export default function CheckInPage() {
 
   if (!user) {
     return null;
+  }
+
+  // Show combat animation first
+  if (showAnimation && attackResult && monster) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-3xl w-full">
+          <CombatAnimation
+            playerName={user.displayName || user.username}
+            monsterName={monster.name}
+            damage={attackResult.totalDamage}
+            hit={attackResult.hit}
+            counterattack={
+              attackResult.wasCounterattacked
+                ? {
+                    damage: attackResult.counterattackDamage || 0,
+                    happened: true,
+                  }
+                : { damage: 0, happened: false }
+            }
+            characterCustomization={characterCustomization}
+            onComplete={() => {
+              setShowAnimation(false);
+              setShowResult(true);
+            }}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (showResult && attackResult) {
@@ -255,6 +344,13 @@ export default function CheckInPage() {
           </div>
 
           <div className="mt-8 space-y-3">
+            <button
+              onClick={handleResetCheckIn}
+              disabled={resetting}
+              className="w-full py-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resetting ? '🔄 Resetting...' : '🎮 Try Again (Reset Check-In)'}
+            </button>
             <button
               onClick={() => router.push("/party/dashboard")}
               className="w-full py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"

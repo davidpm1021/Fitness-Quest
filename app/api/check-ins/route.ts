@@ -61,26 +61,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already checked in today
+    // Check if already checked in today - DISABLED FOR TESTING
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const existingCheckIn = await prisma.checkIn.findFirst({
-      where: {
-        partyMemberId: partyMember.id,
-        checkInDate: today,
-      },
-    });
+    // const existingCheckIn = await prisma.checkIn.findFirst({
+    //   where: {
+    //     partyMemberId: partyMember.id,
+    //     checkInDate: today,
+    //   },
+    // });
 
-    if (existingCheckIn) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "You have already checked in today",
-        } as ApiResponse,
-        { status: 400 }
-      );
-    }
+    // if (existingCheckIn) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: "You have already checked in today",
+    //     } as ApiResponse,
+    //     { status: 400 }
+    //   );
+    // }
 
     // Get user's goals
     const goals = await prisma.goal.findMany({
@@ -280,6 +280,13 @@ export async function POST(request: NextRequest) {
             wasCounterattacked,
             counterattackDamage,
           },
+          monster: activeMonster
+            ? {
+                name: activeMonster.monster.name,
+                currentHp: activeMonster.monster.currentHp - (result.hit ? result.damage : 0),
+                maxHp: activeMonster.monster.maxHp,
+              }
+            : null,
           monsterDefeated: activeMonster
             ? activeMonster.monster.currentHp - result.damage <= 0 && result.hit
             : false,

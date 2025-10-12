@@ -23,10 +23,64 @@ model User {
   goals                Goal[]
   partyMemberships     PartyMember[]
   encouragementsSent   Encouragement[]
+  characterAppearance  CharacterAppearance?
 
   @@index([email])
   @@index([username])
   @@map("users")
+}
+
+enum BodyType {
+  SLIM
+  AVERAGE
+  MUSCULAR
+  BULKY
+}
+
+enum HairStyle {
+  SHORT
+  MEDIUM
+  LONG
+  BALD
+  PONYTAIL
+  MOHAWK
+  AFRO
+}
+
+enum FacialHair {
+  NONE
+  STUBBLE
+  BEARD
+  GOATEE
+  MUSTACHE
+}
+
+enum Outfit {
+  CASUAL
+  ATHLETIC
+  ARMOR
+  NINJA
+  WIZARD
+  KNIGHT
+}
+
+model CharacterAppearance {
+  id             String      @id @default(uuid())
+  userId         String      @unique @map("user_id")
+  bodyType       BodyType    @default(AVERAGE) @map("body_type")
+  skinColor      String      @default("#fbbf24") @map("skin_color")
+  hairStyle      HairStyle   @default(SHORT) @map("hair_style")
+  hairColor      String      @default("#92400e") @map("hair_color")
+  facialHair     FacialHair  @default(NONE) @map("facial_hair")
+  outfit         Outfit      @default(CASUAL) @map("outfit")
+  outfitColor    String      @default("#3b82f6") @map("outfit_color")
+  accessoryColor String?     @default("#9ca3af") @map("accessory_color")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("character_appearances")
 }
 
 model Party {

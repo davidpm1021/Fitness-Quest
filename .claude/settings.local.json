@@ -10,7 +10,17 @@
       "WebSearch",
       "Bash(claude mcp add playwright npx @playwright/mcp@latest)",
       "Bash(npx create-next-app@latest:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(cat:*)",
+      "Bash(npm run dev)",
+      "Bash(curl http://localhost:3000/api/health)",
+      "Bash(timeout:*)",
+      "Bash(curl -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d \"{\"\"email\"\":\"\"test@example.com\"\",\"\"password\"\":\"\"Test123456\"\",\"\"username\"\":\"\"testuser\"\",\"\"displayName\"\":\"\"Test User\"\"}\" -w \"\\nHTTP Status: %{http_code}\\n\")",
+      "Bash(curl -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d \"{\"\"email\"\":\"\"test@example.com\"\",\"\"password\"\":\"\"Test123456\"\"}\" -w \"\\nHTTP Status: %{http_code}\\n\")",
+      "Bash(curl:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjN2ZhMTQwOS04OGRhLTRlYmUtYTNlZi1jZTYyMDI1ZTMzOGQiLCJlbWFpbCI6ImVuZHRvZW5kQHRlc3QuY29tIiwiaWF0IjoxNzYwMjMyMDI3LCJleHAiOjE3NjA4MzY4Mjd9.-OMyFZcNrTv2TngfrnarWafXrHMXHuehRozT5rjU6_8\")",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

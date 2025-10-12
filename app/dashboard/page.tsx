@@ -71,7 +71,13 @@ export default function DashboardPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Sprint 1: User Management - Complete! ✅
                 </p>
-                <div className="flex gap-4">
+                <div className="flex gap-4 flex-wrap">
+                  <button
+                    onClick={() => router.push("/character")}
+                    className="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium"
+                  >
+                    🎨 Customize Character
+                  </button>
                   <button
                     onClick={() => router.push("/goals")}
                     className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
