@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
-import { ApiResponse } from "@/types/api";
+import { ApiResponse } from "@/lib/types";
 import bcrypt from "bcryptjs";
 
 export async function DELETE(req: NextRequest) {
