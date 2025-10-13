@@ -10,6 +10,7 @@ interface HPBarProps {
   animated?: boolean;
   label?: string;
   showMilestones?: boolean; // Show milestone markers at 75%, 50%, 25%
+  variant?: 'player' | 'enemy';
 }
 
 export default function HPBar({
@@ -20,6 +21,7 @@ export default function HPBar({
   animated = true,
   label = 'HP',
   showMilestones = false,
+  variant = 'player',
 }: HPBarProps) {
   const percentage = Math.min(Math.max((current / max) * 100, 0), 100);
   const isLowHealth = percentage <= 25;
@@ -27,6 +29,13 @@ export default function HPBar({
 
   // Color based on HP percentage
   const getColor = () => {
+    if (variant === 'enemy') {
+      // Enemy HP bar - red/orange colors
+      if (percentage > 60) return 'bg-red-500';
+      if (percentage > 30) return 'bg-orange-500';
+      return 'bg-red-700';
+    }
+    // Player HP bar - green/yellow/red
     if (percentage > 60) return 'bg-green-500';
     if (percentage > 30) return 'bg-yellow-500';
     return 'bg-red-500';
