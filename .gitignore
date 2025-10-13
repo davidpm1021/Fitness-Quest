@@ -45,3 +45,6 @@ next-env.d.ts
 /lib/generated/prisma
 nul
 public/sprites/lpc-temp/
+
+# documentation (may contain sensitive info)
+*.md
