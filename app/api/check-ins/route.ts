@@ -274,9 +274,9 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    // Apply welcome back catch-up damage bonus
+    // Apply welcome back catch-up damage bonus (+5 damage)
     if (activeWelcomeBackBonus) {
-      baseDamage += 2;
+      baseDamage += 5;
     }
 
     // Use active monster's AC or default to 12
@@ -583,7 +583,7 @@ export async function POST(request: NextRequest) {
                   0,
                   activeWelcomeBackBonus.bonusCheckInsRemaining - 1
                 ),
-                catchUpDamageBonus: 2,
+                catchUpDamageBonus: 5,
                 reducedCounterattack: true,
               }
             : null,

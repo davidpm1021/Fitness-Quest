@@ -111,6 +111,7 @@ export default function CheckInPage() {
   async function checkWelcomeBack() {
     try {
       const response = await fetch('/api/check-ins/welcome-back', {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
         },
