@@ -32,7 +32,7 @@ export async function DELETE(req: NextRequest) {
       where: { id: user.userId },
       select: {
         id: true,
-        passwordHash: true,
+        password_hash: true,
         email: true,
       },
     });

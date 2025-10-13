@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         monsterType: "TANK",
       },
       orderBy: {
-        createdAt: "asc",
+        created_at: "asc",
       },
     });
 
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
         monsterType: "BALANCED",
       },
       orderBy: {
-        createdAt: "asc",
+        created_at: "asc",
       },
     });
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         monsterType: "GLASS_CANNON",
       },
       orderBy: {
-        createdAt: "asc",
+        created_at: "asc",
       },
     });
 

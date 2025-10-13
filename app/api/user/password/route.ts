@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest) {
       where: { id: user.userId },
       select: {
         id: true,
-        passwordHash: true,
+        password_hash: true,
       },
     });
 
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest) {
     await prisma.users.update({
       where: { id: user.userId },
       data: {
-        passwordHash: hashedPassword,
+        password_hash: hashedPassword,
       },
     });
 

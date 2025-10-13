@@ -637,7 +637,7 @@ export async function GET(request: NextRequest) {
             user: {
               select: {
                 username: true,
-                displayName: true,
+                display_name: true,
               },
             },
           },
@@ -654,7 +654,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        created_at: "desc",
       },
       take: 50,
     });

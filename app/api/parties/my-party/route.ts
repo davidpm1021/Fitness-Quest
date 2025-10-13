@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
             checkInEndHour: true,
             morningReportHour: true,
             activeMonsterId: true,
-            createdAt: true,
-            updatedAt: true,
+            created_at: true,
+            updated_at: true,
             members: {
               select: {
                 id: true,
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
                   select: {
                     id: true,
                     username: true,
-                    displayName: true,
+                    display_name: true,
                   },
                 },
               },
@@ -121,8 +121,8 @@ export async function GET(request: NextRequest) {
           checkInEndHour: membership.party.checkInEndHour,
           morningReportHour: membership.party.morningReportHour,
           activeMonsterId: membership.party.activeMonsterId,
-          createdAt: membership.party.createdAt,
-          updatedAt: membership.party.updatedAt,
+          created_at: membership.party.createdAt,
+          updated_at: membership.party.updatedAt,
           members: membership.party.members,
           activeMonster,
         },

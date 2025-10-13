@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         isActive: true,
       },
       orderBy: {
-        createdAt: "asc",
+        created_at: "asc",
       },
     });
 

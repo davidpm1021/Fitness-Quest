@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
         id: true,
         email: true,
         username: true,
-        displayName: true,
+        display_name: true,
         timezone: true,
-        createdAt: true,
+        created_at: true,
       },
     });
 

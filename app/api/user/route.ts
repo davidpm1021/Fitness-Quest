@@ -38,12 +38,12 @@ export async function PATCH(request: NextRequest) {
         id: true,
         email: true,
         username: true,
-        displayName: true,
-        characterName: true,
-        onboardingStep: true,
-        onboardingCompletedAt: true,
+        display_name: true,
+        character_name: true,
+        onboarding_step: true,
+        onboarding_completed_at: true,
         timezone: true,
-        createdAt: true,
+        created_at: true,
       },
     });
 

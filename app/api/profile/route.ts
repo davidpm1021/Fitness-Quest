@@ -40,9 +40,9 @@ export async function PUT(request: NextRequest) {
         id: true,
         email: true,
         username: true,
-        displayName: true,
+        display_name: true,
         timezone: true,
-        updatedAt: true,
+        updated_at: true,
       },
     });
 
