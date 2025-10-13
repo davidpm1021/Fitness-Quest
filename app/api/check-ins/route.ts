@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const existingCheckIn = await prisma.checkIn.findFirst({
+    const existingCheckIn = await prisma.check_ins.findFirst({
       where: {
         partyMemberId: partyMember.id,
         checkInDate: today,
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const previousCheckIn = await prisma.checkIn.findFirst({
+    const previousCheckIn = await prisma.check_ins.findFirst({
       where: {
         partyMemberId: partyMember.id,
         checkInDate: yesterday,
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Count how many party members have checked in today (before this check-in)
-    const todayCheckIns = await prisma.checkIn.count({
+    const todayCheckIns = await prisma.check_ins.count({
       where: {
         partyId: partyMember.partyId,
         checkInDate: today,
@@ -337,7 +337,7 @@ export async function POST(request: NextRequest) {
     let victoryRewardId: string | null = null;
     const checkInResult = await prisma.$transaction(async (tx) => {
       // Create the check-in
-      const checkIn = await tx.checkIn.create({
+      const checkIn = await tx.check_ins.create({
         data: {
           partyMemberId: partyMember.id,
           partyId: partyMember.partyId,
@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Create goal check-in records
-      await tx.goalCheckIn.createMany({
+      await tx.goal_check_ins.createMany({
         data: goalResults.map((gr) => ({
           checkInId: checkIn.id,
           goalId: gr.goalId,
@@ -373,7 +373,7 @@ export async function POST(request: NextRequest) {
 
       // Update party member stats
       const newHp = Math.max(0, partyMember.currentHp - counterattackDamage);
-      await tx.partyMember.update({
+      await tx.party_members.update({
         where: { id: partyMember.id },
         data: {
           currentStreak: newStreak,
@@ -386,7 +386,7 @@ export async function POST(request: NextRequest) {
       // Apply DEFEND defense bonus to all party members
       if (selectedAction === "DEFEND") {
         const partyMemberIds = partyMember.party.members.map((m) => m.id);
-        await tx.partyMember.updateMany({
+        await tx.party_members.updateMany({
           where: {
             id: { in: partyMemberIds },
           },
@@ -400,12 +400,12 @@ export async function POST(request: NextRequest) {
 
       // Apply SUPPORT healing to teammate
       if (healingTarget && healingAmount > 0) {
-        const teammate = await tx.partyMember.findUnique({
+        const teammate = await tx.party_members.findUnique({
           where: { id: healingTarget },
         });
         if (teammate) {
           const newTeammateHp = Math.min(teammate.maxHp, teammate.currentHp + healingAmount);
-          await tx.partyMember.update({
+          await tx.party_members.update({
             where: { id: healingTarget },
             data: {
               currentHp: newTeammateHp,
@@ -419,7 +419,7 @@ export async function POST(request: NextRequest) {
         const newRemainingCheckIns = activeWelcomeBackBonus.bonusCheckInsRemaining - 1;
         const isStillActive = newRemainingCheckIns > 0;
 
-        await tx.welcomeBackBonus.update({
+        await tx.welcome_back_bonuses.update({
           where: { id: activeWelcomeBackBonus.id },
           data: {
             bonusCheckInsRemaining: newRemainingCheckIns,
@@ -451,7 +451,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        await tx.monster.update({
+        await tx.monsters.update({
           where: { id: activeMonster.monster.id },
           data: {
             currentHp: newMonsterHp,
@@ -462,7 +462,7 @@ export async function POST(request: NextRequest) {
 
         // Deactivate the party monster if defeated
         if (isDefeated) {
-          await tx.partyMonster.update({
+          await tx.party_monsters.update({
             where: { id: activeMonster.id },
             data: { isActive: false },
           });
@@ -627,7 +627,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent check-ins for the party
-    const checkIns = await prisma.checkIn.findMany({
+    const checkIns = await prisma.check_ins.findMany({
       where: {
         partyId: partyMember.partyId,
       },

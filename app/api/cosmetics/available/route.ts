@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
 
     // Get all cosmetic items
-    const allCosmetics = await prisma.cosmeticItem.findMany({
+    const allCosmetics = await prisma.cosmetic_items.findMany({
       orderBy: [
         { category: "asc" },
         { sortOrder: "asc" },
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Get monsters defeated
-    const monstersDefeated = await prisma.checkIn.count({
+    const monstersDefeated = await prisma.check_ins.count({
       where: {
         partyMember: {
           userId,

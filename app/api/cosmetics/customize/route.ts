@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
 
     // Get user's customization
-    const customization = await prisma.userSpriteCustomization.findUnique({
+    const customization = await prisma.user_sprite_customizations.findUnique({
       where: { userId },
     });
 
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert customization
-    const customization = await prisma.userSpriteCustomization.upsert({
+    const customization = await prisma.user_sprite_customizations.upsert({
       where: { userId },
       create: {
         userId,

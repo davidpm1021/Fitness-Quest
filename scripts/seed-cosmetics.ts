@@ -228,11 +228,11 @@ async function seedCosmetics() {
   ];
 
   // Clear existing cosmetics first
-  await prisma.cosmeticItem.deleteMany({});
+  await prisma.cosmetic_items.deleteMany({});
   console.log("Cleared existing cosmetics\n");
 
   for (const cosmetic of cosmetics) {
-    await prisma.cosmeticItem.create({
+    await prisma.cosmetic_items.create({
       data: cosmetic,
     });
     console.log(`✓ Seeded: ${cosmetic.name}`);

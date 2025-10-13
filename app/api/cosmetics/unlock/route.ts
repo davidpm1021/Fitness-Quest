@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the cosmetic item
-    const cosmetic = await prisma.cosmeticItem.findUnique({
+    const cosmetic = await prisma.cosmetic_items.findUnique({
       where: { id: cosmeticItemId },
     });
 
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Get monsters defeated
-    const monstersDefeated = await prisma.checkIn.count({
+    const monstersDefeated = await prisma.check_ins.count({
       where: {
         partyMember: {
           userId,

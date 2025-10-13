@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Get one monster of each type (TANK, BALANCED, GLASS_CANNON)
     // This gives players 3 strategic choices
-    const tankMonster = await prisma.monster.findFirst({
+    const tankMonster = await prisma.monsters.findFirst({
       where: {
         isDefeated: false,
         monsterType: "TANK",
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const balancedMonster = await prisma.monster.findFirst({
+    const balancedMonster = await prisma.monsters.findFirst({
       where: {
         isDefeated: false,
         monsterType: "BALANCED",
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const glassCannon = await prisma.monster.findFirst({
+    const glassCannon = await prisma.monsters.findFirst({
       where: {
         isDefeated: false,
         monsterType: "GLASS_CANNON",
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if monster exists and is not defeated
-    const monster = await prisma.monster.findUnique({
+    const monster = await prisma.monsters.findUnique({
       where: { id: monsterId },
     });
 

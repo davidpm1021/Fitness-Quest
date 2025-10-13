@@ -24,7 +24,7 @@ export async function GET(
 
   try {
     // Find party with all details
-    const party = await prisma.party.findUnique({
+    const party = await prisma.parties.findUnique({
       where: { id },
       include: {
         members: {

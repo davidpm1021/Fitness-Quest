@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find party by invite code
-    const party = await prisma.party.findUnique({
+    const party = await prisma.parties.findUnique({
       where: {
         inviteCode: inviteCode.toUpperCase(),
       },

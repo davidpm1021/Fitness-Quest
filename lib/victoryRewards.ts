@@ -21,7 +21,7 @@ interface MVPData {
 export async function createVictoryReward(stats: VictoryStats) {
   try {
     // Get all check-ins for this party against this monster
-    const monster = await prisma.monster.findUnique({
+    const monster = await prisma.monsters.findUnique({
       where: { id: stats.monsterId },
     });
 
@@ -33,7 +33,7 @@ export async function createVictoryReward(stats: VictoryStats) {
     monsterCreatedDate.setHours(0, 0, 0, 0);
 
     // Get all check-ins since the monster was created
-    const partyCheckIns = await prisma.checkIn.findMany({
+    const partyCheckIns = await prisma.check_ins.findMany({
       where: {
         partyId: stats.partyId,
         checkInDate: {
@@ -59,7 +59,7 @@ export async function createVictoryReward(stats: VictoryStats) {
 
     // Calculate total damage and heals
     const totalDamageDealt = partyCheckIns.reduce((sum, ci) => sum + ci.damageDealt, 0);
-    const totalHeals = await prisma.healingAction.count({
+    const totalHeals = await prisma.healing_actions.count({
       where: {
         fromPartyMember: {
           partyId: stats.partyId,
@@ -76,7 +76,7 @@ export async function createVictoryReward(stats: VictoryStats) {
     const mvpDamage = calculateMVPDamage(partyCheckIns);
 
     // Get all party member user IDs
-    const partyMembers = await prisma.partyMember.findMany({
+    const partyMembers = await prisma.party_members.findMany({
       where: { partyId: stats.partyId },
       include: {
         user: {
@@ -105,7 +105,7 @@ export async function createVictoryReward(stats: VictoryStats) {
     }
 
     // Create victory reward record
-    const victoryReward = await prisma.victoryReward.create({
+    const victoryReward = await prisma.victory_rewards.create({
       data: {
         partyId: stats.partyId,
         monsterId: stats.monsterId,
@@ -277,7 +277,7 @@ function calculateMVPDamage(checkIns: any[]): MVPData | null {
  * Get victory reward details by ID
  */
 export async function getVictoryRewardById(victoryId: string) {
-  const victory = await prisma.victoryReward.findUnique({
+  const victory = await prisma.victory_rewards.findUnique({
     where: { id: victoryId },
   });
 
@@ -286,7 +286,7 @@ export async function getVictoryRewardById(victoryId: string) {
   }
 
   // Get monster details
-  const monster = await prisma.monster.findUnique({
+  const monster = await prisma.monsters.findUnique({
     where: { id: victory.monsterId },
   });
 
