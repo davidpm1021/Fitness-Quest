@@ -158,6 +158,7 @@ model parties {
   check_ins           check_ins[]
   party_members       party_members[]
   party_monsters      party_monsters[]
+  party_messages      party_messages[]
 
   @@index([invite_code])
 }
@@ -183,6 +184,19 @@ model party_members {
   @@unique([party_id, user_id])
   @@index([party_id])
   @@index([user_id])
+}
+
+model party_messages {
+  id           String      @id
+  party_id     String
+  user_id      String
+  message      String
+  message_type MessageType @default(CHAT)
+  created_at   DateTime    @default(now())
+  parties      parties     @relation(fields: [party_id], references: [id], onDelete: Cascade)
+  users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([party_id, created_at])
 }
 
 model party_monsters {
@@ -242,6 +256,7 @@ model users {
   encouragements             encouragements[]
   goals                      goals[]
   party_members              party_members[]
+  party_messages             party_messages[]
   user_cosmetic_unlocks      user_cosmetic_unlocks[]
   user_sprite_customizations user_sprite_customizations?
 
@@ -350,6 +365,12 @@ enum HairStyle {
 enum HealingType {
   QUICK
   DEEP
+}
+
+enum MessageType {
+  CHAT
+  ENCOURAGEMENT
+  SYSTEM
 }
 
 enum MonsterType {
