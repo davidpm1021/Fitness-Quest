@@ -20,18 +20,18 @@ export async function GET(request: NextRequest) {
 
     // Get user's earned badges
     const earnedBadges = await prisma.badges.findMany({
-      where: { userId },
-      orderBy: { earnedAt: 'desc' },
+      where: { user_id: userId },
+      orderBy: { earned_at: 'desc' },
     });
 
     // Create complete badge list with unlock status
     const allBadges = Object.entries(BADGE_INFO).map(([badgeType, info]) => {
-      const earned = earnedBadges.find((b) => b.badgeType === badgeType as BadgeType);
+      const earned = earnedBadges.find((b) => b.badge_type === badgeType as BadgeType);
       return {
         badgeType,
         ...info,
         isUnlocked: !!earned,
-        earnedAt: earned?.earnedAt || null,
+        earnedAt: earned?.earned_at || null,
         metadata: earned?.metadata || null,
       };
     });
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         totalCount: Object.keys(BADGE_INFO).length,
         earnedBadges: earnedBadges.map((b) => ({
           ...b,
-          ...BADGE_INFO[b.badgeType],
+          ...BADGE_INFO[b.badge_type],
         })),
         allBadges,
         badgesByCategory,
