@@ -24,7 +24,7 @@ export async function PUT(
 
   try {
     // Check if goal exists and belongs to user
-    const existingGoal = await prisma.goal.findUnique({
+    const existingGoal = await prisma.goals.findUnique({
       where: { id },
     });
 
@@ -52,7 +52,7 @@ export async function PUT(
     const { name, targetValue, targetUnit, flexPercentage, isActive } = body;
 
     // Update the goal
-    const goal = await prisma.goal.update({
+    const goal = await prisma.goals.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
@@ -95,7 +95,7 @@ export async function DELETE(
 
   try {
     // Check if goal exists and belongs to user
-    const existingGoal = await prisma.goal.findUnique({
+    const existingGoal = await prisma.goals.findUnique({
       where: { id },
     });
 
@@ -120,7 +120,7 @@ export async function DELETE(
     }
 
     // Soft delete by setting isActive to false
-    await prisma.goal.update({
+    await prisma.goals.update({
       where: { id },
       data: { isActive: false },
     });

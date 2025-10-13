@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is already in a party
-    const existingMembership = await prisma.partyMember.findFirst({
+    const existingMembership = await prisma.party_members.findFirst({
       where: {
         userId: user.userId,
       },
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add user to party
-    const partyMember = await prisma.partyMember.create({
+    const partyMember = await prisma.party_members.create({
       data: {
         partyId: party.id,
         userId: user.userId,

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already unlocked
-    const existing = await prisma.userCosmeticUnlock.findUnique({
+    const existing = await prisma.user_cosmetic_unlocks.findUnique({
       where: {
         userId_cosmeticItemId: {
           userId,
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Unlock the cosmetic
-    const unlock = await prisma.userCosmeticUnlock.create({
+    const unlock = await prisma.user_cosmetic_unlocks.create({
       data: {
         userId,
         cosmeticItemId,

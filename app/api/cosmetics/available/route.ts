@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get user's unlocked cosmetics
-    const unlockedCosmetics = await prisma.userCosmeticUnlock.findMany({
+    const unlockedCosmetics = await prisma.user_cosmetic_unlocks.findMany({
       where: { userId },
       select: { cosmeticItemId: true },
     });

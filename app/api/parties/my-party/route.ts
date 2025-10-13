@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Find user's party membership with optimized single query
-    const membership = await prisma.partyMember.findFirst({
+    const membership = await prisma.party_members.findFirst({
       where: {
         userId: user.userId,
       },

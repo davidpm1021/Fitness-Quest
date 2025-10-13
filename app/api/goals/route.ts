@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const { user } = authResult;
 
   try {
-    const goals = await prisma.goal.findMany({
+    const goals = await prisma.goals.findMany({
       where: {
         userId: user.userId,
         isActive: true,
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user doesn't have more than 5 active goals
-    const activeGoalsCount = await prisma.goal.count({
+    const activeGoalsCount = await prisma.goals.count({
       where: {
         userId: user.userId,
         isActive: true,
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the goal
-    const goal = await prisma.goal.create({
+    const goal = await prisma.goals.create({
       data: {
         userId: user.userId,
         goalType: goalType.toUpperCase(),

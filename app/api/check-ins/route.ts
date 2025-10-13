@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const selectedAction = combatAction || "ATTACK";
 
     // Get user's party membership
-    const partyMember = await prisma.partyMember.findFirst({
+    const partyMember = await prisma.party_members.findFirst({
       where: { userId: user.userId },
       include: {
         party: {
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's goals
-    const goals = await prisma.goal.findMany({
+    const goals = await prisma.goals.findMany({
       where: {
         userId: user.userId,
         isActive: true,
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Get active monster for the party
-    const activeMonster = await prisma.partyMonster.findFirst({
+    const activeMonster = await prisma.party_monsters.findFirst({
       where: {
         partyId: partyMember.partyId,
         isActive: true,
@@ -501,7 +501,7 @@ export async function POST(request: NextRequest) {
 
     // Invalidate party dashboard cache for all party members after check-in
     try {
-      const allPartyMembers = await prisma.partyMember.findMany({
+      const allPartyMembers = await prisma.party_members.findMany({
         where: { partyId: partyMember.partyId },
         select: { userId: true },
       });
@@ -615,7 +615,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Get user's party membership
-    const partyMember = await prisma.partyMember.findFirst({
+    const partyMember = await prisma.party_members.findFirst({
       where: { userId: user.userId },
     });
 

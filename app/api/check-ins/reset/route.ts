@@ -20,7 +20,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     // Get user's party membership
-    const partyMember = await prisma.partyMember.findFirst({
+    const partyMember = await prisma.party_members.findFirst({
       where: { userId: user.userId },
     });
 
