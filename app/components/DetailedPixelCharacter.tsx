@@ -423,7 +423,7 @@ function drawDetailedCharacter(
 }
 
 function drawFacialHair(
-  pixel: (x: number, y: number, color: string) => void,
+  pixel: (x: number, y: number, color: string, alpha?: number) => void,
   type: string,
   color: string,
   centerX: number,
@@ -465,7 +465,7 @@ function drawFacialHair(
 }
 
 function drawDetailedHair(
-  pixel: (x: number, y: number, color: string) => void,
+  pixel: (x: number, y: number, color: string, alpha?: number) => void,
   style: string,
   color: string,
   centerX: number,
@@ -545,7 +545,7 @@ function drawDetailedHair(
 }
 
 function drawWizardHat(
-  pixel: (x: number, y: number, color: string) => void,
+  pixel: (x: number, y: number, color: string, alpha?: number) => void,
   color: string,
   accentColor: string,
   centerX: number,
@@ -569,7 +569,7 @@ function drawWizardHat(
 }
 
 function drawHelmet(
-  pixel: (x: number, y: number, color: string) => void,
+  pixel: (x: number, y: number, color: string, alpha?: number) => void,
   centerX: number,
   headY: number
 ) {
@@ -598,7 +598,7 @@ function drawHelmet(
 }
 
 function drawNinjaMask(
-  pixel: (x: number, y: number, color: string) => void,
+  pixel: (x: number, y: number, color: string, alpha?: number) => void,
   color: string,
   centerX: number,
   headY: number,
