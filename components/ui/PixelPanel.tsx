@@ -4,7 +4,7 @@ interface PixelPanelProps {
   children: React.ReactNode;
   title?: string;
   className?: string;
-  variant?: 'default' | 'dialog' | 'menu';
+  variant?: 'default' | 'dialog' | 'menu' | 'success' | 'warning';
 }
 
 export default function PixelPanel({
@@ -17,6 +17,8 @@ export default function PixelPanel({
     default: 'bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900',
     dialog: 'bg-gradient-to-b from-blue-900 to-blue-950',
     menu: 'bg-gradient-to-b from-purple-900 to-purple-950',
+    success: 'bg-gradient-to-b from-green-900 to-green-950',
+    warning: 'bg-gradient-to-b from-yellow-900 to-yellow-950',
   };
 
   return (
