@@ -78,12 +78,15 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password);
 
     // Create user
+    const userId = `usr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const user = await prisma.users.create({
       data: {
+        id: userId,
         email: email.toLowerCase(),
         password_hash: passwordHash,
         username,
         display_name: displayName,
+        updated_at: new Date(),
       },
       select: {
         id: true,

@@ -88,15 +88,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the goal
+    const goalId = `goal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const goal = await prisma.goals.create({
       data: {
-        userId: user.userId,
-        goalType: goalType.toUpperCase(),
+        id: goalId,
+        user_id: user.userId,
+        goal_type: goalType.toUpperCase(),
         name,
-        targetValue: targetValue ? parseFloat(targetValue) : null,
-        targetUnit: targetUnit || null,
-        flexPercentage: flexPercentage ? parseInt(flexPercentage) : 10,
-        isActive: true,
+        target_value: targetValue ? parseFloat(targetValue) : null,
+        target_unit: targetUnit || null,
+        flex_percentage: flexPercentage ? parseInt(flexPercentage) : 10,
+        is_active: true,
+        updated_at: new Date(),
       },
     });
 

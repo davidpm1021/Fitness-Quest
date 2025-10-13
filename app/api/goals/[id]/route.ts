@@ -56,10 +56,11 @@ export async function PUT(
       where: { id },
       data: {
         ...(name !== undefined && { name }),
-        ...(targetValue !== undefined && { targetValue: parseFloat(targetValue) }),
-        ...(targetUnit !== undefined && { targetUnit }),
-        ...(flexPercentage !== undefined && { flexPercentage: parseInt(flexPercentage) }),
-        ...(isActive !== undefined && { isActive }),
+        ...(targetValue !== undefined && { target_value: parseFloat(targetValue) }),
+        ...(targetUnit !== undefined && { target_unit: targetUnit }),
+        ...(flexPercentage !== undefined && { flex_percentage: parseInt(flexPercentage) }),
+        ...(isActive !== undefined && { is_active: isActive }),
+        updated_at: new Date(),
       },
     });
 
@@ -122,7 +123,10 @@ export async function DELETE(
     // Soft delete by setting isActive to false
     await prisma.goals.update({
       where: { id },
-      data: { isActive: false },
+      data: {
+        is_active: false,
+        updated_at: new Date(),
+      },
     });
 
     return NextResponse.json({

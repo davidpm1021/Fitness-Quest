@@ -56,40 +56,45 @@ export async function POST(request: NextRequest) {
 
     // Generate unique invite code
     let inviteCode = generateInviteCode();
-    let codeExists = await prisma.party.findUnique({
-      where: { inviteCode },
+    let codeExists = await prisma.parties.findUnique({
+      where: { invite_code: inviteCode },
     });
 
     // Regenerate if code already exists (very unlikely)
     while (codeExists) {
       inviteCode = generateInviteCode();
-      codeExists = await prisma.party.findUnique({
-        where: { inviteCode },
+      codeExists = await prisma.parties.findUnique({
+        where: { invite_code: inviteCode },
       });
     }
 
     // Create party and add creator as first member in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create the party
-      const party = await tx.party.create({
+      const partyId = `party_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const party = await tx.parties.create({
         data: {
+          id: partyId,
           name,
-          inviteCode,
-          checkInStartHour: checkInStartHour || 18,
-          checkInEndHour: checkInEndHour || 24,
-          morningReportHour: morningReportHour || 6,
+          invite_code: inviteCode,
+          check_in_start_hour: checkInStartHour || 18,
+          check_in_end_hour: checkInEndHour || 24,
+          morning_report_hour: morningReportHour || 6,
+          updated_at: new Date(),
         },
       });
 
       // Add creator as first member
-      const partyMember = await tx.partyMember.create({
+      const memberId = `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const partyMember = await tx.party_members.create({
         data: {
-          partyId: party.id,
-          userId: user.userId,
-          currentHp: 100,
-          maxHp: 100,
-          currentDefense: 0,
-          currentStreak: 0,
+          id: memberId,
+          party_id: party.id,
+          user_id: user.userId,
+          current_hp: 100,
+          max_hp: 100,
+          current_defense: 0,
+          current_streak: 0,
         },
       });
 
