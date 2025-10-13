@@ -148,7 +148,7 @@ export default function HPBar({
                 title={`${milestone}% milestone`}
               >
                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-xs font-pixel text-yellow-400 whitespace-nowrap drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)]">
-                  {milestone === percentage.toFixed(0) ? '🎯' : ''}
+                  {milestone === Math.round(percentage) ? '🎯' : ''}
                 </div>
               </div>
             ))}
