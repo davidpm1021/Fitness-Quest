@@ -1,35 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth/jwt";
+import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
 import { ApiResponse } from "@/types/api";
 import bcrypt from "bcryptjs";
 
 export async function DELETE(req: NextRequest) {
+  const authResult = await authenticateRequest(req);
+  if (isErrorResponse(authResult)) {
+    return authResult;
+  }
+
+  const { user } = authResult;
+
   try {
-    // Get token from header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized - No token provided",
-        } as ApiResponse,
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const payload = verifyToken(token);
-
-    if (!payload) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized - Invalid token",
-        } as ApiResponse,
-        { status: 401 }
-      );
-    }
 
     const { password } = await req.json();
 
@@ -44,9 +27,9 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Get user
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+    // Get user data
+    const userData = await prisma.user.findUnique({
+      where: { id: user.userId },
       select: {
         id: true,
         passwordHash: true,
@@ -54,7 +37,7 @@ export async function DELETE(req: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!userData) {
       return NextResponse.json(
         {
           success: false,
@@ -65,7 +48,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(password, userData.passwordHash);
 
     if (!isValidPassword) {
       return NextResponse.json(
@@ -82,12 +65,12 @@ export async function DELETE(req: NextRequest) {
     await prisma.$transaction(async (tx) => {
       // Delete character appearance
       await tx.characterAppearance.deleteMany({
-        where: { userId: user.id },
+        where: { userId: userData.id },
       });
 
       // Delete goals and their check-ins
       const goals = await tx.goal.findMany({
-        where: { userId: user.id },
+        where: { userId: userData.id },
         select: { id: true },
       });
 
@@ -101,13 +84,13 @@ export async function DELETE(req: NextRequest) {
 
         // Delete goals
         await tx.goal.deleteMany({
-          where: { userId: user.id },
+          where: { userId: userData.id },
         });
       }
 
       // Get party memberships
       const partyMemberships = await tx.partyMember.findMany({
-        where: { userId: user.id },
+        where: { userId: userData.id },
         select: { id: true, partyId: true },
       });
 
@@ -121,7 +104,7 @@ export async function DELETE(req: NextRequest) {
 
         // Delete party memberships
         await tx.partyMember.deleteMany({
-          where: { userId: user.id },
+          where: { userId: userData.id },
         });
 
         // Check if any parties are now empty and delete them
@@ -146,7 +129,7 @@ export async function DELETE(req: NextRequest) {
 
       // Finally, delete the user
       await tx.user.delete({
-        where: { id: user.id },
+        where: { id: userData.id },
       });
     });
 

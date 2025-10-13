@@ -1,34 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth/jwt";
+import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
 import { ApiResponse } from "@/types/api";
 
 export async function PATCH(req: NextRequest) {
+  const authResult = await authenticateRequest(req);
+  if (isErrorResponse(authResult)) {
+    return authResult;
+  }
+
+  const { user } = authResult;
+
   try {
-    // Get token from header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized - No token provided",
-        } as ApiResponse,
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const payload = verifyToken(token);
-
-    if (!payload) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized - Invalid token",
-        } as ApiResponse,
-        { status: 401 }
-      );
-    }
 
     const { email, username, displayName, timezone } = await req.json();
 
@@ -43,8 +26,14 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    // Get current user data
+    const currentUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { email: true, username: true },
+    });
+
     // Check if email is already used by another user
-    if (email !== payload.email) {
+    if (email !== currentUser?.email) {
       const existingEmail = await prisma.user.findUnique({
         where: { email },
       });
@@ -61,10 +50,6 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Check if username is already used by another user
-    const currentUser = await prisma.user.findUnique({
-      where: { id: payload.userId },
-    });
-
     if (username !== currentUser?.username) {
       const existingUsername = await prisma.user.findUnique({
         where: { username },
@@ -83,7 +68,7 @@ export async function PATCH(req: NextRequest) {
 
     // Update user settings
     const updatedUser = await prisma.user.update({
-      where: { id: payload.userId },
+      where: { id: user.userId },
       data: {
         email,
         username,
