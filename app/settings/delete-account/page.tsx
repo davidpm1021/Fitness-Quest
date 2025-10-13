@@ -140,7 +140,7 @@ export default function DeleteAccountPage() {
                 Party Impact:
               </h3>
               <p className="font-retro text-lg text-gray-200">
-                If you're in a party, your departure may affect your team's ability to defeat monsters. Consider coordinating with your party members first.
+                If you&apos;re in a party, your departure may affect your team&apos;s ability to defeat monsters. Consider coordinating with your party members first.
               </p>
             </div>
 

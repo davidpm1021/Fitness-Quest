@@ -45,7 +45,7 @@ export default function WelcomeBackModal({
               We missed you! You were gone for {daysAbsent} days.
             </p>
             <p className="font-retro text-lg text-blue-300">
-              To help you get back in the fight, we've prepared some bonuses!
+              To help you get back in the fight, we&apos;ve prepared some bonuses!
             </p>
           </div>
 
@@ -58,7 +58,7 @@ export default function WelcomeBackModal({
                     +{hpRestored} HP
                   </div>
                   <p className="font-retro text-gray-300">
-                    You've been healed to help you continue the quest!
+                    You&apos;ve been healed to help you continue the quest!
                   </p>
                 </div>
               </PixelPanel>
@@ -117,7 +117,7 @@ export default function WelcomeBackModal({
           {revealStep >= 3 && (
             <div className="animate-fade-in text-center">
               <PixelButton onClick={onClose} variant="primary" size="lg">
-                🎮 LET'S GO!
+                🎮 LET&apos;S GO!
               </PixelButton>
               <p className="font-retro text-sm text-gray-400 mt-3">
                 Your party needs you! Time to jump back into the action.

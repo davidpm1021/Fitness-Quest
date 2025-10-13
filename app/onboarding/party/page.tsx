@@ -182,7 +182,7 @@ export default function PartyOnboardingPage() {
                     CREATE A NEW PARTY
                   </h3>
                   <p className="text-purple-100 font-retro text-sm">
-                    Start solo or with friends - you'll get an invite code to share anytime
+                    Start solo or with friends - you&apos;ll get an invite code to share anytime
                   </p>
                 </div>
                 <div className="text-4xl text-white">→</div>
@@ -201,7 +201,7 @@ export default function PartyOnboardingPage() {
                     JOIN AN EXISTING PARTY
                   </h3>
                   <p className="text-green-100 font-retro text-sm">
-                    Have an invite code? Join your friends' adventure
+                    Have an invite code? Join your friends&apos; adventure
                   </p>
                 </div>
                 <div className="text-4xl text-white">→</div>
@@ -239,7 +239,7 @@ export default function PartyOnboardingPage() {
 
               <div className="p-4 bg-purple-900/30 border-2 border-purple-500/50 rounded-lg">
                 <p className="text-purple-200 font-retro text-sm">
-                  💡 <strong>Playing Solo?</strong> No problem! You'll start your adventure alone and receive an
+                  💡 <strong>Playing Solo?</strong> No problem! You&apos;ll start your adventure alone and receive an
                   invite code to share with friends anytime you want teammates.
                 </p>
               </div>
@@ -286,7 +286,7 @@ export default function PartyOnboardingPage() {
 
               <div className="p-4 bg-green-900/30 border-2 border-green-500/50 rounded-lg">
                 <p className="text-green-200 font-retro text-sm">
-                  💡 <strong>Tip:</strong> Ask your friend for their party's invite code. It should
+                  💡 <strong>Tip:</strong> Ask your friend for their party&apos;s invite code. It should
                   be 6 characters long.
                 </p>
               </div>

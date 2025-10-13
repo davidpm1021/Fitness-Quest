@@ -131,7 +131,7 @@ export default function TestSpritesPage() {
         <div className="mt-8 p-6 bg-red-900 border-4 border-red-700 rounded-lg">
           <h3 className="font-pixel text-xl text-white mb-3">⚠️ Placeholder Notice</h3>
           <p className="font-retro text-sm text-red-100">
-            This page will show "Loading..." until we add actual sprite sheet images.
+            This page will show &quot;Loading...&quot; until we add actual sprite sheet images.
             The component is ready and will work once we have real LPC sprite sheets.
           </p>
         </div>

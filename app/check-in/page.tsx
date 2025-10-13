@@ -547,7 +547,7 @@ export default function CheckInPage() {
               <div className="animate-fade-in">
                 <PixelPanel variant="menu" title="💪 ENCOURAGE YOUR PARTY">
                   <p className="font-retro text-sm text-gray-300 mb-4 text-center">
-                    Send encouragement to boost your teammates' defense by +5!
+                    Send encouragement to boost your teammates&apos; defense by +5!
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {partyMembers.map((member: any) => (
