@@ -9,7 +9,7 @@ import { ApiResponse } from '@/lib/types';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse>> {
   try {
     // Authenticate user
@@ -19,7 +19,7 @@ export async function POST(
     }
 
     const { user } = authResult;
-    const partyId = params.id;
+    const { id: partyId } = await params;
 
     // Parse request body
     const body = await request.json();

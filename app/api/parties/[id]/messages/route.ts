@@ -9,7 +9,7 @@ import { ApiResponse } from '@/lib/types';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse>> {
   try {
     // Authenticate user
@@ -19,7 +19,7 @@ export async function GET(
     }
 
     const { user } = authResult;
-    const partyId = params.id;
+    const { id: partyId } = await params;
 
     // Verify user is a member of this party
     const partyMember = await prisma.party_members.findFirst({
@@ -90,7 +90,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse>> {
   try {
     // Authenticate user
@@ -100,7 +100,7 @@ export async function POST(
     }
 
     const { user } = authResult;
-    const partyId = params.id;
+    const { id: partyId } = await params;
 
     // Parse request body
     const body = await request.json();
