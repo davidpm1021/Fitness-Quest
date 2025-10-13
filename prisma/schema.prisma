@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,30 +7,295 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                   String    @id @default(uuid())
-  email                String    @unique
-  passwordHash         String    @map("password_hash")
-  username             String    @unique
-  displayName          String    @map("display_name")
-  characterName        String?   @map("character_name") // Character's name in the game world
-  timezone             String    @default("America/New_York")
-  onboardingStep       String    @default("character") @map("onboarding_step") // character, goals, party, complete
-  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
+model badges {
+  id         String    @id
+  user_id    String
+  badge_type BadgeType
+  earned_at  DateTime  @default(now())
+  metadata   Json?
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  goals                  Goal[]
-  partyMemberships       PartyMember[]
-  encouragementsSent     Encouragement[]
-  characterAppearance    CharacterAppearance?
-  cosmeticUnlocks        UserCosmeticUnlock[]
-  spriteCustomization    UserSpriteCustomization?
-  badges                 Badge[]
+  @@unique([user_id, badge_type])
+  @@index([user_id])
+}
+
+model character_appearances {
+  id              String     @id
+  user_id         String     @unique
+  body_type       BodyType   @default(AVERAGE)
+  skin_color      String     @default("#fbbf24")
+  hair_style      HairStyle  @default(SHORT)
+  hair_color      String     @default("#92400e")
+  facial_hair     FacialHair @default(NONE)
+  outfit          Outfit     @default(CASUAL)
+  outfit_color    String     @default("#3b82f6")
+  accessory_color String?    @default("#9ca3af")
+  created_at      DateTime   @default(now())
+  updated_at      DateTime
+  users           users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model check_ins {
+  id                 String           @id
+  party_member_id    String
+  party_id           String
+  check_in_date      DateTime         @db.Date
+  goals_met          Int              @default(0)
+  is_rest_day        Boolean          @default(false)
+  attack_roll        Int
+  attack_bonus       Int
+  damage_dealt       Int
+  was_hit_by_monster Boolean          @default(false)
+  damage_taken       Int              @default(0)
+  created_at         DateTime         @default(now())
+  combat_action      CombatAction     @default(ATTACK)
+  focus_earned       Int              @default(0)
+  parties            parties          @relation(fields: [party_id], references: [id], onDelete: Cascade)
+  party_members      party_members    @relation(fields: [party_member_id], references: [id], onDelete: Cascade)
+  encouragements     encouragements[]
+  goal_check_ins     goal_check_ins[]
+
+  @@unique([party_member_id, check_in_date])
+  @@index([check_in_date])
+  @@index([party_id, check_in_date])
+  @@index([party_id])
+}
+
+model cosmetic_items {
+  id                    String                  @id
+  name                  String
+  description           String?
+  category              CosmeticCategory
+  sprite_sheet_path     String
+  unlock_condition_type UnlockConditionType
+  unlock_threshold      Int                     @default(0)
+  is_starter_item       Boolean                 @default(false)
+  sort_order            Int                     @default(0)
+  created_at            DateTime                @default(now())
+  user_cosmetic_unlocks user_cosmetic_unlocks[]
+}
+
+model encouragements {
+  id                 String        @id
+  from_user_id       String
+  to_party_member_id String
+  check_in_id        String?
+  reaction_type      ReactionType
+  message            String?
+  created_at         DateTime      @default(now())
+  check_ins          check_ins?    @relation(fields: [check_in_id], references: [id], onDelete: Cascade)
+  users              users         @relation(fields: [from_user_id], references: [id], onDelete: Cascade)
+  party_members      party_members @relation(fields: [to_party_member_id], references: [id], onDelete: Cascade)
+}
+
+model goal_check_ins {
+  id           String    @id
+  check_in_id  String
+  goal_id      String
+  actual_value Float?
+  target_value Float?
+  was_met      Boolean
+  created_at   DateTime  @default(now())
+  check_ins    check_ins @relation(fields: [check_in_id], references: [id], onDelete: Cascade)
+  goals        goals     @relation(fields: [goal_id], references: [id], onDelete: Cascade)
+}
+
+model goals {
+  id              String           @id
+  user_id         String
+  goal_type       GoalType
+  name            String
+  target_value    Float?
+  target_unit     String?
+  flex_percentage Int              @default(10)
+  is_active       Boolean          @default(true)
+  created_at      DateTime         @default(now())
+  updated_at      DateTime
+  goal_check_ins  goal_check_ins[]
+  users           users            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model healing_actions {
+  id                                                                String        @id
+  from_party_member_id                                              String
+  to_party_member_id                                                String
+  healing_type                                                      HealingType
+  hp_restored                                                       Int
+  action_date                                                       DateTime      @db.Date
+  created_at                                                        DateTime      @default(now())
+  party_members_healing_actions_from_party_member_idToparty_members party_members @relation("healing_actions_from_party_member_idToparty_members", fields: [from_party_member_id], references: [id], onDelete: Cascade)
+  party_members_healing_actions_to_party_member_idToparty_members   party_members @relation("healing_actions_to_party_member_idToparty_members", fields: [to_party_member_id], references: [id], onDelete: Cascade)
+}
+
+model monsters {
+  id                   String           @id
+  name                 String
+  description          String
+  monster_type         MonsterType
+  max_hp               Int
+  current_hp           Int
+  armor_class          Int
+  base_damage          Int[]
+  counterattack_chance Int
+  is_defeated          Boolean          @default(false)
+  created_at           DateTime         @default(now())
+  defeated_at          DateTime?
+  party_monsters       party_monsters[]
+
+  @@index([is_defeated])
+}
+
+model parties {
+  id                  String           @id
+  name                String
+  invite_code         String           @unique
+  check_in_start_hour Int              @default(18)
+  check_in_end_hour   Int              @default(24)
+  morning_report_hour Int              @default(6)
+  active_monster_id   String?
+  created_at          DateTime         @default(now())
+  updated_at          DateTime
+  check_ins           check_ins[]
+  party_members       party_members[]
+  party_monsters      party_monsters[]
+
+  @@index([invite_code])
+}
+
+model party_members {
+  id                                                                  String                 @id
+  party_id                                                            String
+  user_id                                                             String
+  current_hp                                                          Int                    @default(100)
+  max_hp                                                              Int                    @default(100)
+  current_defense                                                     Int                    @default(0)
+  current_streak                                                      Int                    @default(0)
+  joined_at                                                           DateTime               @default(now())
+  focus_points                                                        Int                    @default(0)
+  check_ins                                                           check_ins[]
+  encouragements                                                      encouragements[]
+  healing_actions_healing_actions_from_party_member_idToparty_members healing_actions[]      @relation("healing_actions_from_party_member_idToparty_members")
+  healing_actions_healing_actions_to_party_member_idToparty_members   healing_actions[]      @relation("healing_actions_to_party_member_idToparty_members")
+  parties                                                             parties                @relation(fields: [party_id], references: [id], onDelete: Cascade)
+  users                                                               users                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  welcome_back_bonuses                                                welcome_back_bonuses[]
+
+  @@unique([party_id, user_id])
+  @@index([party_id])
+  @@index([user_id])
+}
+
+model party_monsters {
+  id         String   @id
+  party_id   String
+  monster_id String
+  is_active  Boolean  @default(false)
+  votes      Int      @default(0)
+  created_at DateTime @default(now())
+  monsters   monsters @relation(fields: [monster_id], references: [id], onDelete: Cascade)
+  parties    parties  @relation(fields: [party_id], references: [id], onDelete: Cascade)
+
+  @@index([party_id, is_active])
+}
+
+model user_cosmetic_unlocks {
+  id               String         @id
+  user_id          String
+  cosmetic_item_id String
+  unlocked_at      DateTime       @default(now())
+  cosmetic_items   cosmetic_items @relation(fields: [cosmetic_item_id], references: [id], onDelete: Cascade)
+  users            users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, cosmetic_item_id])
+}
+
+model user_sprite_customizations {
+  id                    String   @id
+  user_id               String   @unique
+  base_sprite_path      String
+  hair_sprite_path      String?
+  clothing_sprite_path  String?
+  accessory_sprite_path String?
+  weapon_sprite_path    String?
+  hair_tint_color       String?
+  clothing_tint_color   String?
+  accessory_tint_color  String?
+  created_at            DateTime @default(now())
+  updated_at            DateTime
+  users                 users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model users {
+  id                         String                      @id
+  email                      String                      @unique
+  password_hash              String
+  username                   String                      @unique
+  display_name               String
+  timezone                   String                      @default("America/New_York")
+  created_at                 DateTime                    @default(now())
+  updated_at                 DateTime
+  character_name             String?
+  onboarding_completed_at    DateTime?
+  onboarding_step            String                      @default("character")
+  badges                     badges[]
+  character_appearances      character_appearances?
+  encouragements             encouragements[]
+  goals                      goals[]
+  party_members              party_members[]
+  user_cosmetic_unlocks      user_cosmetic_unlocks[]
+  user_sprite_customizations user_sprite_customizations?
 
   @@index([email])
   @@index([username])
-  @@map("users")
+}
+
+model victory_rewards {
+  id                 String   @id
+  party_id           String
+  monster_id         String
+  defeated_at        DateTime @default(now())
+  days_to_defeat     Int
+  total_damage_dealt Int
+  total_heals        Int
+  mvp_consistent     String?
+  mvp_supportive     String?
+  mvp_damage         String?
+  badges_awarded     Json[]   @default([])
+}
+
+model welcome_back_bonuses {
+  id                        String        @id
+  party_member_id           String
+  days_absent               Int
+  hp_restored               Int
+  bonus_check_ins_remaining Int
+  is_active                 Boolean       @default(true)
+  created_at                DateTime      @default(now())
+  expires_at                DateTime?
+  party_members             party_members @relation(fields: [party_member_id], references: [id], onDelete: Cascade)
+}
+
+enum BadgeType {
+  FIRST_MONSTER
+  THREE_MONSTERS
+  TEN_MONSTERS
+  TWENTY_MONSTERS
+  WEEK_STREAK
+  TWO_WEEK_STREAK
+  MONTH_STREAK
+  HUNDRED_DAY_STREAK
+  PERFECT_WEEK
+  PERFECT_MONTH
+  GOAL_MASTER
+  SUPPORT_HERO
+  HEALER
+  DEFENDER
+  CRITICAL_HERO
+  FOCUS_MASTER
+  HEROIC_WARRIOR
+  EARLY_BIRD
+  NIGHT_OWL
+  COMEBACK_KID
 }
 
 enum BodyType {
@@ -41,6 +303,38 @@ enum BodyType {
   AVERAGE
   MUSCULAR
   BULKY
+}
+
+enum CombatAction {
+  ATTACK
+  DEFEND
+  SUPPORT
+  HEROIC_STRIKE
+}
+
+enum CosmeticCategory {
+  HAIR
+  CLOTHING
+  ACCESSORY
+  WEAPON
+  COLOR_PALETTE
+}
+
+enum FacialHair {
+  NONE
+  STUBBLE
+  BEARD
+  GOATEE
+  MUSTACHE
+}
+
+enum GoalType {
+  WEIGHT
+  CARDIO
+  STRENGTH
+  PROTEIN
+  SLEEP
+  CUSTOM
 }
 
 enum HairStyle {
@@ -53,12 +347,15 @@ enum HairStyle {
   AFRO
 }
 
-enum FacialHair {
-  NONE
-  STUBBLE
-  BEARD
-  GOATEE
-  MUSTACHE
+enum HealingType {
+  QUICK
+  DEEP
+}
+
+enum MonsterType {
+  TANK
+  BALANCED
+  GLASS_CANNON
 }
 
 enum Outfit {
@@ -70,187 +367,6 @@ enum Outfit {
   KNIGHT
 }
 
-model CharacterAppearance {
-  id             String      @id @default(uuid())
-  userId         String      @unique @map("user_id")
-  bodyType       BodyType    @default(AVERAGE) @map("body_type")
-  skinColor      String      @default("#fbbf24") @map("skin_color")
-  hairStyle      HairStyle   @default(SHORT) @map("hair_style")
-  hairColor      String      @default("#92400e") @map("hair_color")
-  facialHair     FacialHair  @default(NONE) @map("facial_hair")
-  outfit         Outfit      @default(CASUAL) @map("outfit")
-  outfitColor    String      @default("#3b82f6") @map("outfit_color")
-  accessoryColor String?     @default("#9ca3af") @map("accessory_color")
-  createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime    @updatedAt @map("updated_at")
-
-  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("character_appearances")
-}
-
-model Party {
-  id                 String   @id @default(uuid())
-  name               String
-  inviteCode         String   @unique @map("invite_code")
-  checkInStartHour   Int      @default(18) @map("check_in_start_hour")
-  checkInEndHour     Int      @default(24) @map("check_in_end_hour")
-  morningReportHour  Int      @default(6) @map("morning_report_hour")
-  activeMonsterId    String?  @map("active_monster_id")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
-
-  members            PartyMember[]
-  partyMonsters      PartyMonster[]
-  checkIns           CheckIn[]
-
-  @@index([inviteCode])
-  @@map("parties")
-}
-
-model PartyMember {
-  id             String   @id @default(uuid())
-  partyId        String   @map("party_id")
-  userId         String   @map("user_id")
-  currentHp      Int      @default(100) @map("current_hp")
-  maxHp          Int      @default(100) @map("max_hp")
-  currentDefense Int      @default(0) @map("current_defense")
-  currentStreak  Int      @default(0) @map("current_streak")
-  focusPoints    Int      @default(0) @map("focus_points")
-  joinedAt       DateTime @default(now()) @map("joined_at")
-
-  party                  Party              @relation(fields: [partyId], references: [id], onDelete: Cascade)
-  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  checkIns               CheckIn[]
-  encouragementsReceived Encouragement[]
-  healingActionsReceived HealingAction[]    @relation("HealingTo")
-  healingActionsSent     HealingAction[]    @relation("HealingFromMember")
-  welcomeBackBonuses     WelcomeBackBonus[]
-
-  @@unique([partyId, userId])
-  @@index([partyId])
-  @@index([userId])
-  @@map("party_members")
-}
-
-enum GoalType {
-  WEIGHT
-  CARDIO
-  STRENGTH
-  PROTEIN
-  SLEEP
-  CUSTOM
-}
-
-model Goal {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  goalType        GoalType @map("goal_type")
-  name            String
-  targetValue     Float?   @map("target_value")
-  targetUnit      String?  @map("target_unit")
-  flexPercentage  Int      @default(10) @map("flex_percentage")
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  goalCheckIns    GoalCheckIn[]
-
-  @@map("goals")
-}
-
-enum CombatAction {
-  ATTACK
-  DEFEND
-  SUPPORT
-  HEROIC_STRIKE
-}
-
-model CheckIn {
-  id               String        @id @default(uuid())
-  partyMemberId    String        @map("party_member_id")
-  partyId          String        @map("party_id")
-  checkInDate      DateTime      @map("check_in_date") @db.Date
-  goalsMet         Int           @default(0) @map("goals_met")
-  isRestDay        Boolean       @default(false) @map("is_rest_day")
-  attackRoll       Int           @map("attack_roll")
-  attackBonus      Int           @map("attack_bonus")
-  damageDealt      Int           @map("damage_dealt")
-  wasHitByMonster  Boolean       @default(false) @map("was_hit_by_monster")
-  damageTaken      Int           @default(0) @map("damage_taken")
-  combatAction     CombatAction  @default(ATTACK) @map("combat_action")
-  focusEarned      Int           @default(0) @map("focus_earned")
-  createdAt        DateTime      @default(now()) @map("created_at")
-
-  partyMember      PartyMember      @relation(fields: [partyMemberId], references: [id], onDelete: Cascade)
-  party            Party            @relation(fields: [partyId], references: [id], onDelete: Cascade)
-  goalCheckIns     GoalCheckIn[]
-  encouragements   Encouragement[]
-
-  @@unique([partyMemberId, checkInDate])
-  @@index([checkInDate])
-  @@index([partyId])
-  @@index([partyId, checkInDate])
-  @@map("check_ins")
-}
-
-model GoalCheckIn {
-  id           String   @id @default(uuid())
-  checkInId    String   @map("check_in_id")
-  goalId       String   @map("goal_id")
-  actualValue  Float?   @map("actual_value")
-  targetValue  Float?   @map("target_value")
-  wasMet       Boolean  @map("was_met")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  checkIn      CheckIn  @relation(fields: [checkInId], references: [id], onDelete: Cascade)
-  goal         Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-
-  @@map("goal_check_ins")
-}
-
-enum MonsterType {
-  TANK
-  BALANCED
-  GLASS_CANNON
-}
-
-model Monster {
-  id                  String      @id @default(uuid())
-  name                String
-  description         String      @db.Text
-  monsterType         MonsterType @map("monster_type")
-  maxHp               Int         @map("max_hp")
-  currentHp           Int         @map("current_hp")
-  armorClass          Int         @map("armor_class")
-  baseDamage          Int[]       @map("base_damage")
-  counterattackChance Int         @map("counterattack_chance")
-  isDefeated          Boolean     @default(false) @map("is_defeated")
-  createdAt           DateTime    @default(now()) @map("created_at")
-  defeatedAt          DateTime?   @map("defeated_at")
-
-  partyMonsters       PartyMonster[]
-
-  @@index([isDefeated])
-  @@map("monsters")
-}
-
-model PartyMonster {
-  id         String   @id @default(uuid())
-  partyId    String   @map("party_id")
-  monsterId  String   @map("monster_id")
-  isActive   Boolean  @default(false) @map("is_active")
-  votes      Int      @default(0)
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  party      Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
-  monster    Monster  @relation(fields: [monsterId], references: [id], onDelete: Cascade)
-
-  @@index([partyId, isActive])
-  @@map("party_monsters")
-}
-
 enum ReactionType {
   MUSCLE
   FIRE
@@ -258,184 +374,10 @@ enum ReactionType {
   CLAP
 }
 
-model Encouragement {
-  id              String       @id @default(uuid())
-  fromUserId      String       @map("from_user_id")
-  toPartyMemberId String       @map("to_party_member_id")
-  checkInId       String?      @map("check_in_id")
-  reactionType    ReactionType @map("reaction_type")
-  message         String?      @db.Text
-  createdAt       DateTime     @default(now()) @map("created_at")
-
-  fromUser        User         @relation(fields: [fromUserId], references: [id], onDelete: Cascade)
-  toPartyMember   PartyMember  @relation(fields: [toPartyMemberId], references: [id], onDelete: Cascade)
-  checkIn         CheckIn?     @relation(fields: [checkInId], references: [id], onDelete: Cascade)
-
-  @@map("encouragements")
-}
-
-enum HealingType {
-  QUICK
-  DEEP
-}
-
-model HealingAction {
-  id                 String      @id @default(uuid())
-  fromPartyMemberId  String      @map("from_party_member_id")
-  toPartyMemberId    String      @map("to_party_member_id")
-  healingType        HealingType @map("healing_type")
-  hpRestored         Int         @map("hp_restored")
-  actionDate         DateTime    @map("action_date") @db.Date
-  createdAt          DateTime    @default(now()) @map("created_at")
-
-  fromPartyMember    PartyMember @relation("HealingFromMember", fields: [fromPartyMemberId], references: [id], onDelete: Cascade)
-  toPartyMember      PartyMember @relation("HealingTo", fields: [toPartyMemberId], references: [id], onDelete: Cascade)
-
-  @@map("healing_actions")
-}
-
-model WelcomeBackBonus {
-  id                      String      @id @default(uuid())
-  partyMemberId           String      @map("party_member_id")
-  daysAbsent              Int         @map("days_absent")
-  hpRestored              Int         @map("hp_restored")
-  bonusCheckInsRemaining  Int         @map("bonus_check_ins_remaining")
-  isActive                Boolean     @default(true) @map("is_active")
-  createdAt               DateTime    @default(now()) @map("created_at")
-  expiresAt               DateTime?   @map("expires_at")
-
-  partyMember             PartyMember @relation(fields: [partyMemberId], references: [id], onDelete: Cascade)
-
-  @@map("welcome_back_bonuses")
-}
-
-// Cosmetic unlock system for sprite-based characters
-enum CosmeticCategory {
-  HAIR
-  CLOTHING
-  ACCESSORY
-  WEAPON
-  COLOR_PALETTE
-}
-
 enum UnlockConditionType {
-  CHECK_IN_COUNT      // Unlock after X check-ins
-  STREAK_DAYS         // Unlock after X day streak
-  MONSTERS_DEFEATED   // Unlock after defeating X monsters
-  FOCUS_POINTS        // Unlock after earning X focus points
-  STARTER_ITEM        // Available from the start
-}
-
-model CosmeticItem {
-  id                   String                @id @default(uuid())
-  name                 String
-  description          String?               @db.Text
-  category             CosmeticCategory
-  spriteSheetPath      String                @map("sprite_sheet_path") // Path to sprite PNG
-  unlockConditionType  UnlockConditionType   @map("unlock_condition_type")
-  unlockThreshold      Int                   @default(0) @map("unlock_threshold") // Amount needed
-  isStarterItem        Boolean               @default(false) @map("is_starter_item")
-  sortOrder            Int                   @default(0) @map("sort_order") // Display order
-  createdAt            DateTime              @default(now()) @map("created_at")
-
-  userUnlocks          UserCosmeticUnlock[]
-
-  @@map("cosmetic_items")
-}
-
-model UserCosmeticUnlock {
-  id              String        @id @default(uuid())
-  userId          String        @map("user_id")
-  cosmeticItemId  String        @map("cosmetic_item_id")
-  unlockedAt      DateTime      @default(now()) @map("unlocked_at")
-
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cosmeticItem    CosmeticItem  @relation(fields: [cosmeticItemId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, cosmeticItemId])
-  @@map("user_cosmetic_unlocks")
-}
-
-model UserSpriteCustomization {
-  id                  String    @id @default(uuid())
-  userId              String    @unique @map("user_id")
-  baseSpritePath      String    @map("base_sprite_path") // Required base body
-  hairSpritePath      String?   @map("hair_sprite_path")
-  clothingSpritePath  String?   @map("clothing_sprite_path")
-  accessorySpritePath String?   @map("accessory_sprite_path")
-  weaponSpritePath    String?   @map("weapon_sprite_path")
-  hairTintColor       String?   @map("hair_tint_color") // Hex color for tinting
-  clothingTintColor   String?   @map("clothing_tint_color")
-  accessoryTintColor  String?   @map("accessory_tint_color")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
-
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_sprite_customizations")
-}
-
-// Badge/Achievement system for progression and retention
-enum BadgeType {
-  // Monster Defeat Badges
-  FIRST_MONSTER       // Defeat your first monster
-  THREE_MONSTERS      // Defeat 3 monsters
-  TEN_MONSTERS        // Defeat 10 monsters
-  TWENTY_MONSTERS     // Defeat 20 monsters
-
-  // Streak Badges
-  WEEK_STREAK         // 7-day check-in streak
-  TWO_WEEK_STREAK     // 14-day streak
-  MONTH_STREAK        // 30-day streak
-  HUNDRED_DAY_STREAK  // 100-day streak
-
-  // Goal Achievement Badges
-  PERFECT_WEEK        // 7 days all goals met
-  PERFECT_MONTH       // 30 days all goals met
-  GOAL_MASTER         // 100 total goals met
-
-  // Team Player Badges
-  SUPPORT_HERO        // Give 50 encouragements
-  HEALER              // Heal teammates 25 times
-  DEFENDER            // Use DEFEND action 20 times
-
-  // Combat Badges
-  CRITICAL_HERO       // Roll natural 20 ten times
-  FOCUS_MASTER        // Earn 50 focus points total
-  HEROIC_WARRIOR      // Use HEROIC_STRIKE 10 times
-
-  // Consistency Badges
-  EARLY_BIRD          // Check in before 8 AM 10 times
-  NIGHT_OWL           // Check in after 10 PM 10 times
-  COMEBACK_KID        // Return after 7+ day absence and check in 5 times
-}
-
-model Badge {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  badgeType   BadgeType @map("badge_type")
-  earnedAt    DateTime  @default(now()) @map("earned_at")
-  metadata    Json?     // Extra data (e.g., streak count, monster name)
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, badgeType]) // Each user can only earn each badge once
-  @@index([userId])
-  @@map("badges")
-}
-
-model VictoryReward {
-  id                String   @id @default(uuid())
-  partyId           String   @map("party_id")
-  monsterId         String   @map("monster_id")
-  defeatedAt        DateTime @default(now()) @map("defeated_at")
-  daysToDefeat      Int      @map("days_to_defeat")
-  totalDamageDealt  Int      @map("total_damage_dealt")
-  totalHeals        Int      @map("total_heals")
-  mvpConsistent     String?  @map("mvp_consistent") // User ID
-  mvpSupportive     String?  @map("mvp_supportive") // User ID
-  mvpDamage         String?  @map("mvp_damage") // User ID
-  badgesAwarded     Json[]   @default([]) @map("badges_awarded") // Array of {userId, badgeType}
-
-  @@map("victory_rewards")
+  CHECK_IN_COUNT
+  STREAK_DAYS
+  MONSTERS_DEFEATED
+  FOCUS_POINTS
+  STARTER_ITEM
 }

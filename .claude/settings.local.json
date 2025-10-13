@@ -46,7 +46,13 @@
       "Bash(tasklist)",
       "Bash(move SPRINT-PLAN.md archive )",
       "Bash(move SPRINT-PLAN-V2.md archive )",
-      "Bash(move TEST-REPORT-SPRINT-PLANNING.md archive)"
+      "Bash(move TEST-REPORT-SPRINT-PLANNING.md archive)",
+      "Bash(npx vercel:*)",
+      "Bash(set DATABASE_URL=postgresql://neondb_owner:npg_gcC2OGJIhFx1@ep-round-frog-ad7lluez-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require)",
+      "Bash(npm run db:seed:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git rm:*)",
+      "Bash(git filter-branch:*)"
     ],
     "deny": [],
     "ask": []
