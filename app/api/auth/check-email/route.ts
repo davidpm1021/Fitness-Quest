@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if email exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email: email.toLowerCase() },
       select: { id: true },
     });
