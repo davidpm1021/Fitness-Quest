@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import PageLayout from "@/components/layout/PageLayout";
@@ -26,7 +26,7 @@ interface Badge {
   icon: string;
 }
 
-export default function VictoryPage() {
+function VictoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading, token } = useAuth();
@@ -297,5 +297,19 @@ export default function VictoryPage() {
         />
       )}
     </PageLayout>
+  );
+}
+
+export default function VictoryPage() {
+  return (
+    <Suspense fallback={
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <p className="text-gray-600 dark:text-gray-400">Loading victory stats...</p>
+        </div>
+      </PageLayout>
+    }>
+      <VictoryContent />
+    </Suspense>
   );
 }
