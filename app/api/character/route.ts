@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
   const { user } = authResult;
 
   try {
-    const appearance = await prisma.characterAppearance.findUnique({
-      where: { userId: user.userId },
+    const appearance = await prisma.character_appearances.findUnique({
+      where: { user_id: user.userId },
     });
 
     return NextResponse.json({
@@ -62,28 +62,31 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Upsert character appearance
-    const appearance = await prisma.characterAppearance.upsert({
-      where: { userId: user.userId },
+    const appearance = await prisma.character_appearances.upsert({
+      where: { user_id: user.userId },
       create: {
-        userId: user.userId,
-        bodyType,
-        skinColor,
-        hairStyle,
-        hairColor,
-        facialHair,
+        id: crypto.randomUUID(),
+        user_id: user.userId,
+        body_type: bodyType,
+        skin_color: skinColor,
+        hair_style: hairStyle,
+        hair_color: hairColor,
+        facial_hair: facialHair,
         outfit,
-        outfitColor,
-        accessoryColor,
+        outfit_color: outfitColor,
+        accessory_color: accessoryColor,
+        updated_at: new Date(),
       },
       update: {
-        bodyType,
-        skinColor,
-        hairStyle,
-        hairColor,
-        facialHair,
+        body_type: bodyType,
+        skin_color: skinColor,
+        hair_style: hairStyle,
+        hair_color: hairColor,
+        facial_hair: facialHair,
         outfit,
-        outfitColor,
-        accessoryColor,
+        outfit_color: outfitColor,
+        accessory_color: accessoryColor,
+        updated_at: new Date(),
       },
     });
 
