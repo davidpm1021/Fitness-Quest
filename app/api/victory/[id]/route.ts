@@ -4,7 +4,7 @@ import { getVictoryRewardById } from '@/lib/victoryRewards';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authResult = await authenticateRequest(request);
   if (isErrorResponse(authResult)) {
@@ -12,8 +12,8 @@ export async function GET(
   }
 
   try {
-
-    const victoryId = params.id;
+    const { id } = await params;
+    const victoryId = id;
     const victoryData = await getVictoryRewardById(victoryId);
 
     if (!victoryData) {
