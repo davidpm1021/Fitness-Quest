@@ -7,7 +7,7 @@ import { ApiResponse } from '@/lib/types';
  * POST /api/check-ins/welcome-back
  * Check if user needs welcome back bonuses and apply them
  */
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
+export async function POST(request: NextRequest) {
   try {
     // Authenticate user
     const authResult = await authenticateRequest(request);
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
  * GET /api/check-ins/welcome-back
  * Check if user has active welcome back bonuses
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
+export async function GET(request: NextRequest) {
   try {
     // Authenticate user
     const authResult = await authenticateRequest(request);

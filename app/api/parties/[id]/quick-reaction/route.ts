@@ -10,7 +10,7 @@ import { ApiResponse } from '@/lib/types';
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse<ApiResponse>> {
+) {
   try {
     // Authenticate user
     const authResult = await authenticateRequest(request);

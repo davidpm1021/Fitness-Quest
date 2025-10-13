@@ -8,7 +8,7 @@ import { ApiResponse } from '@/lib/types';
  * Get aggregated statistics for user's check-ins
  * Includes streaks, totals, averages, and records
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
+export async function GET(request: NextRequest) {
   try {
     // Authenticate user
     const authResult = await authenticateRequest(request);

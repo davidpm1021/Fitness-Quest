@@ -8,7 +8,7 @@ import { ApiResponse } from '@/lib/types';
  * Get user's check-in history for the last 30 days
  * Includes goal data, damage dealt, HP changes, etc.
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
+export async function GET(request: NextRequest) {
   try {
     // Authenticate user
     const authResult = await authenticateRequest(request);
