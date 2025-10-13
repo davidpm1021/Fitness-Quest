@@ -54,9 +54,10 @@ export default function PixelPasswordInput({
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
           aria-label={showPassword ? "Hide password" : "Show password"}
+          title={showPassword ? "Hide password" : "Show password"}
         >
           <span className="text-2xl select-none">
-            {showPassword ? '👁️' : '🔒'}
+            {showPassword ? '🙈' : '👁️'}
           </span>
         </button>
       </div>

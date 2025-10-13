@@ -156,7 +156,7 @@ export default function DashboardPage() {
           {/* Hero Status Card */}
           <div className="lg:col-span-1">
             <PixelPanel variant="dialog" title="⚔️ HERO STATUS">
-              {currentMember ? (
+              {partyData && currentMember ? (
                 <div className="space-y-4">
                   <div>
                     <HPBar
@@ -185,7 +185,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
-              ) : (
+              ) : !partyData ? (
                 <div className="text-center py-6">
                   <p className="text-gray-400 font-retro mb-4">No party joined yet</p>
                   <PixelButton
@@ -195,6 +195,10 @@ export default function DashboardPage() {
                   >
                     JOIN A PARTY
                   </PixelButton>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-gray-400 font-retro mb-4">Loading hero stats...</p>
                 </div>
               )}
             </PixelPanel>
