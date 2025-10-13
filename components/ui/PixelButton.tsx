@@ -3,18 +3,20 @@ import React from 'react';
 interface PixelButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning';
   size?: 'sm' | 'md' | 'lg';
+  fullWidth?: boolean;
   children: React.ReactNode;
 }
 
 export default function PixelButton({
   variant = 'primary',
   size = 'md',
+  fullWidth = false,
   className = '',
   children,
   disabled,
   ...props
 }: PixelButtonProps) {
-  const baseClasses = 'font-bold uppercase tracking-wider transition-all duration-100 relative overflow-hidden';
+  const baseClasses = `font-bold uppercase tracking-wider transition-all duration-100 relative overflow-hidden ${fullWidth ? 'w-full' : ''}`;
 
   // Enhanced pixel art border effect with 3D look
   const pixelBorder = 'shadow-[0_0_0_3px_rgba(0,0,0,0.4),0_0_0_6px_currentColor,6px_6px_0_0_rgba(0,0,0,0.4)]';
