@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useToast } from "@/lib/context/ToastContext";
 
 interface Monster {
   id: string;
@@ -20,6 +21,7 @@ interface Monster {
 export default function MonstersPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
+  const toast = useToast();
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [activeMonster, setActiveMonster] = useState<Monster | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,10 +75,10 @@ export default function MonstersPage() {
       if (data.success) {
         router.push("/party/dashboard");
       } else {
-        alert(data.error || "Failed to activate monster");
+        toast.error(data.error || "Failed to activate monster");
       }
     } catch (err) {
-      alert("Failed to activate monster");
+      toast.error("Failed to activate monster");
     } finally {
       setActivating(null);
     }
@@ -92,6 +94,19 @@ export default function MonstersPage() {
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
+  }
+
+  function getTypeStrategy(type: string): string {
+    switch (type) {
+      case "TANK":
+        return "🛡️ FORGIVING: High HP, lower pressure. Perfect for building habits and long-term consistency. Defeats take longer but misses hurt less.";
+      case "BALANCED":
+        return "⚖️ STEADY: Balanced challenge with predictable pacing. Standard difficulty for established groups.";
+      case "GLASS_CANNON":
+        return "⚔️ FAST & RISKY: Low HP means quick victories IF you hit goals (high AC). But counterattacks hit hard. High risk, high reward!";
+      default:
+        return "";
     }
   }
 
@@ -144,8 +159,11 @@ export default function MonstersPage() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Choose Your Challenge
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Select a monster for your party to fight. Each type offers a different challenge!
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              Select a monster for your party to fight. Each type matches different motivation styles and pacing.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              💡 First person to select chooses for the whole party. Choose wisely!
             </p>
           </div>
         )}
@@ -169,9 +187,15 @@ export default function MonstersPage() {
                 </span>
               </div>
 
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
                 {monster.description}
               </p>
+
+              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                <p className="text-xs text-gray-700 dark:text-gray-300">
+                  {getTypeStrategy(monster.monsterType)}
+                </p>
+              </div>
 
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">

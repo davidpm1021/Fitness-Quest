@@ -12,14 +12,14 @@ import { ApiResponse } from "@/lib/types";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, username, displayName } = body;
+    const { email, password, displayName } = body;
 
     // Validate required fields
-    if (!email || !password || !username || !displayName) {
+    if (!email || !password || !displayName) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
-          error: "All fields are required: email, password, username, displayName",
+          error: "Email, password, and display name are required",
         },
         { status: 400 }
       );
@@ -44,17 +44,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate username format
-    if (!isValidUsername(username)) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Username must be 3-20 characters, alphanumeric and underscores only",
-        },
-        { status: 400 }
-      );
-    }
-
     // Check if email already exists
     const existingEmail = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -67,16 +56,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if username already exists
-    const existingUsername = await prisma.user.findUnique({
-      where: { username: username.toLowerCase() },
+    // Generate username from email (use email prefix before @)
+    const emailPrefix = email.split('@')[0].toLowerCase();
+    let username = emailPrefix;
+
+    // Ensure username is unique by appending numbers if needed
+    let usernameExists = await prisma.user.findUnique({
+      where: { username },
     });
 
-    if (existingUsername) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Username already taken" },
-        { status: 409 }
-      );
+    let counter = 1;
+    while (usernameExists) {
+      username = `${emailPrefix}${counter}`;
+      usernameExists = await prisma.user.findUnique({
+        where: { username },
+      });
+      counter++;
     }
 
     // Hash password
@@ -87,7 +82,7 @@ export async function POST(request: NextRequest) {
       data: {
         email: email.toLowerCase(),
         passwordHash,
-        username: username.toLowerCase(),
+        username,
         displayName,
       },
       select: {

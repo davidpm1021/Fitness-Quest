@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useToast } from "@/lib/context/ToastContext";
+import PageLayout from "@/components/layout/PageLayout";
 import CombatAnimation from "@/app/components/CombatAnimation";
+import DiceRoll from "@/components/game/DiceRoll";
+import MilestoneCelebration from "@/components/game/MilestoneCelebration";
+import WelcomeBackModal from "@/components/game/WelcomeBackModal";
+import CombatActionCard from "@/components/game/CombatActionCard";
+import PixelPanel from "@/components/ui/PixelPanel";
+import PixelButton from "@/components/ui/PixelButton";
 import { CharacterCustomization } from "@/app/components/CustomizablePixelCharacter";
 
 interface Goal {
@@ -40,6 +48,7 @@ interface Monster {
 export default function CheckInPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
+  const toast = useToast();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goalValues, setGoalValues] = useState<Record<string, { value: string; isRestDay: boolean }>>({});
   const [loading, setLoading] = useState(true);
@@ -47,10 +56,25 @@ export default function CheckInPage() {
   const [error, setError] = useState("");
   const [attackResult, setAttackResult] = useState<AttackResult | null>(null);
   const [monster, setMonster] = useState<Monster | null>(null);
+  const [showDiceRoll, setShowDiceRoll] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestoneCrossed, setMilestoneCrossed] = useState<75 | 50 | 25 | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [characterCustomization, setCharacterCustomization] = useState<CharacterCustomization | null>(null);
+  const [revealStep, setRevealStep] = useState(0); // For sequential reveals
+  const [partyMembers, setPartyMembers] = useState<any[]>([]);
+  const [sendingEncouragement, setSendingEncouragement] = useState<string | null>(null);
+  const [showWelcomeBack, setShowWelcomeBack] = useState(false);
+  const [welcomeBackData, setWelcomeBackData] = useState<{
+    daysAbsent: number;
+    hpRestored: number;
+    bonuses: { reducedCounterattack: boolean; catchUpDamage: number; daysRemaining: number };
+  } | null>(null);
+  const [combatAction, setCombatAction] = useState<"ATTACK" | "DEFEND" | "SUPPORT" | "HEROIC_STRIKE">("ATTACK");
+  const [focusPoints, setFocusPoints] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -60,10 +84,51 @@ export default function CheckInPage() {
 
   useEffect(() => {
     if (user && token) {
+      checkWelcomeBack();
       fetchGoals();
       fetchCharacterAppearance();
+      fetchPartyMemberData();
     }
   }, [user, token]);
+
+  // Sequential reveal animation for results screen
+  useEffect(() => {
+    if (showResult && revealStep < 5) {
+      const timer = setTimeout(() => {
+        setRevealStep((prev) => prev + 1);
+      }, 600); // Show each section after 600ms
+      return () => clearTimeout(timer);
+    }
+  }, [showResult, revealStep]);
+
+  // Fetch party members when results are shown
+  useEffect(() => {
+    if (showResult && token) {
+      fetchPartyMembers();
+    }
+  }, [showResult, token]);
+
+  async function checkWelcomeBack() {
+    try {
+      const response = await fetch('/api/check-ins/welcome-back', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success && data.data.needsWelcomeBack) {
+        setWelcomeBackData({
+          daysAbsent: data.data.daysAbsent,
+          hpRestored: data.data.hpRestored,
+          bonuses: data.data.bonuses,
+        });
+        setShowWelcomeBack(true);
+      }
+    } catch (err) {
+      console.error('Error checking welcome back:', err);
+    }
+  }
 
   async function fetchGoals() {
     try {
@@ -106,6 +171,78 @@ export default function CheckInPage() {
     }
   }
 
+  async function fetchPartyMemberData() {
+    try {
+      const response = await fetch('/api/parties/my-party', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success && data.data.party) {
+        // Find current user's party member data
+        const myMember = data.data.party.members.find(
+          (member: any) => member.user.id === user?.id
+        );
+        if (myMember) {
+          setFocusPoints(myMember.focusPoints || 0);
+          setCurrentStreak(myMember.currentStreak || 0);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching party member data:', err);
+    }
+  }
+
+  async function fetchPartyMembers() {
+    try {
+      const response = await fetch('/api/parties/my-party', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success && data.data.party) {
+        // Filter out current user
+        const otherMembers = data.data.party.members.filter(
+          (member: any) => member.user.id !== user?.id
+        );
+        setPartyMembers(otherMembers);
+      }
+    } catch (err) {
+      console.error('Error fetching party members:', err);
+    }
+  }
+
+  async function sendEncouragement(memberId: string) {
+    setSendingEncouragement(memberId);
+    try {
+      const response = await fetch('/api/encouragements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ targetMemberId: memberId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Encouragement sent! +5 defense to your teammate!');
+        // Refresh party members to update encouragement status
+        fetchPartyMembers();
+      } else {
+        toast.error(data.error || 'Failed to send encouragement');
+      }
+    } catch (err) {
+      toast.error('Failed to send encouragement');
+    } finally {
+      setSendingEncouragement(null);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -128,17 +265,30 @@ export default function CheckInPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ goalCheckIns }),
+        body: JSON.stringify({ goalCheckIns, combatAction }),
       });
 
       const data = await response.json();
 
       if (data.success) {
+        // Check if monster was defeated - redirect to victory screen
+        if (data.data.monsterDefeated && data.data.victoryRewardId) {
+          router.push(`/victory?id=${data.data.victoryRewardId}`);
+          return;
+        }
+
         setAttackResult(data.data.attackResult);
         setMonster(data.data.monster);
-        setShowAnimation(true); // Show animation first
+        setMilestoneCrossed(data.data.milestoneCrossed || null);
+        setShowDiceRoll(true); // Show dice roll first
       } else {
-        setError(data.error || "Failed to submit check-in");
+        // Check if this is a duplicate check-in error
+        if (data.data?.alreadyCheckedIn) {
+          setError(data.error || "You've already checked in today!");
+          // Could show today's results here in the future
+        } else {
+          setError(data.error || "Failed to submit check-in");
+        }
       }
     } catch (err) {
       setError("Failed to submit check-in");
@@ -179,15 +329,19 @@ export default function CheckInPage() {
       if (data.success) {
         // Reset the UI back to check-in form
         setShowResult(false);
+        setShowDiceRoll(false);
         setShowAnimation(false);
+        setShowMilestone(false);
+        setMilestoneCrossed(null);
         setAttackResult(null);
         setMonster(null);
         setError('');
+        toast.info('Check-in has been reset. You can try again!');
       } else {
-        alert('Failed to reset: ' + data.error);
+        toast.error('Failed to reset: ' + data.error);
       }
     } catch (err) {
-      alert('Failed to reset check-in');
+      toast.error('Failed to reset check-in');
     } finally {
       setResetting(false);
     }
@@ -205,14 +359,32 @@ export default function CheckInPage() {
     return null;
   }
 
-  // Show combat animation first
-  if (showAnimation && attackResult && monster) {
+  // Show dice roll first
+  if (showDiceRoll && attackResult) {
+    return (
+      <PageLayout title="⚔️ DAILY CHECK-IN" showBackButton={false}>
+        <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+          <DiceRoll
+            onComplete={() => {
+              setShowDiceRoll(false);
+              setShowAnimation(true);
+            }}
+            autoRoll={true}
+            finalResult={attackResult.roll}
+          />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Show combat animation after dice roll
+  if (showAnimation && attackResult) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="max-w-3xl w-full">
           <CombatAnimation
             playerName={user.displayName || user.username}
-            monsterName={monster.name}
+            monsterName={monster?.name || "Training Dummy"}
             damage={attackResult.totalDamage}
             hit={attackResult.hit}
             counterattack={
@@ -226,7 +398,13 @@ export default function CheckInPage() {
             characterCustomization={characterCustomization}
             onComplete={() => {
               setShowAnimation(false);
-              setShowResult(true);
+              // Check if we crossed a milestone
+              if (milestoneCrossed) {
+                setShowMilestone(true);
+              } else {
+                setRevealStep(0); // Reset reveal step
+                setShowResult(true);
+              }
             }}
           />
         </div>
@@ -234,18 +412,37 @@ export default function CheckInPage() {
     );
   }
 
+  // Show milestone celebration after combat animation
+  if (showMilestone && milestoneCrossed) {
+    return (
+      <PageLayout title="⚔️ MILESTONE!" showBackButton={false}>
+        <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+          <MilestoneCelebration
+            milestone={milestoneCrossed}
+            onComplete={() => {
+              setShowMilestone(false);
+              setRevealStep(0); // Reset reveal step
+              setShowResult(true);
+            }}
+            autoShow={true}
+          />
+        </div>
+      </PageLayout>
+    );
+  }
+
   if (showResult && attackResult) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <PageLayout title="⚔️ BATTLE RESULTS" showBackButton={false}>
+        <main className="max-w-3xl mx-auto py-6 px-4">
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4">
+            <div className="text-8xl mb-4 animate-bounce">
               {attackResult.hit ? "⚔️" : "🛡️"}
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="font-pixel text-5xl text-white mb-4 drop-shadow-[4px_4px_0_rgba(0,0,0,0.8)]">
               {attackResult.hit ? "HIT!" : "MISS!"}
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">
+            <p className="font-retro text-2xl text-yellow-300">
               {attackResult.hit
                 ? `You dealt ${attackResult.totalDamage} damage!`
                 : "Better luck tomorrow!"}
@@ -253,157 +450,163 @@ export default function CheckInPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Attack Roll
-              </h3>
-              <div className="text-center">
-                <div className="text-5xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
-                  {attackResult.roll}
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">d20 Roll</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Bonuses
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    +{attackResult.bonuses.goalBonus}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Goals Met</p>
-                </div>
-                {attackResult.bonuses.streakBonus > 0 && (
+            {/* Step 1: Attack Roll */}
+            {revealStep >= 1 && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="menu" title="🎲 ATTACK ROLL">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      +{attackResult.bonuses.streakBonus}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Streak</p>
+                    <div className="text-6xl font-pixel text-blue-400 mb-2 drop-shadow-[3px_3px_0_rgba(0,0,0,0.8)]">
+                      {attackResult.roll}
+                    </div>
+                    <p className="font-retro text-lg text-gray-300">d20 Roll</p>
                   </div>
-                )}
-                {attackResult.bonuses.teamBonus > 0 && (
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      +{attackResult.bonuses.teamBonus}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Teamwork</p>
-                  </div>
-                )}
-                {attackResult.bonuses.underdogBonus > 0 && (
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                      +{attackResult.bonuses.underdogBonus}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Underdog</p>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Bonus</p>
-                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                  +{attackResult.bonuses.totalBonus}
-                </p>
-              </div>
-            </div>
-
-            {attackResult.hit && (
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Damage Dealt
-                </h3>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-red-600 dark:text-red-400 mb-2">
-                    {attackResult.totalDamage}
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Base {attackResult.baseDamage} + Bonuses {attackResult.bonuses.totalBonus}
-                  </p>
-                </div>
+                </PixelPanel>
               </div>
             )}
 
-            {attackResult.wasCounterattacked && (
-              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6 border-2 border-red-200 dark:border-red-800">
-                <h3 className="text-lg font-semibold text-red-900 dark:text-red-200 mb-4 flex items-center justify-center">
-                  <span className="mr-2">⚠️</span>
-                  Counterattack!
-                </h3>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-red-600 dark:text-red-400 mb-2">
-                    -{attackResult.counterattackDamage}
+            {/* Step 2: Bonuses */}
+            {revealStep >= 2 && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="menu" title="⚡ BONUSES">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <p className="text-3xl font-pixel text-green-400">
+                        +{attackResult.bonuses.goalBonus}
+                      </p>
+                      <p className="font-retro text-sm text-gray-400">Goals Met</p>
+                    </div>
+                    {attackResult.bonuses.streakBonus > 0 && (
+                      <div className="text-center">
+                        <p className="text-3xl font-pixel text-blue-400">
+                          +{attackResult.bonuses.streakBonus}
+                        </p>
+                        <p className="font-retro text-sm text-gray-400">Streak</p>
+                      </div>
+                    )}
+                    {attackResult.bonuses.teamBonus > 0 && (
+                      <div className="text-center">
+                        <p className="text-3xl font-pixel text-purple-400">
+                          +{attackResult.bonuses.teamBonus}
+                        </p>
+                        <p className="font-retro text-sm text-gray-400">Teamwork</p>
+                      </div>
+                    )}
+                    {attackResult.bonuses.underdogBonus > 0 && (
+                      <div className="text-center">
+                        <p className="text-3xl font-pixel text-red-400">
+                          +{attackResult.bonuses.underdogBonus}
+                        </p>
+                        <p className="font-retro text-sm text-gray-400">Underdog</p>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-red-800 dark:text-red-300">
-                    The monster struck back and damaged your HP!
+                  <div className="mt-6 pt-6 border-t-4 border-gray-700 text-center">
+                    <p className="font-retro text-sm text-gray-400 mb-2">Total Bonus</p>
+                    <p className="text-4xl font-pixel text-yellow-400 drop-shadow-[3px_3px_0_rgba(0,0,0,0.8)]">
+                      +{attackResult.bonuses.totalBonus}
+                    </p>
+                  </div>
+                </PixelPanel>
+              </div>
+            )}
+
+            {/* Step 3: Damage Dealt (if hit) */}
+            {revealStep >= 3 && attackResult.hit && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="success" title="💥 DAMAGE DEALT">
+                  <div className="text-center">
+                    <div className="text-6xl font-pixel text-red-400 mb-3 drop-shadow-[3px_3px_0_rgba(0,0,0,0.8)]">
+                      {attackResult.totalDamage}
+                    </div>
+                    <p className="font-retro text-lg text-gray-300">
+                      Base {attackResult.baseDamage} + Bonuses {attackResult.bonuses.totalBonus}
+                    </p>
+                  </div>
+                </PixelPanel>
+              </div>
+            )}
+
+            {/* Step 4: Counterattack (if happened) */}
+            {revealStep >= 4 && attackResult.wasCounterattacked && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="warning" title="⚠️ COUNTERATTACK!">
+                  <div className="text-center">
+                    <div className="text-5xl font-pixel text-red-400 mb-3 animate-pulse">
+                      -{attackResult.counterattackDamage}
+                    </div>
+                    <p className="font-retro text-lg text-red-300">
+                      The monster struck back and damaged your HP!
+                    </p>
+                  </div>
+                </PixelPanel>
+              </div>
+            )}
+
+            {/* Step 4.5: Encourage Teammates */}
+            {revealStep >= 4 && partyMembers.length > 0 && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="menu" title="💪 ENCOURAGE YOUR PARTY">
+                  <p className="font-retro text-sm text-gray-300 mb-4 text-center">
+                    Send encouragement to boost your teammates' defense by +5!
                   </p>
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {partyMembers.map((member: any) => (
+                      <PixelButton
+                        key={member.id}
+                        onClick={() => sendEncouragement(member.id)}
+                        disabled={sendingEncouragement !== null}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        {sendingEncouragement === member.id
+                          ? '⏳ SENDING...'
+                          : `👍 ${member.user.displayName}`}
+                      </PixelButton>
+                    ))}
+                  </div>
+                </PixelPanel>
               </div>
             )}
           </div>
 
-          <div className="mt-8 space-y-3">
-            <button
-              onClick={handleResetCheckIn}
-              disabled={resetting}
-              className="w-full py-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {resetting ? '🔄 Resetting...' : '🎮 Try Again (Reset Check-In)'}
-            </button>
-            <button
-              onClick={() => router.push("/party/dashboard")}
-              className="w-full py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
-            >
-              Back to Party Dashboard
-            </button>
-            <button
-              onClick={() => {
-                setShowResult(false);
-                setAttackResult(null);
-                router.push("/party/dashboard");
-              }}
-              className="w-full py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            >
-              View Battle Feed
-            </button>
-          </div>
-        </div>
-      </div>
+          {/* Step 5: Action Buttons */}
+          {revealStep >= 5 && (
+            <div className="mt-8 space-y-4 animate-fade-in">
+              <PixelButton
+                onClick={handleResetCheckIn}
+                disabled={resetting}
+                variant="warning"
+                size="lg"
+                fullWidth
+              >
+                {resetting ? '🔄 RESETTING...' : '🎮 TRY AGAIN'}
+              </PixelButton>
+              <PixelButton
+                onClick={() => router.push("/party/dashboard")}
+                variant="primary"
+                size="lg"
+                fullWidth
+              >
+                🏰 BACK TO DASHBOARD
+              </PixelButton>
+            </div>
+          )}
+        </main>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Daily Check-In
-              </h1>
-            </div>
-            <div className="flex items-center">
-              <button
-                onClick={() => router.push("/party/dashboard")}
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <PageLayout title="⚔️ DAILY CHECK-IN" showBackButton={true} backPath="/party/dashboard">
       <main className="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            How did you do today?
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.3)] border-4 border-gray-700 p-6">
+          <h2 className="text-2xl font-pixel text-white mb-6">
+            ⚔️ How did you do today?
           </h2>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-md">
-              <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+            <div className="mb-4 p-4 bg-red-900/50 border-4 border-red-500 rounded-lg">
+              <p className="font-bold text-red-200 text-center">⚠️ {error}</p>
             </div>
           )}
 
@@ -474,6 +677,85 @@ export default function CheckInPage() {
                 </div>
               ))}
 
+              {/* Combat Action Selection */}
+              <div className="my-8 pt-6 border-t-4 border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-pixel text-xl text-white">
+                    ⚔️ CHOOSE YOUR ACTION
+                  </h3>
+                  <div className="font-pixel text-sm text-yellow-400">
+                    ⭐ {focusPoints} Focus
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <CombatActionCard
+                    action="ATTACK"
+                    selected={combatAction === "ATTACK"}
+                    onClick={() => setCombatAction("ATTACK")}
+                    icon="⚔️"
+                    title="ATTACK"
+                    description="Deal standard damage and build focus."
+                    details={[
+                      "Base damage: 3-5",
+                      "Apply all bonuses",
+                      "Gain +1 Focus",
+                    ]}
+                  />
+
+                  <CombatActionCard
+                    action="DEFEND"
+                    selected={combatAction === "DEFEND"}
+                    onClick={() => setCombatAction("DEFEND")}
+                    icon="🛡️"
+                    title="DEFEND"
+                    description="Protect yourself and boost team defense."
+                    details={[
+                      "Reduce damage by 50%",
+                      "-50% counterattack chance",
+                      "+5 team defense",
+                    ]}
+                  />
+
+                  <CombatActionCard
+                    action="SUPPORT"
+                    selected={combatAction === "SUPPORT"}
+                    onClick={() => setCombatAction("SUPPORT")}
+                    icon="💚"
+                    title="SUPPORT"
+                    description="Heal a teammate but deal reduced damage."
+                    details={[
+                      "Heal teammate +10 HP",
+                      "Deal 50% damage",
+                      "Gain +1 Focus",
+                    ]}
+                  />
+
+                  <CombatActionCard
+                    action="HEROIC_STRIKE"
+                    selected={combatAction === "HEROIC_STRIKE"}
+                    onClick={() => setCombatAction("HEROIC_STRIKE")}
+                    icon="⚡"
+                    title="HEROIC STRIKE"
+                    description="Guaranteed critical hit!"
+                    details={[
+                      "Automatic hit",
+                      "Double damage",
+                      "No focus gained",
+                    ]}
+                    disabled={currentStreak < 7}
+                    focusRequired={3}
+                    currentFocus={focusPoints}
+                  />
+                </div>
+
+                {currentStreak < 7 && (
+                  <p className="mt-4 text-center font-retro text-sm text-gray-400">
+                    🔒 Heroic Strike unlocks after 7-day streak
+                  </p>
+                )}
+              </div>
+
               <button
                 type="submit"
                 disabled={submitting}
@@ -485,6 +767,16 @@ export default function CheckInPage() {
           )}
         </div>
       </main>
-    </div>
+
+      {/* Welcome Back Modal */}
+      {showWelcomeBack && welcomeBackData && (
+        <WelcomeBackModal
+          daysAbsent={welcomeBackData.daysAbsent}
+          hpRestored={welcomeBackData.hpRestored}
+          bonuses={welcomeBackData.bonuses}
+          onClose={() => setShowWelcomeBack(false)}
+        />
+      )}
+    </PageLayout>
   );
 }

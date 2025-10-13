@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import PixelCharacter from './PixelCharacter';
 import DetailedPixelCharacter, { CharacterCustomization } from './DetailedPixelCharacter';
+import FloatingDamageNumber from '@/components/game/FloatingDamageNumber';
 
 interface CombatAnimationProps {
   playerName: string;
@@ -221,10 +222,12 @@ export default function CombatAnimation({
           <div className="text-white text-lg font-bold bg-black/70 px-4 py-2 rounded-lg border-2 border-blue-400">
             {playerName}
           </div>
-          {showCounterDamage && (
-            <div className="absolute top-20 animate-float-up-big text-6xl font-black text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
-              -{counterattack!.damage}
-            </div>
+          {showCounterDamage && counterattack && (
+            <FloatingDamageNumber
+              damage={counterattack.damage}
+              isCritical={false}
+              position={{ x: 25, y: 30 }}
+            />
           )}
         </div>
 
@@ -253,9 +256,16 @@ export default function CombatAnimation({
           <div className="text-white text-lg font-bold bg-black/70 px-4 py-2 rounded-lg border-2 border-red-400">
             {monsterName}
           </div>
-          {showDamage && (
-            <div className="absolute top-20 animate-float-up-big text-7xl font-black text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.9)]">
-              {hit ? `-${damage}` : 'MISS!'}
+          {showDamage && hit && (
+            <FloatingDamageNumber
+              damage={damage}
+              isCritical={damage >= 15}
+              position={{ x: 75, y: 30 }}
+            />
+          )}
+          {showDamage && !hit && (
+            <div className="absolute top-20 animate-float-up-big text-5xl font-black text-gray-400 drop-shadow-[0_0_10px_rgba(156,163,175,0.8)]">
+              MISS!
             </div>
           )}
         </div>

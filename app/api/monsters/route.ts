@@ -45,15 +45,42 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get all undefeated monsters
-    const availableMonsters = await prisma.monster.findMany({
+    // Get one monster of each type (TANK, BALANCED, GLASS_CANNON)
+    // This gives players 3 strategic choices
+    const tankMonster = await prisma.monster.findFirst({
       where: {
         isDefeated: false,
+        monsterType: "TANK",
       },
       orderBy: {
         createdAt: "asc",
       },
     });
+
+    const balancedMonster = await prisma.monster.findFirst({
+      where: {
+        isDefeated: false,
+        monsterType: "BALANCED",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    const glassCannon = await prisma.monster.findFirst({
+      where: {
+        isDefeated: false,
+        monsterType: "GLASS_CANNON",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    // Build available monsters array (filter out nulls)
+    const availableMonsters = [tankMonster, balancedMonster, glassCannon].filter(
+      (m) => m !== null
+    );
 
     return NextResponse.json({
       success: true,

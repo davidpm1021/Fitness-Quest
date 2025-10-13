@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/context/AuthContext";
+import PixelButton from "@/components/ui/PixelButton";
+import PixelPanel from "@/components/ui/PixelPanel";
+import PixelInput from "@/components/ui/PixelInput";
+import PixelBadge from "@/components/ui/PixelBadge";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,77 +35,99 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Welcome Back
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Log in to continue your fitness adventure
-          </p>
+    <div className="min-h-screen flex items-center justify-center game-bg pixel-grid-bg py-12 px-4 sm:px-6 lg:px-8">
+      {/* Animated stars background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute bg-white rounded-full animate-pulse"
+            style={{
+              width: i % 5 === 0 ? '3px' : '2px',
+              height: i % 5 === 0 ? '3px' : '2px',
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`,
+              opacity: Math.random() * 0.5 + 0.3,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="max-w-md w-full relative z-10">
+        {/* Back to home link */}
+        <div className="text-center mb-6">
+          <Link href="/">
+            <PixelButton variant="secondary" size="sm">
+              ← BACK TO HOME
+            </PixelButton>
+          </Link>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
-              <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-indigo-600 focus:border-indigo-600 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-indigo-600 focus:border-indigo-600 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
+        <PixelPanel variant="dialog" title="⚔️ HERO LOGIN">
+          <div className="text-center mb-6">
+            <PixelBadge variant="info" size="md">
+              RETURNING HERO
+            </PixelBadge>
+            <p className="mt-4 text-white font-retro text-lg">
+              Continue your fitness adventure
+            </p>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Logging in..." : "Log In"}
-            </button>
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-900/50 border-4 border-red-500 rounded-lg p-4">
+                <p className="text-red-200 font-bold text-center">
+                  ⚠️ {error}
+                </p>
+              </div>
+            )}
 
-          <div className="text-center">
-            <Link
-              href="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-            >
-              Don&apos;t have an account? Sign up
+            <PixelInput
+              label="EMAIL ADDRESS"
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="hero@fitness-quest.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+
+            <PixelInput
+              label="PASSWORD"
+              id="password"
+              name="password"
+              type="password"
+              required
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+
+            <div className="pt-4">
+              <PixelButton
+                type="submit"
+                variant="primary"
+                size="lg"
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? "⏳ LOGGING IN..." : "▶ LOGIN"}
+              </PixelButton>
+            </div>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-gray-300 font-retro mb-2">NEW HERO?</p>
+            <Link href="/register">
+              <PixelButton variant="success" size="md">
+                ✨ CREATE ACCOUNT
+              </PixelButton>
             </Link>
           </div>
-        </form>
+        </PixelPanel>
       </div>
     </div>
   );

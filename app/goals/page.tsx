@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
+import PageLayout from "@/components/layout/PageLayout";
+import PixelButton from "@/components/ui/PixelButton";
+import PixelPanel from "@/components/ui/PixelPanel";
+import PixelInput from "@/components/ui/PixelInput";
+import PixelBadge from "@/components/ui/PixelBadge";
 
 interface Goal {
   id: string;
@@ -149,8 +154,8 @@ export default function GoalsPage() {
 
   if (isLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center game-bg pixel-grid-bg">
+        <p className="text-white font-retro text-xl">Loading...</p>
       </div>
     );
   }
@@ -160,73 +165,58 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Fitness Quest
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <PageLayout title="🎯 GOALS" showBackButton={true}>
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="mb-6 flex justify-between items-center">
+          <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                My Goals
+              <h2 className="font-pixel text-3xl text-white drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
+                ⚡ QUEST SETUP
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Set 2-5 fitness goals to track daily
+              <p className="font-retro text-lg text-blue-200 mt-2">
+                Choose 2-5 fitness goals to track daily
               </p>
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
               disabled={goals.length >= 5}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`px-4 py-2 font-bold border-4 rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.4)] transition-all ${
+                goals.length >= 5
+                  ? 'bg-gray-500 border-gray-700 text-gray-300 cursor-not-allowed opacity-50'
+                  : 'bg-green-500 border-green-700 text-white hover:translate-y-[-2px] hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.6)]'
+              }`}
             >
-              {showForm ? "Cancel" : "Add Goal"}
+              {showForm ? "✖ CANCEL" : "➕ ADD GOAL"}
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-md">
-              <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+            <div className="mb-4 p-4 bg-red-900/50 border-4 border-red-500 rounded-lg">
+              <p className="font-bold text-red-200 text-center">
+                ⚠️ {error}
+              </p>
             </div>
           )}
 
           {success && (
-            <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-md">
-              <p className="text-sm text-green-800 dark:text-green-400">{success}</p>
+            <div className="mb-4 p-4 bg-green-900/50 border-4 border-green-500 rounded-lg">
+              <p className="font-bold text-green-200 text-center">
+                ✓ {success}
+              </p>
             </div>
           )}
 
           {showForm && (
-            <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Create New Goal
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <PixelPanel variant="dialog" title="➕ NEW QUEST" className="mb-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Goal Type
+                  <label className="block font-bold text-sm uppercase tracking-wider mb-2 text-white">
+                    QUEST TYPE
                   </label>
                   <select
                     value={formData.goalType}
                     onChange={(e) => handleGoalTypeChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-4 border-gray-800 dark:border-gray-600 rounded-sm font-retro text-lg text-gray-900 dark:text-white shadow-[4px_4px_0_0_rgba(0,0,0,0.2)] focus:outline-none focus:border-blue-500"
                     required
                   >
                     <option value="">Select type...</option>
@@ -238,58 +228,43 @@ export default function GoalsPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Goal Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
+                <PixelInput
+                  label="QUEST NAME"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="e.g., Morning Run"
+                  required
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <PixelInput
+                    label="TARGET VALUE"
+                    type="number"
+                    step="0.1"
+                    value={formData.targetValue}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      setFormData({ ...formData, targetValue: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                    placeholder="e.g., Morning Run"
-                    required
+                    placeholder="e.g., 30"
+                  />
+
+                  <PixelInput
+                    label="UNIT"
+                    type="text"
+                    value={formData.targetUnit}
+                    onChange={(e) =>
+                      setFormData({ ...formData, targetUnit: e.target.value })
+                    }
+                    placeholder="e.g., minutes"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Target Value
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={formData.targetValue}
-                      onChange={(e) =>
-                        setFormData({ ...formData, targetValue: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                      placeholder="e.g., 30"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Unit
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.targetUnit}
-                      onChange={(e) =>
-                        setFormData({ ...formData, targetUnit: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                      placeholder="e.g., minutes"
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Flex Percentage: {formData.flexPercentage}%
+                  <label className="block font-bold text-sm uppercase tracking-wider mb-2 text-white">
+                    FLEX: {formData.flexPercentage}%
                   </label>
                   <input
                     type="range"
@@ -299,75 +274,82 @@ export default function GoalsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, flexPercentage: e.target.value })
                     }
-                    className="w-full"
+                    className="w-full h-3 bg-gray-700 rounded-sm appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-yellow-400 [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-yellow-600 [&::-webkit-slider-thumb]:rounded-sm"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-blue-200 mt-2 font-retro">
                     Wiggle room for your target (0-20%)
                   </p>
                 </div>
 
-                <button
+                <PixelButton
                   type="submit"
-                  className="w-full py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  variant="success"
+                  size="lg"
+                  className="w-full"
                 >
-                  Create Goal
-                </button>
+                  ✓ CREATE QUEST
+                </PixelButton>
               </form>
-            </div>
+            </PixelPanel>
           )}
 
           <div className="space-y-4">
             {goals.length === 0 ? (
-              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-                <p className="text-gray-600 dark:text-gray-400">
-                  No goals yet. Create your first goal to get started!
-                </p>
-              </div>
+              <PixelPanel variant="menu">
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📜</div>
+                  <p className="font-retro text-xl text-white">
+                    No quests yet!
+                  </p>
+                  <p className="font-retro text-lg text-gray-300 mt-2">
+                    Create your first quest to begin your adventure
+                  </p>
+                </div>
+              </PixelPanel>
             ) : (
               goals.map((goal) => (
-                <div
-                  key={goal.id}
-                  className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow"
-                >
+                <PixelPanel key={goal.id} variant="menu">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {goal.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {GOAL_TYPES.find((t) => t.value === goal.goalType)?.label}
-                      </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-pixel text-lg text-white">
+                          {goal.name}
+                        </h3>
+                        <PixelBadge variant="info" size="sm">
+                          {GOAL_TYPES.find((t) => t.value === goal.goalType)?.label}
+                        </PixelBadge>
+                      </div>
                       {goal.targetValue && (
-                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                          Target: {goal.targetValue} {goal.targetUnit} (±
-                          {goal.flexPercentage}%)
+                        <p className="font-retro text-lg text-blue-200 mt-2">
+                          Target: {goal.targetValue} {goal.targetUnit} (±{goal.flexPercentage}%)
                         </p>
                       )}
                     </div>
                     <button
                       onClick={() => handleDelete(goal.id)}
-                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
+                      className="ml-4 px-3 py-2 bg-red-600 border-4 border-red-800 text-white font-bold rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.4)] hover:translate-y-[-2px] transition-all"
                     >
-                      Remove
+                      ✖
                     </button>
                   </div>
-                </div>
+                </PixelPanel>
               ))
             )}
           </div>
 
           {goals.length >= 2 && (
-            <div className="mt-6 text-center">
-              <button
+            <div className="mt-8 text-center">
+              <PixelButton
                 onClick={() => router.push("/party")}
-                className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+                variant="success"
+                size="lg"
               >
-                Continue to Party Setup
-              </button>
+                ▶ CONTINUE TO PARTY SETUP
+              </PixelButton>
             </div>
           )}
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }

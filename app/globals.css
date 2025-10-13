@@ -2,14 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import pixel-style fonts */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 :root {
+  /* Color Palette - 8-bit inspired */
+  --color-hero-blue: #3b82f6;
+  --color-hp-green: #22c55e;
+  --color-damage-red: #ef4444;
+  --color-xp-gold: #f59e0b;
+  --color-magic-purple: #a855f7;
+  --color-dark-bg: #1a1a2e;
+  --color-darker-bg: #0f0f1e;
+
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Pixel art shadows */
+  --pixel-shadow-sm: 2px 2px 0 0 rgba(0,0,0,0.3);
+  --pixel-shadow-md: 4px 4px 0 0 rgba(0,0,0,0.3);
+  --pixel-shadow-lg: 6px 6px 0 0 rgba(0,0,0,0.3);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: var(--color-darker-bg);
     --foreground: #ededed;
   }
 }
@@ -17,5 +35,170 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'VT323', monospace;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Pixel art text */
+.font-pixel {
+  font-family: 'Press Start 2P', cursive;
+  image-rendering: pixelated;
+}
+
+.font-retro {
+  font-family: 'VT323', monospace;
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+/* Pixel grid background */
+.pixel-grid-bg {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 4px,
+      rgba(255,255,255,0.03) 4px,
+      rgba(255,255,255,0.03) 8px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 4px,
+      rgba(255,255,255,0.03) 4px,
+      rgba(255,255,255,0.03) 8px
+    );
+}
+
+/* Scanline effect */
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanlines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.1) 2px,
+    rgba(0,0,0,0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* CRT screen effect */
+.crt-effect {
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.98; }
+  50% { opacity: 1; }
+  100% { opacity: 0.98; }
+}
+
+/* Pixel pulse animation */
+@keyframes pixel-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+  }
+}
+
+.animate-pixel-pulse {
+  animation: pixel-pulse 2s ease-in-out infinite;
+}
+
+/* Dark game background with gradient */
+.game-bg {
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #1e3a8a 100%) !important;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+/* Float up animation for damage numbers */
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-30px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.8);
+  }
+}
+
+.animate-float-up {
+  animation: float-up 1.5s ease-out forwards;
+}
+
+/* Shake animation for counterattack */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s;
+}
+
+/* Slide in from bottom */
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.6s ease-out;
 }

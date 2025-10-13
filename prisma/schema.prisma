@@ -11,14 +11,17 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  username      String   @unique
-  displayName   String   @map("display_name")
-  timezone      String   @default("America/New_York")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  passwordHash         String    @map("password_hash")
+  username             String    @unique
+  displayName          String    @map("display_name")
+  characterName        String?   @map("character_name") // Character's name in the game world
+  timezone             String    @default("America/New_York")
+  onboardingStep       String    @default("character") @map("onboarding_step") // character, goals, party, complete
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
   goals                  Goal[]
   partyMemberships       PartyMember[]

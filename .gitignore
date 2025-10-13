@@ -43,3 +43,5 @@ next-env.d.ts
 /prisma/migrations
 
 /lib/generated/prisma
+nul
+public/sprites/lpc-temp/

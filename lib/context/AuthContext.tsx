@@ -7,7 +7,10 @@ interface User {
   email: string;
   username: string;
   displayName: string;
+  characterName?: string | null;
   timezone: string;
+  onboardingStep?: string;
+  onboardingCompletedAt?: string | null;
   createdAt: string;
 }
 
@@ -17,6 +20,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -24,7 +28,6 @@ interface AuthContextType {
 interface RegisterData {
   email: string;
   password: string;
-  username: string;
   displayName: string;
 }
 
@@ -138,6 +141,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("auth_token");
   }
 
+  async function refreshUser() {
+    if (token) {
+      await fetchUser(token);
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -146,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         logout,
+        refreshUser,
         isLoading,
         error,
       }}

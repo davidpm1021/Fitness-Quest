@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useToast } from "@/lib/context/ToastContext";
+import PageLayout from "@/components/layout/PageLayout";
+import PixelButton from "@/components/ui/PixelButton";
+import PixelPanel from "@/components/ui/PixelPanel";
+import PixelBadge from "@/components/ui/PixelBadge";
+import HPBar from "@/components/ui/HPBar";
 
 interface PartyMember {
   id: string;
@@ -27,7 +33,8 @@ interface Party {
 
 export default function PartyDashboard() {
   const router = useRouter();
-  const { user, isLoading, token, logout } = useAuth();
+  const { user, isLoading, token } = useAuth();
+  const toast = useToast();
   const [party, setParty] = useState<Party | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteCode, setShowInviteCode] = useState(false);
@@ -70,7 +77,7 @@ export default function PartyDashboard() {
   function copyInviteCode() {
     if (party) {
       navigator.clipboard.writeText(party.inviteCode);
-      alert("Invite code copied to clipboard!");
+      toast.success("Invite code copied to clipboard!");
     }
   }
 
@@ -86,8 +93,8 @@ export default function PartyDashboard() {
 
   if (isLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center game-bg pixel-grid-bg">
+        <p className="text-white font-retro text-xl">Loading...</p>
       </div>
     );
   }
@@ -97,137 +104,108 @@ export default function PartyDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Fitness Quest
-              </h1>
-              <button
-                onClick={() => router.push("/goals")}
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                My Goals
-              </button>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700 dark:text-gray-300">
-                {user.displayName}
-              </span>
-              <button
-                onClick={logout}
-                className="px-4 py-2 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <PageLayout title="🏰 PARTY DASHBOARD" showBackButton={true}>
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Party Header */}
-          <div className="mb-8 flex justify-between items-center">
+          <div className="mb-8 flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {party.name}
+              <h2 className="font-pixel text-4xl text-white drop-shadow-[3px_3px_0_rgba(0,0,0,0.5)]">
+                🏰 {party.name}
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {party.members.length} member{party.members.length !== 1 ? "s" : ""}
-              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <PixelBadge variant="info" size="md">
+                  {party.members.length} MEMBER{party.members.length !== 1 ? "S" : ""}
+                </PixelBadge>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <button
+            <div className="flex gap-3 flex-wrap">
+              <PixelButton
                 onClick={() => router.push("/check-in")}
-                className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+                variant="success"
+                size="lg"
               >
-                Daily Check-In
-              </button>
-              <button
+                ⚔️ DAILY CHECK-IN
+              </PixelButton>
+              <PixelButton
                 onClick={() => setShowInviteCode(!showInviteCode)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                variant="primary"
+                size="md"
               >
-                {showInviteCode ? "Hide" : "Show"} Invite Code
-              </button>
+                {showInviteCode ? "🔒 HIDE CODE" : "📋 INVITE CODE"}
+              </PixelButton>
             </div>
           </div>
 
           {showInviteCode && (
-            <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Share this code with friends to invite them:
+            <PixelPanel variant="dialog" className="mb-8">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-center sm:text-left">
+                  <p className="font-retro text-lg text-blue-200 mb-2">
+                    Share this code with friends:
                   </p>
-                  <code className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 tracking-wider">
+                  <code className="font-pixel text-3xl text-yellow-400 tracking-wider bg-gray-800 px-6 py-3 border-4 border-yellow-600 rounded-sm inline-block">
                     {party.inviteCode}
                   </code>
                 </div>
-                <button
+                <PixelButton
                   onClick={copyInviteCode}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  variant="warning"
+                  size="md"
                 >
-                  Copy Code
-                </button>
+                  📋 COPY CODE
+                </PixelButton>
               </div>
-            </div>
+            </PixelPanel>
           )}
 
           {/* Active Monster Section */}
           <div className="mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+            <PixelPanel variant="menu" title="👹 ACTIVE MONSTER">
               {party.activeMonster ? (
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    {party.activeMonster.name}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    {party.activeMonster.description}
-                  </p>
-                  <div className="mb-2">
-                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      <span>HP</span>
-                      <span>
-                        {party.activeMonster.currentHp} / {party.activeMonster.maxHp}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
-                      <div
-                        className="bg-red-500 h-4 rounded-full transition-all"
-                        style={{
-                          width: `${getHpPercentage(
-                            party.activeMonster.currentHp,
-                            party.activeMonster.maxHp
-                          )}%`,
-                        }}
-                      ></div>
-                    </div>
+                  <div className="text-center mb-6">
+                    <div className="text-6xl mb-3">👹</div>
+                    <h3 className="font-pixel text-2xl text-white mb-2">
+                      {party.activeMonster.name}
+                    </h3>
+                    <p className="font-retro text-lg text-gray-300 max-w-2xl mx-auto">
+                      {party.activeMonster.description}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 mt-4 text-center">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+
+                  <div className="mb-6">
+                    <HPBar
+                      current={party.activeMonster.currentHp}
+                      max={party.activeMonster.maxHp}
+                      size="lg"
+                      label="MONSTER HP"
+                      showMilestones={true}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-purple-800/50 border-4 border-purple-500 rounded-lg p-4 text-center">
+                      <p className="font-retro text-sm text-purple-200 mb-1">
                         Type
                       </p>
-                      <p className="font-semibold text-gray-900 dark:text-white">
+                      <p className="font-pixel text-xl text-white">
                         {party.activeMonster.monsterType}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="bg-blue-800/50 border-4 border-blue-500 rounded-lg p-4 text-center">
+                      <p className="font-retro text-sm text-blue-200 mb-1">
                         Armor Class
                       </p>
-                      <p className="font-semibold text-gray-900 dark:text-white">
+                      <p className="font-pixel text-xl text-white">
                         {party.activeMonster.armorClass}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="bg-red-800/50 border-4 border-red-500 rounded-lg p-4 text-center">
+                      <p className="font-retro text-sm text-red-200 mb-1">
                         Counterattack
                       </p>
-                      <p className="font-semibold text-gray-900 dark:text-white">
+                      <p className="font-pixel text-xl text-white">
                         {party.activeMonster.counterattackChance}%
                       </p>
                     </div>
@@ -235,105 +213,79 @@ export default function PartyDashboard() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <div className="text-6xl mb-4">❓</div>
+                  <p className="font-retro text-xl text-gray-300 mb-6">
                     No active monster
                   </p>
-                  <button
+                  <PixelButton
                     onClick={() => router.push("/monsters")}
-                    className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+                    variant="primary"
+                    size="lg"
                   >
-                    Select a Monster
-                  </button>
+                    ⚔️ SELECT A MONSTER
+                  </PixelButton>
                 </div>
               )}
-            </div>
+            </PixelPanel>
           </div>
 
           {/* Party Members */}
           <div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Party Members
+            <h3 className="font-pixel text-2xl text-white mb-6 drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
+              ⚔️ PARTY MEMBERS
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {party.members.map((member) => (
-                <div
-                  key={member.id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
-                >
+                <PixelPanel key={member.id} variant="menu">
                   <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
-                      <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                    <div className="w-12 h-12 bg-blue-600 border-4 border-blue-800 rounded-sm flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]">
+                      <span className="font-pixel text-lg text-white">
                         {member.user.displayName.charAt(0)}
                       </span>
                     </div>
                     <div className="ml-3">
-                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                      <h4 className="font-pixel text-sm text-white">
                         {member.user.displayName}
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="font-retro text-sm text-gray-400">
                         @{member.user.username}
                       </p>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        <span>HP</span>
-                        <span>
-                          {member.currentHp} / {member.maxHp}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className={`${getHpColor(
-                            getHpPercentage(member.currentHp, member.maxHp)
-                          )} h-2 rounded-full transition-all`}
-                          style={{
-                            width: `${getHpPercentage(
-                              member.currentHp,
-                              member.maxHp
-                            )}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
+                  <div className="space-y-4">
+                    <HPBar
+                      current={member.currentHp}
+                      max={member.maxHp}
+                      size="sm"
+                      label="HP"
+                    />
 
-                    <div className="grid grid-cols-2 gap-2 text-center pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t-4 border-gray-700">
+                      <div className="text-center">
+                        <p className="font-retro text-xs text-gray-400 mb-1">
                           Defense
                         </p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
+                        <p className="font-pixel text-lg text-blue-400">
                           +{member.currentDefense}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <div className="text-center">
+                        <p className="font-retro text-xs text-gray-400 mb-1">
                           Streak
                         </p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {member.currentStreak} days
+                        <p className="font-pixel text-lg text-orange-400">
+                          {member.currentStreak}🔥
                         </p>
                       </div>
                     </div>
                   </div>
-                </div>
+                </PixelPanel>
               ))}
             </div>
           </div>
-
-          {/* Sprint Progress */}
-          <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Sprint 4: Monsters & HP - Complete! ✅
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              The monster system is live! Fight creatures, deal damage, and watch out for counterattacks. Check in daily to defeat your party's active monster!
-            </p>
-          </div>
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }

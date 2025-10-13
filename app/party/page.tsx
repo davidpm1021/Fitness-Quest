@@ -3,10 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useToast } from "@/lib/context/ToastContext";
+import PageLayout from "@/components/layout/PageLayout";
+import PixelButton from "@/components/ui/PixelButton";
+import PixelPanel from "@/components/ui/PixelPanel";
+import PixelInput from "@/components/ui/PixelInput";
+import PixelBadge from "@/components/ui/PixelBadge";
 
 export default function PartyPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
+  const toast = useToast();
   const [mode, setMode] = useState<"select" | "create" | "join">("select");
   const [partyName, setPartyName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
@@ -105,14 +112,14 @@ export default function PartyPage() {
   function copyInviteCode() {
     if (createdParty) {
       navigator.clipboard.writeText(createdParty.inviteCode);
-      alert("Invite code copied to clipboard!");
+      toast.success("Invite code copied to clipboard!");
     }
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center game-bg pixel-grid-bg">
+        <p className="text-white font-retro text-xl">Loading...</p>
       </div>
     );
   }
@@ -122,87 +129,56 @@ export default function PartyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Fitness Quest
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <PageLayout title="👥 PARTY SETUP" showBackButton={true}>
       <main className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         {createdParty ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <PixelPanel variant="dialog" title="✓ PARTY CREATED!">
             <div className="text-center">
               <div className="mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full mb-4">
-                  <svg
-                    className="w-8 h-8 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Party Created!
-                </h2>
-                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                <div className="text-6xl mb-4">🎉</div>
+                <h2 className="font-pixel text-2xl text-white mb-2">
                   {createdParty.name}
-                </p>
+                </h2>
+                <PixelBadge variant="success" size="lg">
+                  READY TO ADVENTURE
+                </PixelBadge>
               </div>
 
-              <div className="mb-6 p-6 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <div className="mb-8 p-6 bg-gray-900/50 border-4 border-yellow-500 rounded-lg">
+                <p className="font-retro text-lg text-yellow-200 mb-4">
                   Share this invite code with your friends:
                 </p>
-                <div className="flex items-center justify-center space-x-4">
-                  <code className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 tracking-wider">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <code className="font-pixel text-3xl text-yellow-400 tracking-wider bg-gray-800 px-6 py-3 border-4 border-yellow-600 rounded-sm">
                     {createdParty.inviteCode}
                   </code>
-                  <button
+                  <PixelButton
                     onClick={copyInviteCode}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                    variant="warning"
+                    size="md"
                   >
-                    Copy
-                  </button>
+                    📋 COPY
+                  </PixelButton>
                 </div>
               </div>
 
-              <button
+              <PixelButton
                 onClick={() => router.push("/party/dashboard")}
-                className="w-full py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+                variant="success"
+                size="lg"
+                className="w-full"
               >
-                Go to Party Dashboard
-              </button>
+                ▶ GO TO PARTY DASHBOARD
+              </PixelButton>
             </div>
-          </div>
+          </PixelPanel>
         ) : mode === "select" ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <PixelPanel variant="dialog" title="👥 PARTY SETUP">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Join the Adventure
+              <h2 className="font-pixel text-2xl text-white mb-3">
+                JOIN THE ADVENTURE
               </h2>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">
+              <p className="font-retro text-lg text-blue-200">
                 Create a new party or join an existing one
               </p>
             </div>
@@ -210,28 +186,14 @@ export default function PartyPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <button
                 onClick={() => setMode("create")}
-                className="p-8 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-500 transition-colors"
+                className="p-8 bg-blue-800/50 border-4 border-blue-500 rounded-lg hover:bg-blue-700/50 hover:translate-y-[-4px] transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.4)] hover:shadow-[4px_8px_0_0_rgba(0,0,0,0.6)]"
               >
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full mb-4">
-                    <svg
-                      className="w-8 h-8 text-indigo-600 dark:text-indigo-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Create Party
+                  <div className="text-5xl mb-4">➕</div>
+                  <h3 className="font-pixel text-lg text-white mb-2">
+                    CREATE PARTY
                   </h3>
-                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="font-retro text-blue-200">
                     Start a new party and invite friends
                   </p>
                 </div>
@@ -239,126 +201,126 @@ export default function PartyPage() {
 
               <button
                 onClick={() => setMode("join")}
-                className="p-8 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-green-500 dark:hover:border-green-500 transition-colors"
+                className="p-8 bg-green-800/50 border-4 border-green-500 rounded-lg hover:bg-green-700/50 hover:translate-y-[-4px] transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.4)] hover:shadow-[4px_8px_0_0_rgba(0,0,0,0.6)]"
               >
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full mb-4">
-                    <svg
-                      className="w-8 h-8 text-green-600 dark:text-green-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Join Party
+                  <div className="text-5xl mb-4">🚪</div>
+                  <h3 className="font-pixel text-lg text-white mb-2">
+                    JOIN PARTY
                   </h3>
-                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="font-retro text-green-200">
                     Enter an invite code to join
                   </p>
                 </div>
               </button>
             </div>
-          </div>
+          </PixelPanel>
         ) : mode === "create" ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <button
+          <PixelPanel variant="dialog" title="➕ CREATE PARTY">
+            <PixelButton
               onClick={() => setMode("select")}
-              className="mb-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              variant="secondary"
+              size="sm"
+              className="mb-6"
             >
-              ← Back
-            </button>
+              ← BACK
+            </PixelButton>
 
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Create Your Party
-            </h2>
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-3">🏰</div>
+              <h2 className="font-pixel text-xl text-white">
+                CREATE YOUR PARTY
+              </h2>
+            </div>
 
             {error && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-md">
-                <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+              <div className="mb-4 p-4 bg-red-900/50 border-4 border-red-500 rounded-lg">
+                <p className="font-bold text-red-200 text-center">
+                  ⚠️ {error}
+                </p>
               </div>
             )}
 
             <form onSubmit={handleCreateParty} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Party Name
-                </label>
-                <input
-                  type="text"
-                  value={partyName}
-                  onChange={(e) => setPartyName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                  placeholder="e.g., The Iron Warriors"
-                  required
-                />
-              </div>
+              <PixelInput
+                label="PARTY NAME"
+                type="text"
+                value={partyName}
+                onChange={(e) => setPartyName(e.target.value)}
+                placeholder="e.g., The Iron Warriors"
+                helperText="Choose a legendary name for your party"
+                required
+              />
 
-              <button
+              <PixelButton
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium disabled:opacity-50"
+                variant="primary"
+                size="lg"
+                className="w-full"
               >
-                {loading ? "Creating..." : "Create Party"}
-              </button>
+                {loading ? "⏳ CREATING..." : "✓ CREATE PARTY"}
+              </PixelButton>
             </form>
-          </div>
+          </PixelPanel>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <button
+          <PixelPanel variant="dialog" title="🚪 JOIN PARTY">
+            <PixelButton
               onClick={() => setMode("select")}
-              className="mb-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              variant="secondary"
+              size="sm"
+              className="mb-6"
             >
-              ← Back
-            </button>
+              ← BACK
+            </PixelButton>
 
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Join a Party
-            </h2>
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-3">🔑</div>
+              <h2 className="font-pixel text-xl text-white">
+                JOIN A PARTY
+              </h2>
+            </div>
 
             {error && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-md">
-                <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+              <div className="mb-4 p-4 bg-red-900/50 border-4 border-red-500 rounded-lg">
+                <p className="font-bold text-red-200 text-center">
+                  ⚠️ {error}
+                </p>
               </div>
             )}
 
             <form onSubmit={handleJoinParty} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Invite Code
+                <label className="block font-bold text-sm uppercase tracking-wider mb-2 text-white">
+                  INVITE CODE
                 </label>
                 <input
                   type="text"
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-center text-2xl tracking-wider font-mono"
+                  className="w-full px-4 py-4 bg-white dark:bg-gray-800 border-4 border-gray-800 dark:border-gray-600 rounded-sm font-pixel text-2xl text-gray-900 dark:text-white text-center tracking-wider shadow-[4px_4px_0_0_rgba(0,0,0,0.2)] focus:outline-none focus:border-blue-500 focus:shadow-[4px_4px_0_0_rgba(59,130,246,0.4)] uppercase"
                   placeholder="ABCD12"
                   maxLength={6}
                   required
                 />
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Enter the 6-character code shared by your party leader
+                <p className="mt-3 font-retro text-sm text-blue-200 text-center">
+                  Enter the 6-character code from your party leader
                 </p>
               </div>
 
-              <button
+              <PixelButton
                 type="submit"
                 disabled={loading || inviteCode.length !== 6}
-                className="w-full py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium disabled:opacity-50"
+                variant="success"
+                size="lg"
+                className="w-full"
               >
-                {loading ? "Joining..." : "Join Party"}
-              </button>
+                {loading ? "⏳ JOINING..." : "▶ JOIN PARTY"}
+              </PixelButton>
             </form>
-          </div>
+          </PixelPanel>
         )}
       </main>
-    </div>
+    </PageLayout>
   );
 }

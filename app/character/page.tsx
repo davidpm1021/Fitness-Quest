@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useToast } from '@/lib/context/ToastContext';
+import PageLayout from '@/components/layout/PageLayout';
 import DetailedPixelCharacter, {
   CharacterCustomization,
 } from '@/app/components/DetailedPixelCharacter';
@@ -48,6 +50,7 @@ const OUTFIT_COLORS = [
 export default function CharacterCustomizationPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -109,12 +112,12 @@ export default function CharacterCustomizationPage() {
 
       const data = await response.json();
       if (data.success) {
-        alert('Character saved successfully!');
+        toast.success('Character saved successfully!');
       } else {
-        alert('Failed to save character: ' + data.error);
+        toast.error('Failed to save character: ' + data.error);
       }
     } catch (err) {
-      alert('Failed to save character');
+      toast.error('Failed to save character');
     } finally {
       setSaving(false);
     }
@@ -133,33 +136,19 @@ export default function CharacterCustomizationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Character Customization
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Character'}
-              </button>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Back
-              </button>
-            </div>
-          </div>
+    <PageLayout title="🎨 CHARACTER CUSTOMIZATION" showBackButton={true}>
+      {/* Save button bar */}
+      <div className="bg-gray-800/50 border-b-2 border-purple-500/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-pixel text-sm disabled:opacity-50 border-2 border-purple-400 shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
+          >
+            {saving ? '⏳ SAVING...' : '💾 SAVE CHARACTER'}
+          </button>
         </div>
-      </nav>
+      </div>
 
       <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -370,6 +359,6 @@ export default function CharacterCustomizationPage() {
           </div>
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }
