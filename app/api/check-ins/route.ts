@@ -12,6 +12,8 @@ import {
   rollCounterattack,
   calculateCounterattackDamage,
 } from "@/lib/combat";
+import { createVictoryReward } from "@/lib/victoryRewards";
+import { cache, CacheKeys } from "@/lib/cache";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -37,7 +39,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { goalCheckIns } = body as { goalCheckIns: GoalCheckIn[] };
+    const { goalCheckIns, combatAction } = body as {
+      goalCheckIns: GoalCheckIn[];
+      combatAction?: "ATTACK" | "DEFEND" | "SUPPORT" | "HEROIC_STRIKE";
+    };
+
+    // Default to ATTACK if not specified
+    const selectedAction = combatAction || "ATTACK";
 
     // Get user's party membership
     const partyMember = await prisma.partyMember.findFirst({
@@ -45,7 +53,21 @@ export async function POST(request: NextRequest) {
       include: {
         party: {
           include: {
-            members: true,
+            members: {
+              select: {
+                id: true,
+                currentHp: true,
+                maxHp: true,
+                currentDefense: true,
+                currentStreak: true,
+                focusPoints: true,
+              },
+            },
+          },
+        },
+        welcomeBackBonuses: {
+          where: {
+            isActive: true,
           },
         },
       },
@@ -61,26 +83,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already checked in today - DISABLED FOR TESTING
+    // Check if already checked in today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // const existingCheckIn = await prisma.checkIn.findFirst({
-    //   where: {
-    //     partyMemberId: partyMember.id,
-    //     checkInDate: today,
-    //   },
-    // });
+    const existingCheckIn = await prisma.checkIn.findFirst({
+      where: {
+        partyMemberId: partyMember.id,
+        checkInDate: today,
+      },
+      include: {
+        goalCheckIns: {
+          include: {
+            goal: true,
+          },
+        },
+      },
+    });
 
-    // if (existingCheckIn) {
-    //   return NextResponse.json(
-    //     {
-    //       success: false,
-    //       error: "You have already checked in today",
-    //     } as ApiResponse,
-    //     { status: 400 }
-    //   );
-    // }
+    if (existingCheckIn) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "You've already completed your check-in for today! Your party appreciates your dedication. Come back tomorrow to continue the quest.",
+          data: {
+            checkIn: existingCheckIn,
+            alreadyCheckedIn: true,
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
+    }
 
     // Get user's goals
     const goals = await prisma.goal.findMany({
@@ -138,6 +171,28 @@ export async function POST(request: NextRequest) {
       partyMember.currentStreak
     );
 
+    // Validate combat action requirements
+    if (selectedAction === "HEROIC_STRIKE") {
+      if (partyMember.focusPoints < 3) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Not enough focus! Heroic Strike requires 3 focus points.",
+          } as ApiResponse,
+          { status: 400 }
+        );
+      }
+      if (newStreak < 7) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Heroic Strike requires a 7-day streak to unlock!",
+          } as ApiResponse,
+          { status: 400 }
+        );
+      }
+    }
+
     // Count how many party members have checked in today (before this check-in)
     const todayCheckIns = await prisma.checkIn.count({
       where: {
@@ -157,6 +212,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Check for active welcome back bonus
+    const activeWelcomeBackBonus =
+      partyMember.welcomeBackBonuses && partyMember.welcomeBackBonuses.length > 0
+        ? partyMember.welcomeBackBonuses[0]
+        : null;
+
     // Calculate attack bonuses
     const bonuses = calculateAttackBonuses({
       goalsMet,
@@ -166,18 +227,78 @@ export async function POST(request: NextRequest) {
       checkedInCount: todayCheckIns,
     });
 
-    // Roll d20 and calculate damage
-    const attackRoll = rollD20();
-    const baseDamage = rollBaseDamage();
+    // Roll d20 and calculate damage (modified by combat action)
+    let attackRoll = rollD20();
+    let baseDamage = rollBaseDamage();
+    let focusEarned = 0;
+    let damageMultiplier = 1.0;
+    let autoHit = false;
+    let healingTarget: string | null = null;
+    let healingAmount = 0;
+
+    // Apply combat action modifiers
+    switch (selectedAction) {
+      case "ATTACK":
+        // Standard attack - earn 1 focus
+        focusEarned = 1;
+        break;
+
+      case "DEFEND":
+        // Deal 50% damage, but provide defense bonus (handled later)
+        damageMultiplier = 0.5;
+        break;
+
+      case "SUPPORT":
+        // Deal 50% damage, heal a teammate, earn 1 focus
+        damageMultiplier = 0.5;
+        focusEarned = 1;
+
+        // Find a random teammate with less than max HP
+        const injuredTeammates = partyMember.party.members.filter(
+          (m) => m.id !== partyMember.id && m.currentHp < m.maxHp
+        );
+
+        if (injuredTeammates.length > 0) {
+          const randomTeammate =
+            injuredTeammates[Math.floor(Math.random() * injuredTeammates.length)];
+          healingTarget = randomTeammate.id;
+          healingAmount = 10;
+        }
+        break;
+
+      case "HEROIC_STRIKE":
+        // Auto-hit, double damage, costs 3 focus (no focus earned)
+        autoHit = true;
+        damageMultiplier = 2.0;
+        focusEarned = 0;
+        break;
+    }
+
+    // Apply welcome back catch-up damage bonus
+    if (activeWelcomeBackBonus) {
+      baseDamage += 2;
+    }
 
     // Use active monster's AC or default to 12
     const monsterAC = activeMonster?.monster.armorClass || 12;
-    const result = calculateDamage(
-      attackRoll,
-      bonuses.totalBonus,
-      baseDamage,
-      monsterAC
-    );
+
+    let result;
+    if (autoHit) {
+      // Heroic Strike always hits
+      result = {
+        hit: true,
+        damage: Math.floor(baseDamage * damageMultiplier),
+        roll: attackRoll,
+        targetAC: monsterAC,
+      };
+    } else {
+      result = calculateDamage(
+        attackRoll,
+        bonuses.totalBonus,
+        Math.floor(baseDamage * damageMultiplier),
+        monsterAC
+      );
+    }
 
     // Calculate new defense
     const newDefense = calculateDefense(newStreak);
@@ -186,18 +307,34 @@ export async function POST(request: NextRequest) {
     let wasCounterattacked = false;
     let counterattackDamage = 0;
     if (activeMonster && result.hit) {
-      wasCounterattacked = rollCounterattack(
-        activeMonster.monster.counterattackChance,
-        newDefense
-      );
+      // Apply welcome back bonus: reduce counterattack chance by 50%
+      let counterattackChance = activeMonster.monster.counterattackChance;
+      if (activeWelcomeBackBonus) {
+        counterattackChance = Math.floor(counterattackChance * 0.5);
+      }
+
+      // Apply DEFEND action: reduce counterattack chance by additional 50%
+      if (selectedAction === "DEFEND") {
+        counterattackChance = Math.floor(counterattackChance * 0.5);
+      }
+
+      wasCounterattacked = rollCounterattack(counterattackChance, newDefense);
       if (wasCounterattacked) {
         counterattackDamage = calculateCounterattackDamage(
           activeMonster.monster.baseDamage
         );
+
+        // DEFEND action also reduces damage taken by 50%
+        if (selectedAction === "DEFEND") {
+          counterattackDamage = Math.floor(counterattackDamage * 0.5);
+        }
       }
     }
 
     // Create check-in with transaction
+    let milestoneCrossed: 75 | 50 | 25 | null = null;
+    let monsterWasDefeated = false;
+    let victoryRewardId: string | null = null;
     const checkInResult = await prisma.$transaction(async (tx) => {
       // Create the check-in
       const checkIn = await tx.checkIn.create({
@@ -212,6 +349,8 @@ export async function POST(request: NextRequest) {
           damageDealt: result.damage,
           wasHitByMonster: wasCounterattacked,
           damageTaken: counterattackDamage,
+          combatAction: selectedAction,
+          focusEarned: focusEarned,
         },
       });
 
@@ -226,6 +365,12 @@ export async function POST(request: NextRequest) {
         })),
       });
 
+      // Calculate new focus points
+      let newFocus = partyMember.focusPoints + focusEarned;
+      if (selectedAction === "HEROIC_STRIKE") {
+        newFocus -= 3; // Deduct focus cost
+      }
+
       // Update party member stats
       const newHp = Math.max(0, partyMember.currentHp - counterattackDamage);
       await tx.partyMember.update({
@@ -234,16 +379,77 @@ export async function POST(request: NextRequest) {
           currentStreak: newStreak,
           currentDefense: newDefense,
           currentHp: newHp,
+          focusPoints: newFocus,
         },
       });
 
-      // Update monster HP if hit
+      // Apply DEFEND defense bonus to all party members
+      if (selectedAction === "DEFEND") {
+        const partyMemberIds = partyMember.party.members.map((m) => m.id);
+        await tx.partyMember.updateMany({
+          where: {
+            id: { in: partyMemberIds },
+          },
+          data: {
+            currentDefense: {
+              increment: 5,
+            },
+          },
+        });
+      }
+
+      // Apply SUPPORT healing to teammate
+      if (healingTarget && healingAmount > 0) {
+        const teammate = await tx.partyMember.findUnique({
+          where: { id: healingTarget },
+        });
+        if (teammate) {
+          const newTeammateHp = Math.min(teammate.maxHp, teammate.currentHp + healingAmount);
+          await tx.partyMember.update({
+            where: { id: healingTarget },
+            data: {
+              currentHp: newTeammateHp,
+            },
+          });
+        }
+      }
+
+      // Update welcome back bonus - decrement remaining check-ins
+      if (activeWelcomeBackBonus) {
+        const newRemainingCheckIns = activeWelcomeBackBonus.bonusCheckInsRemaining - 1;
+        const isStillActive = newRemainingCheckIns > 0;
+
+        await tx.welcomeBackBonus.update({
+          where: { id: activeWelcomeBackBonus.id },
+          data: {
+            bonusCheckInsRemaining: newRemainingCheckIns,
+            isActive: isStillActive,
+            expiresAt: !isStillActive ? new Date() : undefined,
+          },
+        });
+      }
+
+      // Update monster HP if hit and detect milestones
       if (activeMonster && result.hit) {
+        const oldHp = activeMonster.monster.currentHp;
         const newMonsterHp = Math.max(
           0,
           activeMonster.monster.currentHp - result.damage
         );
         const isDefeated = newMonsterHp === 0;
+
+        // Calculate HP percentages
+        const oldPercentage = (oldHp / activeMonster.monster.maxHp) * 100;
+        const newPercentage = (newMonsterHp / activeMonster.monster.maxHp) * 100;
+
+        // Check if we crossed a milestone (75%, 50%, 25%)
+        const milestones: Array<75 | 50 | 25> = [75, 50, 25];
+        for (const milestone of milestones) {
+          if (oldPercentage > milestone && newPercentage <= milestone) {
+            milestoneCrossed = milestone;
+            break; // Only celebrate the highest milestone crossed
+          }
+        }
 
         await tx.monster.update({
           where: { id: activeMonster.monster.id },
@@ -260,11 +466,79 @@ export async function POST(request: NextRequest) {
             where: { id: activeMonster.id },
             data: { isActive: false },
           });
+          monsterWasDefeated = true;
         }
       }
 
       return checkIn;
     });
+
+    // Create victory reward after transaction if monster was defeated
+    if (monsterWasDefeated && activeMonster) {
+      try {
+        // Calculate days to defeat
+        const monsterCreatedDate = new Date(activeMonster.monster.createdAt);
+        monsterCreatedDate.setHours(0, 0, 0, 0);
+        const daysToDefeat = Math.max(
+          1,
+          Math.ceil((today.getTime() - monsterCreatedDate.getTime()) / (1000 * 60 * 60 * 24))
+        );
+
+        const victoryResult = await createVictoryReward({
+          partyId: partyMember.partyId,
+          monsterId: activeMonster.monster.id,
+          daysToDefeat,
+          monsterName: activeMonster.monster.name,
+          monsterType: activeMonster.monster.monsterType,
+        });
+
+        victoryRewardId = victoryResult.victoryReward.id;
+      } catch (error) {
+        console.error("Error creating victory reward:", error);
+        // Don't fail the check-in if victory reward fails
+      }
+    }
+
+    // Invalidate party dashboard cache for all party members after check-in
+    try {
+      const allPartyMembers = await prisma.partyMember.findMany({
+        where: { partyId: partyMember.partyId },
+        select: { userId: true },
+      });
+
+      // Clear cache for all party members since their party data changed
+      allPartyMembers.forEach((pm) => {
+        cache.delete(CacheKeys.partyDashboard(pm.userId));
+      });
+    } catch (error) {
+      console.error("Error invalidating cache:", error);
+      // Don't fail the check-in if cache invalidation fails
+    }
+
+    // Build combat action result message
+    let actionMessage = "";
+    if (selectedAction === "ATTACK") {
+      actionMessage = result.hit
+        ? wasCounterattacked
+          ? `Hit! You dealt ${result.damage} damage but the monster counterattacked for ${counterattackDamage} damage!`
+          : `Hit! You dealt ${result.damage} damage!`
+        : "Miss! Better luck tomorrow!";
+    } else if (selectedAction === "DEFEND") {
+      actionMessage = result.hit
+        ? wasCounterattacked
+          ? `Defensive Strike! You dealt ${result.damage} damage and took only ${counterattackDamage} damage. Your party gained +5 defense!`
+          : `Defensive Strike! You dealt ${result.damage} damage and your party gained +5 defense!`
+        : `You took a defensive stance. Your party gained +5 defense!`;
+    } else if (selectedAction === "SUPPORT") {
+      const healMessage = healingTarget
+        ? ` You healed a teammate for ${healingAmount} HP!`
+        : ` No injured teammates to heal.`;
+      actionMessage = result.hit
+        ? `Supporting Attack! You dealt ${result.damage} damage.${healMessage}`
+        : `Supporting effort! You dealt base damage.${healMessage}`;
+    } else if (selectedAction === "HEROIC_STRIKE") {
+      actionMessage = `HEROIC STRIKE! You unleashed devastating power for ${result.damage} damage!`;
+    }
 
     return NextResponse.json(
       {
@@ -280,6 +554,15 @@ export async function POST(request: NextRequest) {
             wasCounterattacked,
             counterattackDamage,
           },
+          combatAction: {
+            action: selectedAction,
+            focusEarned: focusEarned,
+            focusCost: selectedAction === "HEROIC_STRIKE" ? 3 : 0,
+            newFocusTotal: partyMember.focusPoints + focusEarned - (selectedAction === "HEROIC_STRIKE" ? 3 : 0),
+            healingTarget: healingTarget,
+            healingAmount: healingAmount,
+            defenseBonus: selectedAction === "DEFEND" ? 5 : 0,
+          },
           monster: activeMonster
             ? {
                 name: activeMonster.monster.name,
@@ -290,14 +573,22 @@ export async function POST(request: NextRequest) {
           monsterDefeated: activeMonster
             ? activeMonster.monster.currentHp - result.damage <= 0 && result.hit
             : false,
+          victoryRewardId: victoryRewardId,
+          milestoneCrossed: milestoneCrossed,
           streakUpdated: newStreak,
           defenseUpdated: newDefense,
+          welcomeBackBonus: activeWelcomeBackBonus
+            ? {
+                daysRemaining: Math.max(
+                  0,
+                  activeWelcomeBackBonus.bonusCheckInsRemaining - 1
+                ),
+                catchUpDamageBonus: 2,
+                reducedCounterattack: true,
+              }
+            : null,
         },
-        message: result.hit
-          ? wasCounterattacked
-            ? `Hit! You dealt ${result.damage} damage but the monster counterattacked for ${counterattackDamage} damage!`
-            : `Hit! You dealt ${result.damage} damage!`
-          : "Miss! Better luck tomorrow!",
+        message: actionMessage,
       } as ApiResponse,
       { status: 201 }
     );
