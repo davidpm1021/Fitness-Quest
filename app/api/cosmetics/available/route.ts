@@ -21,27 +21,27 @@ export async function GET(request: NextRequest) {
     const allCosmetics = await prisma.cosmetic_items.findMany({
       orderBy: [
         { category: "asc" },
-        { sortOrder: "asc" },
+        { sort_order: "asc" },
       ],
     });
 
     // Get user's unlocked cosmetics
     const unlockedCosmetics = await prisma.user_cosmetic_unlocks.findMany({
-      where: { userId },
-      select: { cosmeticItemId: true },
+      where: { user_id: userId },
+      select: { cosmetic_item_id: true },
     });
 
-    const unlockedIds = new Set(unlockedCosmetics.map((u) => u.cosmeticItemId));
+    const unlockedIds = new Set(unlockedCosmetics.map((u) => u.cosmetic_item_id));
 
     // Get user's stats for unlock calculations
     const user = await prisma.users.findUnique({
       where: { id: userId },
       include: {
-        partyMemberships: {
+        party_members: {
           select: {
-            currentStreak: true,
-            focusPoints: true,
-            checkIns: {
+            current_streak: true,
+            focus_points: true,
+            check_ins: {
               select: { id: true },
             },
           },
@@ -57,24 +57,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate user's stats
-    const totalCheckIns = user.partyMemberships.reduce(
-      (sum, pm) => sum + pm.checkIns.length,
+    const totalCheckIns = user.party_members.reduce(
+      (sum, pm) => sum + pm.check_ins.length,
       0
     );
     const maxStreak = Math.max(
-      ...user.partyMemberships.map((pm) => pm.currentStreak),
+      ...user.party_members.map((pm) => pm.current_streak),
       0
     );
-    const totalFocusPoints = user.partyMemberships.reduce(
-      (sum, pm) => sum + pm.focusPoints,
+    const totalFocusPoints = user.party_members.reduce(
+      (sum, pm) => sum + pm.focus_points,
       0
     );
 
     // Get monsters defeated
     const monstersDefeated = await prisma.check_ins.count({
       where: {
-        partyMember: {
-          userId,
+        party_members: {
+          user_id: userId,
         },
       },
     });
@@ -84,25 +84,25 @@ export async function GET(request: NextRequest) {
       const isUnlocked = unlockedIds.has(cosmetic.id);
       let canUnlock = false;
       let progress = 0;
-      let progressMax = cosmetic.unlockThreshold;
+      let progressMax = cosmetic.unlock_threshold;
 
-      if (!isUnlocked && !cosmetic.isStarterItem) {
-        switch (cosmetic.unlockConditionType) {
+      if (!isUnlocked && !cosmetic.is_starter_item) {
+        switch (cosmetic.unlock_condition_type) {
           case "CHECK_IN_COUNT":
             progress = totalCheckIns;
-            canUnlock = totalCheckIns >= cosmetic.unlockThreshold;
+            canUnlock = totalCheckIns >= cosmetic.unlock_threshold;
             break;
           case "STREAK_DAYS":
             progress = maxStreak;
-            canUnlock = maxStreak >= cosmetic.unlockThreshold;
+            canUnlock = maxStreak >= cosmetic.unlock_threshold;
             break;
           case "MONSTERS_DEFEATED":
             progress = monstersDefeated;
-            canUnlock = monstersDefeated >= cosmetic.unlockThreshold;
+            canUnlock = monstersDefeated >= cosmetic.unlock_threshold;
             break;
           case "FOCUS_POINTS":
             progress = totalFocusPoints;
-            canUnlock = totalFocusPoints >= cosmetic.unlockThreshold;
+            canUnlock = totalFocusPoints >= cosmetic.unlock_threshold;
             break;
           case "STARTER_ITEM":
             canUnlock = false; // Starter items are auto-unlocked
@@ -115,11 +115,11 @@ export async function GET(request: NextRequest) {
         name: cosmetic.name,
         description: cosmetic.description,
         category: cosmetic.category,
-        spriteSheetPath: cosmetic.spriteSheetPath,
-        unlockConditionType: cosmetic.unlockConditionType,
-        unlockThreshold: cosmetic.unlockThreshold,
-        isStarterItem: cosmetic.isStarterItem,
-        isUnlocked: isUnlocked || cosmetic.isStarterItem,
+        spriteSheetPath: cosmetic.sprite_sheet_path,
+        unlockConditionType: cosmetic.unlock_condition_type,
+        unlockThreshold: cosmetic.unlock_threshold,
+        isStarterItem: cosmetic.is_starter_item,
+        isUnlocked: isUnlocked || cosmetic.is_starter_item,
         canUnlock,
         progress,
         progressMax,

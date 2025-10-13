@@ -49,25 +49,25 @@ export async function POST(request: NextRequest) {
 
     // Get user's party membership
     const partyMember = await prisma.party_members.findFirst({
-      where: { userId: user.userId },
+      where: { user_id: user.userId },
       include: {
-        party: {
+        parties: {
           include: {
-            members: {
+            party_members: {
               select: {
                 id: true,
-                currentHp: true,
-                maxHp: true,
-                currentDefense: true,
-                currentStreak: true,
-                focusPoints: true,
+                current_hp: true,
+                max_hp: true,
+                current_defense: true,
+                current_streak: true,
+                focus_points: true,
               },
             },
           },
         },
-        welcomeBackBonuses: {
+        welcome_back_bonuses: {
           where: {
-            isActive: true,
+            is_active: true,
           },
         },
       },
@@ -89,13 +89,13 @@ export async function POST(request: NextRequest) {
 
     const existingCheckIn = await prisma.check_ins.findFirst({
       where: {
-        partyMemberId: partyMember.id,
-        checkInDate: today,
+        party_member_id: partyMember.id,
+        check_in_date: today,
       },
       include: {
-        goalCheckIns: {
+        goal_check_ins: {
           include: {
-            goal: true,
+            goals: true,
           },
         },
       },
@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
     // Get user's goals
     const goals = await prisma.goals.findMany({
       where: {
-        userId: user.userId,
-        isActive: true,
+        user_id: user.userId,
+        is_active: true,
       },
     });
 
@@ -134,11 +134,11 @@ export async function POST(request: NextRequest) {
       let wasMet = false;
       if (checkIn.isRestDay) {
         wasMet = true; // Rest days count as met
-      } else if (checkIn.actualValue !== null && goal.targetValue !== null) {
+      } else if (checkIn.actualValue !== null && goal.target_value !== null) {
         wasMet = evaluateGoal(
           checkIn.actualValue,
-          goal.targetValue,
-          goal.flexPercentage
+          goal.target_value,
+          goal.flex_percentage
         );
       }
 
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       return {
         goalId: goal.id,
         actualValue: checkIn.actualValue,
-        targetValue: goal.targetValue,
+        targetValue: goal.target_value,
         wasMet,
       };
     });
@@ -160,20 +160,20 @@ export async function POST(request: NextRequest) {
 
     const previousCheckIn = await prisma.check_ins.findFirst({
       where: {
-        partyMemberId: partyMember.id,
-        checkInDate: yesterday,
+        party_member_id: partyMember.id,
+        check_in_date: yesterday,
       },
     });
 
     // Update streak
     const newStreak = updateStreak(
       !!previousCheckIn,
-      partyMember.currentStreak
+      partyMember.current_streak
     );
 
     // Validate combat action requirements
     if (selectedAction === "HEROIC_STRIKE") {
-      if (partyMember.focusPoints < 3) {
+      if (partyMember.focus_points < 3) {
         return NextResponse.json(
           {
             success: false,
@@ -196,34 +196,34 @@ export async function POST(request: NextRequest) {
     // Count how many party members have checked in today (before this check-in)
     const todayCheckIns = await prisma.check_ins.count({
       where: {
-        partyId: partyMember.partyId,
-        checkInDate: today,
+        party_id: partyMember.party_id,
+        check_in_date: today,
       },
     });
 
     // Get active monster for the party
     const activeMonster = await prisma.party_monsters.findFirst({
       where: {
-        partyId: partyMember.partyId,
-        isActive: true,
+        party_id: partyMember.party_id,
+        is_active: true,
       },
       include: {
-        monster: true,
+        monsters: true,
       },
     });
 
     // Check for active welcome back bonus
     const activeWelcomeBackBonus =
-      partyMember.welcomeBackBonuses && partyMember.welcomeBackBonuses.length > 0
-        ? partyMember.welcomeBackBonuses[0]
+      partyMember.welcome_back_bonuses && partyMember.welcome_back_bonuses.length > 0
+        ? partyMember.welcome_back_bonuses[0]
         : null;
 
     // Calculate attack bonuses
     const bonuses = calculateAttackBonuses({
       goalsMet,
       currentStreak: newStreak,
-      currentHp: partyMember.currentHp,
-      maxHp: partyMember.maxHp,
+      currentHp: partyMember.current_hp,
+      maxHp: partyMember.max_hp,
       checkedInCount: todayCheckIns,
     });
 
@@ -254,8 +254,8 @@ export async function POST(request: NextRequest) {
         focusEarned = 1;
 
         // Find a random teammate with less than max HP
-        const injuredTeammates = partyMember.party.members.filter(
-          (m) => m.id !== partyMember.id && m.currentHp < m.maxHp
+        const injuredTeammates = partyMember.parties.party_members.filter(
+          (m) => m.id !== partyMember.id && m.current_hp < m.max_hp
         );
 
         if (injuredTeammates.length > 0) {
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use active monster's AC or default to 12
-    const monsterAC = activeMonster?.monster.armorClass || 12;
+    const monsterAC = activeMonster?.monsters.armor_class || 12;
 
     let result;
     if (autoHit) {
@@ -308,7 +308,7 @@ export async function POST(request: NextRequest) {
     let counterattackDamage = 0;
     if (activeMonster && result.hit) {
       // Apply welcome back bonus: reduce counterattack chance by 50%
-      let counterattackChance = activeMonster.monster.counterattackChance;
+      let counterattackChance = activeMonster.monsters.counterattack_chance;
       if (activeWelcomeBackBonus) {
         counterattackChance = Math.floor(counterattackChance * 0.5);
       }
@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
       wasCounterattacked = rollCounterattack(counterattackChance, newDefense);
       if (wasCounterattacked) {
         counterattackDamage = calculateCounterattackDamage(
-          activeMonster.monster.baseDamage
+          activeMonster.monsters.base_damage
         );
 
         // DEFEND action also reduces damage taken by 50%
@@ -339,59 +339,59 @@ export async function POST(request: NextRequest) {
       // Create the check-in
       const checkIn = await tx.check_ins.create({
         data: {
-          partyMemberId: partyMember.id,
-          partyId: partyMember.partyId,
-          checkInDate: today,
-          goalsMet,
-          isRestDay: goalCheckIns.every((g) => g.isRestDay),
-          attackRoll,
-          attackBonus: bonuses.totalBonus,
-          damageDealt: result.damage,
-          wasHitByMonster: wasCounterattacked,
-          damageTaken: counterattackDamage,
-          combatAction: selectedAction,
-          focusEarned: focusEarned,
+          party_member_id: partyMember.id,
+          party_id: partyMember.party_id,
+          check_in_date: today,
+          goals_met: goalsMet,
+          is_rest_day: goalCheckIns.every((g) => g.isRestDay),
+          attack_roll: attackRoll,
+          attack_bonus: bonuses.totalBonus,
+          damage_dealt: result.damage,
+          was_hit_by_monster: wasCounterattacked,
+          damage_taken: counterattackDamage,
+          combat_action: selectedAction,
+          focus_earned: focusEarned,
         },
       });
 
       // Create goal check-in records
       await tx.goal_check_ins.createMany({
         data: goalResults.map((gr) => ({
-          checkInId: checkIn.id,
-          goalId: gr.goalId,
-          actualValue: gr.actualValue,
-          targetValue: gr.targetValue,
-          wasMet: gr.wasMet,
+          check_in_id: checkIn.id,
+          goal_id: gr.goalId,
+          actual_value: gr.actualValue,
+          target_value: gr.targetValue,
+          was_met: gr.wasMet,
         })),
       });
 
       // Calculate new focus points
-      let newFocus = partyMember.focusPoints + focusEarned;
+      let newFocus = partyMember.focus_points + focusEarned;
       if (selectedAction === "HEROIC_STRIKE") {
         newFocus -= 3; // Deduct focus cost
       }
 
       // Update party member stats
-      const newHp = Math.max(0, partyMember.currentHp - counterattackDamage);
+      const newHp = Math.max(0, partyMember.current_hp - counterattackDamage);
       await tx.party_members.update({
         where: { id: partyMember.id },
         data: {
-          currentStreak: newStreak,
-          currentDefense: newDefense,
-          currentHp: newHp,
-          focusPoints: newFocus,
+          current_streak: newStreak,
+          current_defense: newDefense,
+          current_hp: newHp,
+          focus_points: newFocus,
         },
       });
 
       // Apply DEFEND defense bonus to all party members
       if (selectedAction === "DEFEND") {
-        const partyMemberIds = partyMember.party.members.map((m) => m.id);
+        const partyMemberIds = partyMember.parties.party_members.map((m) => m.id);
         await tx.party_members.updateMany({
           where: {
             id: { in: partyMemberIds },
           },
           data: {
-            currentDefense: {
+            current_defense: {
               increment: 5,
             },
           },
@@ -404,11 +404,11 @@ export async function POST(request: NextRequest) {
           where: { id: healingTarget },
         });
         if (teammate) {
-          const newTeammateHp = Math.min(teammate.maxHp, teammate.currentHp + healingAmount);
+          const newTeammateHp = Math.min(teammate.max_hp, teammate.current_hp + healingAmount);
           await tx.party_members.update({
             where: { id: healingTarget },
             data: {
-              currentHp: newTeammateHp,
+              current_hp: newTeammateHp,
             },
           });
         }
@@ -416,31 +416,31 @@ export async function POST(request: NextRequest) {
 
       // Update welcome back bonus - decrement remaining check-ins
       if (activeWelcomeBackBonus) {
-        const newRemainingCheckIns = activeWelcomeBackBonus.bonusCheckInsRemaining - 1;
+        const newRemainingCheckIns = activeWelcomeBackBonus.bonus_check_ins_remaining - 1;
         const isStillActive = newRemainingCheckIns > 0;
 
         await tx.welcome_back_bonuses.update({
           where: { id: activeWelcomeBackBonus.id },
           data: {
-            bonusCheckInsRemaining: newRemainingCheckIns,
-            isActive: isStillActive,
-            expiresAt: !isStillActive ? new Date() : undefined,
+            bonus_check_ins_remaining: newRemainingCheckIns,
+            is_active: isStillActive,
+            expires_at: !isStillActive ? new Date() : undefined,
           },
         });
       }
 
       // Update monster HP if hit and detect milestones
       if (activeMonster && result.hit) {
-        const oldHp = activeMonster.monster.currentHp;
+        const oldHp = activeMonster.monsters.current_hp;
         const newMonsterHp = Math.max(
           0,
-          activeMonster.monster.currentHp - result.damage
+          activeMonster.monsters.current_hp - result.damage
         );
         const isDefeated = newMonsterHp === 0;
 
         // Calculate HP percentages
-        const oldPercentage = (oldHp / activeMonster.monster.maxHp) * 100;
-        const newPercentage = (newMonsterHp / activeMonster.monster.maxHp) * 100;
+        const oldPercentage = (oldHp / activeMonster.monsters.max_hp) * 100;
+        const newPercentage = (newMonsterHp / activeMonster.monsters.max_hp) * 100;
 
         // Check if we crossed a milestone (75%, 50%, 25%)
         const milestones: Array<75 | 50 | 25> = [75, 50, 25];
@@ -452,11 +452,11 @@ export async function POST(request: NextRequest) {
         }
 
         await tx.monsters.update({
-          where: { id: activeMonster.monster.id },
+          where: { id: activeMonster.monsters.id },
           data: {
-            currentHp: newMonsterHp,
-            isDefeated,
-            defeatedAt: isDefeated ? new Date() : undefined,
+            current_hp: newMonsterHp,
+            is_defeated: isDefeated,
+            defeated_at: isDefeated ? new Date() : undefined,
           },
         });
 
@@ -464,7 +464,7 @@ export async function POST(request: NextRequest) {
         if (isDefeated) {
           await tx.party_monsters.update({
             where: { id: activeMonster.id },
-            data: { isActive: false },
+            data: { is_active: false },
           });
           monsterWasDefeated = true;
         }
@@ -477,7 +477,7 @@ export async function POST(request: NextRequest) {
     if (monsterWasDefeated && activeMonster) {
       try {
         // Calculate days to defeat
-        const monsterCreatedDate = new Date(activeMonster.monster.createdAt);
+        const monsterCreatedDate = new Date(activeMonster.monsters.created_at);
         monsterCreatedDate.setHours(0, 0, 0, 0);
         const daysToDefeat = Math.max(
           1,
@@ -485,11 +485,11 @@ export async function POST(request: NextRequest) {
         );
 
         const victoryResult = await createVictoryReward({
-          partyId: partyMember.partyId,
-          monsterId: activeMonster.monster.id,
+          partyId: partyMember.party_id,
+          monsterId: activeMonster.monsters.id,
           daysToDefeat,
-          monsterName: activeMonster.monster.name,
-          monsterType: activeMonster.monster.monsterType,
+          monsterName: activeMonster.monsters.name,
+          monsterType: activeMonster.monsters.monster_type,
         });
 
         victoryRewardId = victoryResult.victoryReward.id;
@@ -502,13 +502,13 @@ export async function POST(request: NextRequest) {
     // Invalidate party dashboard cache for all party members after check-in
     try {
       const allPartyMembers = await prisma.party_members.findMany({
-        where: { partyId: partyMember.partyId },
-        select: { userId: true },
+        where: { party_id: partyMember.party_id },
+        select: { user_id: true },
       });
 
       // Clear cache for all party members since their party data changed
       allPartyMembers.forEach((pm) => {
-        cache.delete(CacheKeys.partyDashboard(pm.userId));
+        cache.delete(CacheKeys.partyDashboard(pm.user_id));
       });
     } catch (error) {
       console.error("Error invalidating cache:", error);
@@ -558,20 +558,20 @@ export async function POST(request: NextRequest) {
             action: selectedAction,
             focusEarned: focusEarned,
             focusCost: selectedAction === "HEROIC_STRIKE" ? 3 : 0,
-            newFocusTotal: partyMember.focusPoints + focusEarned - (selectedAction === "HEROIC_STRIKE" ? 3 : 0),
+            newFocusTotal: partyMember.focus_points + focusEarned - (selectedAction === "HEROIC_STRIKE" ? 3 : 0),
             healingTarget: healingTarget,
             healingAmount: healingAmount,
             defenseBonus: selectedAction === "DEFEND" ? 5 : 0,
           },
           monster: activeMonster
             ? {
-                name: activeMonster.monster.name,
-                currentHp: activeMonster.monster.currentHp - (result.hit ? result.damage : 0),
-                maxHp: activeMonster.monster.maxHp,
+                name: activeMonster.monsters.name,
+                currentHp: activeMonster.monsters.current_hp - (result.hit ? result.damage : 0),
+                maxHp: activeMonster.monsters.max_hp,
               }
             : null,
           monsterDefeated: activeMonster
-            ? activeMonster.monster.currentHp - result.damage <= 0 && result.hit
+            ? activeMonster.monsters.current_hp - result.damage <= 0 && result.hit
             : false,
           victoryRewardId: victoryRewardId,
           milestoneCrossed: milestoneCrossed,
@@ -581,7 +581,7 @@ export async function POST(request: NextRequest) {
             ? {
                 daysRemaining: Math.max(
                   0,
-                  activeWelcomeBackBonus.bonusCheckInsRemaining - 1
+                  activeWelcomeBackBonus.bonus_check_ins_remaining - 1
                 ),
                 catchUpDamageBonus: 5,
                 reducedCounterattack: true,
@@ -616,7 +616,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get user's party membership
     const partyMember = await prisma.party_members.findFirst({
-      where: { userId: user.userId },
+      where: { user_id: user.userId },
     });
 
     if (!partyMember) {
@@ -629,12 +629,12 @@ export async function GET(request: NextRequest) {
     // Get recent check-ins for the party
     const checkIns = await prisma.check_ins.findMany({
       where: {
-        partyId: partyMember.partyId,
+        party_id: partyMember.party_id,
       },
       include: {
-        partyMember: {
+        party_members: {
           include: {
-            user: {
+            users: {
               select: {
                 username: true,
                 display_name: true,
@@ -642,12 +642,12 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        goalCheckIns: {
+        goal_check_ins: {
           include: {
-            goal: {
+            goals: {
               select: {
                 name: true,
-                goalType: true,
+                goal_type: true,
               },
             },
           },

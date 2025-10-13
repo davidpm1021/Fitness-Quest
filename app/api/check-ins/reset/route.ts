@@ -21,7 +21,7 @@ export async function DELETE(request: NextRequest) {
   try {
     // Get user's party membership
     const partyMember = await prisma.party_members.findFirst({
-      where: { userId: user.userId },
+      where: { user_id: user.userId },
     });
 
     if (!partyMember) {
@@ -41,23 +41,23 @@ export async function DELETE(request: NextRequest) {
     // Find today's check-ins
     const checkIns = await prisma.check_ins.findMany({
       where: {
-        partyMemberId: partyMember.id,
-        checkInDate: today,
+        party_member_id: partyMember.id,
+        check_in_date: today,
       },
     });
 
     // Delete goal check-ins first (foreign key)
     for (const checkIn of checkIns) {
       await prisma.goal_check_ins.deleteMany({
-        where: { checkInId: checkIn.id },
+        where: { check_in_id: checkIn.id },
       });
     }
 
     // Delete check-ins
     const result = await prisma.check_ins.deleteMany({
       where: {
-        partyMemberId: partyMember.id,
-        checkInDate: today,
+        party_member_id: partyMember.id,
+        check_in_date: today,
       },
     });
 

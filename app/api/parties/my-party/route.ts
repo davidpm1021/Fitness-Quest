@@ -31,36 +31,36 @@ export async function GET(request: NextRequest) {
     // Find user's party membership with optimized single query
     const membership = await prisma.party_members.findFirst({
       where: {
-        userId: user.userId,
+        user_id: user.userId,
       },
       select: {
         id: true,
-        currentHp: true,
-        maxHp: true,
-        currentDefense: true,
-        currentStreak: true,
-        joinedAt: true,
-        partyId: true,
-        party: {
+        current_hp: true,
+        max_hp: true,
+        current_defense: true,
+        current_streak: true,
+        joined_at: true,
+        party_id: true,
+        parties: {
           select: {
             id: true,
             name: true,
-            inviteCode: true,
-            checkInStartHour: true,
-            checkInEndHour: true,
-            morningReportHour: true,
-            activeMonsterId: true,
+            invite_code: true,
+            check_in_start_hour: true,
+            check_in_end_hour: true,
+            morning_report_hour: true,
+            active_monster_id: true,
             created_at: true,
             updated_at: true,
-            members: {
+            party_members: {
               select: {
                 id: true,
-                currentHp: true,
-                maxHp: true,
-                currentDefense: true,
-                currentStreak: true,
-                focusPoints: true,
-                user: {
+                current_hp: true,
+                max_hp: true,
+                current_defense: true,
+                current_streak: true,
+                focus_points: true,
+                users: {
                   select: {
                     id: true,
                     username: true,
@@ -69,26 +69,26 @@ export async function GET(request: NextRequest) {
                 },
               },
               orderBy: {
-                joinedAt: "asc",
+                joined_at: "asc",
               },
             },
-            partyMonsters: {
+            party_monsters: {
               where: {
-                isActive: true,
+                is_active: true,
               },
               select: {
-                monster: {
+                monsters: {
                   select: {
                     id: true,
                     name: true,
                     description: true,
-                    monsterType: true,
-                    maxHp: true,
-                    currentHp: true,
-                    armorClass: true,
-                    baseDamage: true,
-                    counterattackChance: true,
-                    isDefeated: true,
+                    monster_type: true,
+                    max_hp: true,
+                    current_hp: true,
+                    armor_class: true,
+                    base_damage: true,
+                    counterattack_chance: true,
+                    is_defeated: true,
                   },
                 },
               },
@@ -108,31 +108,31 @@ export async function GET(request: NextRequest) {
     }
 
     // Extract active monster from optimized query result
-    const activeMonster = membership.party.partyMonsters[0]?.monster || null;
+    const activeMonster = membership.parties.party_monsters[0]?.monsters || null;
 
     const responseData = {
       success: true,
       data: {
         party: {
-          id: membership.party.id,
-          name: membership.party.name,
-          inviteCode: membership.party.inviteCode,
-          checkInStartHour: membership.party.checkInStartHour,
-          checkInEndHour: membership.party.checkInEndHour,
-          morningReportHour: membership.party.morningReportHour,
-          activeMonsterId: membership.party.activeMonsterId,
-          created_at: membership.party.createdAt,
-          updated_at: membership.party.updatedAt,
-          members: membership.party.members,
+          id: membership.parties.id,
+          name: membership.parties.name,
+          inviteCode: membership.parties.invite_code,
+          checkInStartHour: membership.parties.check_in_start_hour,
+          checkInEndHour: membership.parties.check_in_end_hour,
+          morningReportHour: membership.parties.morning_report_hour,
+          activeMonsterId: membership.parties.active_monster_id,
+          created_at: membership.parties.created_at,
+          updated_at: membership.parties.updated_at,
+          members: membership.parties.party_members,
           activeMonster,
         },
         membership: {
           id: membership.id,
-          currentHp: membership.currentHp,
-          maxHp: membership.maxHp,
-          currentDefense: membership.currentDefense,
-          currentStreak: membership.currentStreak,
-          joinedAt: membership.joinedAt,
+          currentHp: membership.current_hp,
+          maxHp: membership.max_hp,
+          currentDefense: membership.current_defense,
+          currentStreak: membership.current_streak,
+          joinedAt: membership.joined_at,
         },
       },
     } as ApiResponse;

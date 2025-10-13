@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
     // Check if user is already in a party
     const existingMembership = await prisma.party_members.findFirst({
       where: {
-        userId: user.userId,
+        user_id: user.userId,
       },
       include: {
-        party: true,
+        parties: true,
       },
     });
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `You are already in party "${existingMembership.party.name}"`,
+          error: `You are already in party "${existingMembership.parties.name}"`,
         } as ApiResponse,
         { status: 400 }
       );
@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
     // Find party by invite code
     const party = await prisma.parties.findUnique({
       where: {
-        inviteCode: inviteCode.toUpperCase(),
+        invite_code: inviteCode.toUpperCase(),
       },
       include: {
-        members: true,
+        party_members: true,
       },
     });
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check party size limit (2-8 members)
-    if (party.members.length >= 8) {
+    if (party.party_members.length >= 8) {
       return NextResponse.json(
         {
           success: false,
@@ -88,12 +88,12 @@ export async function POST(request: NextRequest) {
     // Add user to party
     const partyMember = await prisma.party_members.create({
       data: {
-        partyId: party.id,
-        userId: user.userId,
-        currentHp: 100,
-        maxHp: 100,
-        currentDefense: 0,
-        currentStreak: 0,
+        party_id: party.id,
+        user_id: user.userId,
+        current_hp: 100,
+        max_hp: 100,
+        current_defense: 0,
+        current_streak: 0,
       },
     });
 
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           party: {
             id: party.id,
             name: party.name,
-            memberCount: party.members.length + 1,
+            memberCount: party.party_members.length + 1,
           },
           membership: partyMember,
         },

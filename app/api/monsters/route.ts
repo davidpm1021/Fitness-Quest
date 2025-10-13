@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get user's party membership
     const partyMember = await prisma.party_members.findFirst({
-      where: { userId: user.userId },
+      where: { user_id: user.userId },
     });
 
     if (!partyMember) {
@@ -37,11 +37,11 @@ export async function GET(request: NextRequest) {
     // Check if party has an active monster
     const activeMonster = await prisma.party_monsters.findFirst({
       where: {
-        partyId: partyMember.partyId,
-        isActive: true,
+        party_id: partyMember.party_id,
+        is_active: true,
       },
       include: {
-        monster: true,
+        monsters: true,
       },
     });
 
@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
     // This gives players 3 strategic choices
     const tankMonster = await prisma.monsters.findFirst({
       where: {
-        isDefeated: false,
-        monsterType: "TANK",
+        is_defeated: false,
+        monster_type: "TANK",
       },
       orderBy: {
         created_at: "asc",
@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
 
     const balancedMonster = await prisma.monsters.findFirst({
       where: {
-        isDefeated: false,
-        monsterType: "BALANCED",
+        is_defeated: false,
+        monster_type: "BALANCED",
       },
       orderBy: {
         created_at: "asc",
@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
 
     const glassCannon = await prisma.monsters.findFirst({
       where: {
-        isDefeated: false,
-        monsterType: "GLASS_CANNON",
+        is_defeated: false,
+        monster_type: "GLASS_CANNON",
       },
       orderBy: {
         created_at: "asc",
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        activeMonster: activeMonster?.monster || null,
+        activeMonster: activeMonster?.monsters || null,
         availableMonsters,
       },
     } as ApiResponse);
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's party membership
     const partyMember = await prisma.party_members.findFirst({
-      where: { userId: user.userId },
+      where: { user_id: user.userId },
     });
 
     if (!partyMember) {
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
       where: { id: monsterId },
     });
 
-    if (!monster || monster.isDefeated) {
+    if (!monster || monster.is_defeated) {
       return NextResponse.json(
         {
           success: false,
@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
     // Check if party already has an active monster
     const existingActive = await prisma.party_monsters.findFirst({
       where: {
-        partyId: partyMember.partyId,
-        isActive: true,
+        party_id: partyMember.party_id,
+        is_active: true,
       },
     });
 
@@ -165,12 +165,12 @@ export async function POST(request: NextRequest) {
     // Create party monster relationship and activate it
     const partyMonster = await prisma.party_monsters.create({
       data: {
-        partyId: partyMember.partyId,
-        monsterId: monster.id,
-        isActive: true,
+        party_id: partyMember.party_id,
+        monster_id: monster.id,
+        is_active: true,
       },
       include: {
-        monster: true,
+        monsters: true,
       },
     });
 

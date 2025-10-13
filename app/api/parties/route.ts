@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
     // Check if user is already in a party
     const existingMembership = await prisma.party_members.findFirst({
       where: {
-        userId: user.userId,
+        user_id: user.userId,
       },
       include: {
-        party: true,
+        parties: true,
       },
     });
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `You are already in party "${existingMembership.party.name}"`,
+          error: `You are already in party "${existingMembership.parties.name}"`,
         } as ApiResponse,
         { status: 400 }
       );

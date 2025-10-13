@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
     // Check if already unlocked
     const existing = await prisma.user_cosmetic_unlocks.findUnique({
       where: {
-        userId_cosmeticItemId: {
-          userId,
-          cosmeticItemId,
+        user_id_cosmetic_item_id: {
+          user_id: userId,
+          cosmetic_item_id: cosmeticItemId,
         },
       },
     });
@@ -61,11 +61,11 @@ export async function POST(request: NextRequest) {
     const user = await prisma.users.findUnique({
       where: { id: userId },
       include: {
-        partyMemberships: {
+        party_members: {
           select: {
-            currentStreak: true,
-            focusPoints: true,
-            checkIns: {
+            current_streak: true,
+            focus_points: true,
+            check_ins: {
               select: { id: true },
             },
           },
@@ -81,24 +81,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate user's stats
-    const totalCheckIns = user.partyMemberships.reduce(
-      (sum, pm) => sum + pm.checkIns.length,
+    const totalCheckIns = user.party_members.reduce(
+      (sum, pm) => sum + pm.check_ins.length,
       0
     );
     const maxStreak = Math.max(
-      ...user.partyMemberships.map((pm) => pm.currentStreak),
+      ...user.party_members.map((pm) => pm.current_streak),
       0
     );
-    const totalFocusPoints = user.partyMemberships.reduce(
-      (sum, pm) => sum + pm.focusPoints,
+    const totalFocusPoints = user.party_members.reduce(
+      (sum, pm) => sum + pm.focus_points,
       0
     );
 
     // Get monsters defeated
     const monstersDefeated = await prisma.check_ins.count({
       where: {
-        partyMember: {
-          userId,
+        party_members: {
+          user_id: userId,
         },
       },
     });
@@ -107,22 +107,22 @@ export async function POST(request: NextRequest) {
     let meetsRequirements = false;
     let errorMessage = "";
 
-    switch (cosmetic.unlockConditionType) {
+    switch (cosmetic.unlock_condition_type) {
       case "CHECK_IN_COUNT":
-        meetsRequirements = totalCheckIns >= cosmetic.unlockThreshold;
-        errorMessage = `Need ${cosmetic.unlockThreshold} check-ins (you have ${totalCheckIns})`;
+        meetsRequirements = totalCheckIns >= cosmetic.unlock_threshold;
+        errorMessage = `Need ${cosmetic.unlock_threshold} check-ins (you have ${totalCheckIns})`;
         break;
       case "STREAK_DAYS":
-        meetsRequirements = maxStreak >= cosmetic.unlockThreshold;
-        errorMessage = `Need ${cosmetic.unlockThreshold} day streak (you have ${maxStreak})`;
+        meetsRequirements = maxStreak >= cosmetic.unlock_threshold;
+        errorMessage = `Need ${cosmetic.unlock_threshold} day streak (you have ${maxStreak})`;
         break;
       case "MONSTERS_DEFEATED":
-        meetsRequirements = monstersDefeated >= cosmetic.unlockThreshold;
-        errorMessage = `Need ${cosmetic.unlockThreshold} monsters defeated (you have ${monstersDefeated})`;
+        meetsRequirements = monstersDefeated >= cosmetic.unlock_threshold;
+        errorMessage = `Need ${cosmetic.unlock_threshold} monsters defeated (you have ${monstersDefeated})`;
         break;
       case "FOCUS_POINTS":
-        meetsRequirements = totalFocusPoints >= cosmetic.unlockThreshold;
-        errorMessage = `Need ${cosmetic.unlockThreshold} focus points (you have ${totalFocusPoints})`;
+        meetsRequirements = totalFocusPoints >= cosmetic.unlock_threshold;
+        errorMessage = `Need ${cosmetic.unlock_threshold} focus points (you have ${totalFocusPoints})`;
         break;
       case "STARTER_ITEM":
         meetsRequirements = true; // Starter items can always be unlocked
@@ -139,8 +139,8 @@ export async function POST(request: NextRequest) {
     // Unlock the cosmetic
     const unlock = await prisma.user_cosmetic_unlocks.create({
       data: {
-        userId,
-        cosmeticItemId,
+        user_id: userId,
+        cosmetic_item_id: cosmeticItemId,
       },
     });
 

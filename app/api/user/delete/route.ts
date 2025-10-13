@@ -48,7 +48,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, userData.passwordHash);
+    const isValidPassword = await bcrypt.compare(password, userData.password_hash);
 
     if (!isValidPassword) {
       return NextResponse.json(
@@ -64,13 +64,13 @@ export async function DELETE(req: NextRequest) {
     // Prisma cascade delete will handle related records
     await prisma.$transaction(async (tx) => {
       // Delete character appearance
-      await tx.characterAppearance.deleteMany({
-        where: { userId: userData.id },
+      await tx.character_appearances.deleteMany({
+        where: { user_id: userData.id },
       });
 
       // Delete goals and their check-ins
-      const goals = await tx.goal.findMany({
-        where: { userId: userData.id },
+      const goals = await tx.goals.findMany({
+        where: { user_id: userData.id },
         select: { id: true },
       });
 
@@ -78,57 +78,57 @@ export async function DELETE(req: NextRequest) {
         const goalIds = goals.map((g) => g.id);
 
         // Delete goal check-ins
-        await tx.goalCheckIn.deleteMany({
-          where: { goalId: { in: goalIds } },
+        await tx.goal_check_ins.deleteMany({
+          where: { goal_id: { in: goalIds } },
         });
 
         // Delete goals
-        await tx.goal.deleteMany({
-          where: { userId: userData.id },
+        await tx.goals.deleteMany({
+          where: { user_id: userData.id },
         });
       }
 
       // Get party memberships
-      const partyMemberships = await tx.partyMember.findMany({
-        where: { userId: userData.id },
-        select: { id: true, partyId: true },
+      const partyMemberships = await tx.party_members.findMany({
+        where: { user_id: userData.id },
+        select: { id: true, party_id: true },
       });
 
       if (partyMemberships.length > 0) {
         const memberIds = partyMemberships.map((m) => m.id);
 
         // Delete check-ins associated with this user's party memberships
-        await tx.checkIn.deleteMany({
-          where: { partyMemberId: { in: memberIds } },
+        await tx.check_ins.deleteMany({
+          where: { party_member_id: { in: memberIds } },
         });
 
         // Delete party memberships
-        await tx.partyMember.deleteMany({
-          where: { userId: userData.id },
+        await tx.party_members.deleteMany({
+          where: { user_id: userData.id },
         });
 
         // Check if any parties are now empty and delete them
         for (const membership of partyMemberships) {
-          const remainingMembers = await tx.partyMember.count({
-            where: { partyId: membership.partyId },
+          const remainingMembers = await tx.party_members.count({
+            where: { party_id: membership.party_id },
           });
 
           if (remainingMembers === 0) {
             // Delete party monsters
-            await tx.partyMonster.deleteMany({
-              where: { partyId: membership.partyId },
+            await tx.party_monsters.deleteMany({
+              where: { party_id: membership.party_id },
             });
 
             // Delete the party
-            await tx.party.delete({
-              where: { id: membership.partyId },
+            await tx.parties.delete({
+              where: { id: membership.party_id },
             });
           }
         }
       }
 
       // Finally, delete the user
-      await tx.user.delete({
+      await tx.users.delete({
         where: { id: userData.id },
       });
     });

@@ -15,7 +15,7 @@ export async function POST(
     // Authenticate user
     const authResult = await authenticateRequest(request);
     if (isErrorResponse(authResult)) {
-      return NextResponse.json(authResult, { status: 401 });
+      return authResult;
     }
 
     const { user } = authResult;

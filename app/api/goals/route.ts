@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
   try {
     const goals = await prisma.goals.findMany({
       where: {
-        userId: user.userId,
-        isActive: true,
+        user_id: user.userId,
+        is_active: true,
       },
       orderBy: {
         created_at: "asc",
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
     // Check user doesn't have more than 5 active goals
     const activeGoalsCount = await prisma.goals.count({
       where: {
-        userId: user.userId,
-        isActive: true,
+        user_id: user.userId,
+        is_active: true,
       },
     });
 
