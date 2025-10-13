@@ -9,6 +9,7 @@ interface HPBarProps {
   showText?: boolean;
   animated?: boolean;
   label?: string;
+  showLabel?: boolean;
   showMilestones?: boolean; // Show milestone markers at 75%, 50%, 25%
   variant?: 'player' | 'enemy';
 }
@@ -20,6 +21,7 @@ export default function HPBar({
   showText = true,
   animated = true,
   label = 'HP',
+  showLabel = true,
   showMilestones = false,
   variant = 'player',
 }: HPBarProps) {
@@ -56,7 +58,7 @@ export default function HPBar({
   return (
     <div className="w-full">
       {/* Label */}
-      {label && (
+      {showLabel && label && (
         <div className={`flex justify-between mb-1 ${textSizes[size]} font-bold`}>
           <span className="text-gray-700 dark:text-gray-300">{label}</span>
           {showText && (
