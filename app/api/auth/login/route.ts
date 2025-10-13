@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
-    const isPasswordValid = await comparePassword(password, user.passwordHash);
+    const isPasswordValid = await comparePassword(password, user.password_hash);
 
     if (!isPasswordValid) {
       return NextResponse.json<ApiResponse>(
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Return user data (without password hash)
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { password_hash, ...userWithoutPassword } = user;
 
     return NextResponse.json<ApiResponse>({
       success: true,
