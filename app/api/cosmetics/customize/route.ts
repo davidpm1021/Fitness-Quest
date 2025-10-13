@@ -1,33 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db/prisma";
-import { verifyToken } from "@/lib/auth/jwt";
+import { prisma } from "@/lib/prisma";
+import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
 
 /**
  * GET /api/cosmetics/customize
  * Returns the user's current sprite customization
  */
 export async function GET(request: NextRequest) {
+  const authResult = await authenticateRequest(request);
+  if (isErrorResponse(authResult)) {
+    return authResult;
+  }
+
+  const { user } = authResult;
+  const userId = user.userId;
+
   try {
-    // Authenticate user
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { success: false, error: "Missing or invalid authorization header" },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const payload = verifyToken(token);
-
-    if (!payload || !payload.userId) {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token" },
-        { status: 401 }
-      );
-    }
-
-    const userId = payload.userId as string;
 
     // Get user's customization
     const customization = await prisma.userSpriteCustomization.findUnique({
@@ -69,27 +57,15 @@ export async function GET(request: NextRequest) {
  * Saves the user's sprite customization
  */
 export async function POST(request: NextRequest) {
+  const authResult = await authenticateRequest(request);
+  if (isErrorResponse(authResult)) {
+    return authResult;
+  }
+
+  const { user } = authResult;
+  const userId = user.userId;
+
   try {
-    // Authenticate user
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { success: false, error: "Missing or invalid authorization header" },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const payload = verifyToken(token);
-
-    if (!payload || !payload.userId) {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token" },
-        { status: 401 }
-      );
-    }
-
-    const userId = payload.userId as string;
 
     // Get customization from request body
     const body = await request.json();
