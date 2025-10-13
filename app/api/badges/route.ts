@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const userId = user.userId;
 
     // Get user's earned badges
-    const earnedBadges = await prisma.badge.findMany({
+    const earnedBadges = await prisma.badges.findMany({
       where: { userId },
       orderBy: { earnedAt: 'desc' },
     });
