@@ -7,7 +7,7 @@ async function setUnlimitedCheckIns() {
     const email = process.argv[2] || 'davidpmartin@gmail.com';
 
     // Find the user
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email }
     });
 

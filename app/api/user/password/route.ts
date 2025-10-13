@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Get current user data
-    const userData = await prisma.user.findUnique({
+    const userData = await prisma.users.findUnique({
       where: { id: user.userId },
       select: {
         id: true,
@@ -76,7 +76,7 @@ export async function PATCH(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.userId },
       data: {
         passwordHash: hashedPassword,

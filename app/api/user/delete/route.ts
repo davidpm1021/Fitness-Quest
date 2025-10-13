@@ -28,7 +28,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Get user data
-    const userData = await prisma.user.findUnique({
+    const userData = await prisma.users.findUnique({
       where: { id: user.userId },
       select: {
         id: true,

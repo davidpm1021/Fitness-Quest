@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Fetch full user data from database
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: authUser.userId },
       select: {
         id: true,

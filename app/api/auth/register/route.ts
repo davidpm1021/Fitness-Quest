@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const existingEmail = await prisma.user.findUnique({
+    const existingEmail = await prisma.users.findUnique({
       where: { email: email.toLowerCase() },
     });
 
@@ -61,14 +61,14 @@ export async function POST(request: NextRequest) {
     let username = emailPrefix;
 
     // Ensure username is unique by appending numbers if needed
-    let usernameExists = await prisma.user.findUnique({
+    let usernameExists = await prisma.users.findUnique({
       where: { username },
     });
 
     let counter = 1;
     while (usernameExists) {
       username = `${emailPrefix}${counter}`;
-      usernameExists = await prisma.user.findUnique({
+      usernameExists = await prisma.users.findUnique({
         where: { username },
       });
       counter++;
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password);
 
     // Create user
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email: email.toLowerCase(),
         passwordHash,

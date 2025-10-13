@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest) {
     if (timezone) updateData.timezone = timezone;
 
     // Update user
-    const user = await prisma.user.update({
+    const user = await prisma.users.update({
       where: { id: authUser.userId },
       data: updateData,
       select: {

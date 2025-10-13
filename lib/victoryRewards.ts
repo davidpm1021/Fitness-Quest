@@ -291,7 +291,7 @@ export async function getVictoryRewardById(victoryId: string) {
   });
 
   // Get MVP user details
-  const mvpUsers = await prisma.user.findMany({
+  const mvpUsers = await prisma.users.findMany({
     where: {
       id: {
         in: [victory.mvpConsistent, victory.mvpSupportive, victory.mvpDamage].filter(

@@ -31,7 +31,7 @@ export async function PATCH(request: NextRequest) {
       updateData.onboardingCompletedAt = onboardingCompletedAt ? new Date() : null;
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: user.userId },
       data: updateData,
       select: {

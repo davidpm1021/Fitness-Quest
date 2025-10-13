@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const unlockedIds = new Set(unlockedCosmetics.map((u) => u.cosmeticItemId));
 
     // Get user's stats for unlock calculations
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       include: {
         partyMemberships: {

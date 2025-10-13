@@ -27,14 +27,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Get current user data
-    const currentUser = await prisma.user.findUnique({
+    const currentUser = await prisma.users.findUnique({
       where: { id: user.userId },
       select: { email: true, username: true },
     });
 
     // Check if email is already used by another user
     if (email !== currentUser?.email) {
-      const existingEmail = await prisma.user.findUnique({
+      const existingEmail = await prisma.users.findUnique({
         where: { email },
       });
 
@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest) {
 
     // Check if username is already used by another user
     if (username !== currentUser?.username) {
-      const existingUsername = await prisma.user.findUnique({
+      const existingUsername = await prisma.users.findUnique({
         where: { username },
       });
 
@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Update user settings
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: user.userId },
       data: {
         email,
