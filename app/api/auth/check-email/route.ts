@@ -41,8 +41,17 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error checking email:', error);
+    // Detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('Detailed error:', { errorMessage, errorStack });
+
     return NextResponse.json(
-      { success: false, error: 'Failed to check email availability' },
+      {
+        success: false,
+        error: 'Failed to check email availability',
+        debug: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     );
   }
