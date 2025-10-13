@@ -27,6 +27,7 @@ export default function AuthenticatedNav({
     { path: "/party/dashboard", label: "PARTY", icon: "👥" },
     { path: "/check-in", label: "CHECK-IN", icon: "⚔️" },
     { path: "/badges", label: "BADGES", icon: "🏆" },
+    { path: "/history", label: "HISTORY", icon: "📊" },
     { path: "/settings", label: "SETTINGS", icon: "⚙️" },
   ];
 
