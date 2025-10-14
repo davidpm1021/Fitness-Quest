@@ -82,14 +82,6 @@ export async function createVictoryReward(stats: VictoryStats) {
     // Get all party member user IDs and current XP
     const partyMembers = await prisma.party_members.findMany({
       where: { party_id: stats.partyId },
-      include: {
-        users: {
-          select: {
-            id: true,
-          },
-        },
-      },
-      // Select xp and level for progression updates
       select: {
         id: true,
         xp: true,
