@@ -58,7 +58,13 @@
       "Bash(git gc:*)",
       "Bash(powershell:*)",
       "Bash(git fetch:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_evaluate",
+      "Bash(dir:*)",
+      "Bash(move ROADMAP-UPDATED.md archive )",
+      "Bash(move GAME-ROADMAP.md archive )",
+      "Bash(move:*)"
     ],
     "deny": [],
     "ask": []

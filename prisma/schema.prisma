@@ -176,6 +176,10 @@ model party_members {
   xp                                                                  Int                    @default(0)
   level                                                               Int                    @default(1)
   skill_points                                                        Int                    @default(0)
+  welcome_back_active                                                 Boolean                @default(false)
+  welcome_back_remaining                                              Int                    @default(0)
+  welcome_back_activated_at                                           DateTime?
+  welcome_back_acknowledged                                           Boolean                @default(false)
   check_ins                                                           check_ins[]
   encouragements                                                      encouragements[]
   healing_actions_healing_actions_from_party_member_idToparty_members healing_actions[]      @relation("healing_actions_from_party_member_idToparty_members")
@@ -188,6 +192,7 @@ model party_members {
   @@unique([party_id, user_id])
   @@index([party_id])
   @@index([user_id])
+  @@index([welcome_back_active])
 }
 
 model party_messages {

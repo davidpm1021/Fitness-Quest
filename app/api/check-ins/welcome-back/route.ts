@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { authenticateRequest, isErrorResponse } from '@/lib/middleware';
-import { ApiResponse } from '@/lib/types';
+import {
+  checkWelcomeBackEligibility,
+  activateWelcomeBackBuff,
+  getWelcomeBackStatus,
+} from '@/lib/welcomeBack';
 
 /**
  * POST /api/check-ins/welcome-back
@@ -20,15 +24,10 @@ export async function POST(request: NextRequest) {
     // Get user's active party member
     const partyMember = await prisma.party_members.findFirst({
       where: { user_id: user.userId },
-      include: {
-        check_ins: {
-          orderBy: { check_in_date: 'desc' },
-          take: 1,
-        },
-        welcome_back_bonuses: {
-          where: { is_active: true },
-          take: 1,
-        },
+      select: {
+        id: true,
+        current_hp: true,
+        max_hp: true,
       },
     });
 
@@ -39,92 +38,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already has active bonuses
-    if (partyMember.welcome_back_bonuses.length > 0) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          hasActiveBonuses: true,
-          bonuses: partyMember.welcome_back_bonuses[0],
-        },
-      });
-    }
+    // Check eligibility
+    const eligibility = await checkWelcomeBackEligibility(partyMember.id);
 
-    // Check last check-in date
-    const lastCheckIn = partyMember.check_ins[0];
-
-    // If no check-ins yet, no need for welcome back
-    if (!lastCheckIn) {
+    if (!eligibility.isEligible) {
       return NextResponse.json({
         success: true,
         data: {
           needsWelcomeBack: false,
-          daysAbsent: 0,
+          daysAbsent: eligibility.daysMissed,
+          reason: eligibility.reason,
         },
       });
     }
 
-    // Calculate days since last check-in
-    const lastCheckInDate = new Date(lastCheckIn.check_in_date);
-    const today = new Date();
-    const daysSinceLastCheckIn = Math.floor(
-      (today.getTime() - lastCheckInDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    // Activate welcome-back buff
+    const result = await activateWelcomeBackBuff(partyMember.id);
 
-    // If user has been gone 3+ days, apply welcome back bonuses
-    if (daysSinceLastCheckIn >= 3) {
-      // Calculate HP to restore (bring them to at least 50% HP, or +20 HP, whichever is more)
-      const hpToRestore = Math.max(
-        20,
-        Math.floor(partyMember.max_hp * 0.5) - partyMember.current_hp
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error || 'Failed to activate welcome-back buff',
+        },
+        { status: 500 }
       );
-
-      // Create welcome back bonus
-      const welcomeBackBonus = await prisma.welcome_back_bonuses.create({
-        data: {
-          id: `wb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          party_member_id: partyMember.id,
-          days_absent: daysSinceLastCheckIn,
-          hp_restored: hpToRestore,
-          bonus_check_ins_remaining: 3, // Bonuses last for 3 check-ins
-          is_active: true,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-        },
-      });
-
-      // Restore HP
-      await prisma.party_members.update({
-        where: { id: partyMember.id },
-        data: {
-          current_hp: Math.min(
-            partyMember.max_hp,
-            partyMember.current_hp + hpToRestore
-          ),
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          needsWelcomeBack: true,
-          daysAbsent: daysSinceLastCheckIn,
-          hpRestored: hpToRestore,
-          bonuses: {
-            reducedCounterattack: true,
-            catchUpDamage: 5, // +5 bonus damage
-            daysRemaining: 3,
-          },
-          bonusRecord: welcomeBackBonus,
-        },
-      });
     }
 
-    // User doesn't need welcome back
+    const healAmount = (result.newHp || partyMember.current_hp) - partyMember.current_hp;
+
     return NextResponse.json({
       success: true,
       data: {
-        needsWelcomeBack: false,
-        daysAbsent: daysSinceLastCheckIn,
+        needsWelcomeBack: true,
+        daysAbsent: eligibility.daysMissed,
+        healAmount,
+        newHp: result.newHp,
+        maxHp: partyMember.max_hp,
+        bonuses: {
+          extraDamage: 5, // +5 bonus damage for 3 check-ins
+          counterattackReduction: 0.5, // 50% reduction for 3 check-ins
+          checkInsRemaining: 3,
+        },
+        message: result.message,
       },
     });
   } catch (error) {
@@ -156,11 +112,8 @@ export async function GET(request: NextRequest) {
     // Get user's active party member
     const partyMember = await prisma.party_members.findFirst({
       where: { user_id: user.userId },
-      include: {
-        welcome_back_bonuses: {
-          where: { is_active: true },
-          take: 1,
-        },
+      select: {
+        id: true,
       },
     });
 
@@ -171,13 +124,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const activeBonus = partyMember.welcome_back_bonuses[0];
+    // Get welcome-back status
+    const status = await getWelcomeBackStatus(partyMember.id);
 
     return NextResponse.json({
       success: true,
       data: {
-        hasActiveBonuses: !!activeBonus,
-        bonuses: activeBonus || null,
+        hasActiveBonuses: status.isActive,
+        checkInsRemaining: status.checkInsRemaining,
+        bonuses: status.isActive ? status.bonuses : null,
       },
     });
   } catch (error) {
