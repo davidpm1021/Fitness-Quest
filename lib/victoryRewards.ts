@@ -1,5 +1,6 @@
 import { checkAndAwardAllBadges } from './badges';
 import { prisma } from '@/lib/prisma';
+import { calculateMonsterDefeatXP, calculateLevelFromXP } from './progression';
 
 interface VictoryStats {
   partyId: string;
@@ -78,10 +79,21 @@ export async function createVictoryReward(stats: VictoryStats) {
     const mvpSupportive = calculateMVPSupportive(partyCheckIns);
     const mvpDamage = calculateMVPDamage(partyCheckIns);
 
-    // Get all party member user IDs
+    // Get all party member user IDs and current XP
     const partyMembers = await prisma.party_members.findMany({
       where: { party_id: stats.partyId },
       include: {
+        users: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      // Select xp and level for progression updates
+      select: {
+        id: true,
+        xp: true,
+        level: true,
         users: {
           select: {
             id: true,
@@ -122,6 +134,27 @@ export async function createVictoryReward(stats: VictoryStats) {
         badges_awarded: badgesAwarded,
       },
     });
+
+    // Grant XP to all party members for defeating the monster
+    const xpReward = calculateMonsterDefeatXP(
+      stats.monsterType as 'TANK' | 'BALANCED' | 'GLASS_CANNON'
+    );
+
+    // Update all party members with XP and reset focus
+    for (const pm of partyMembers) {
+      const currentXP = pm.xp || 0;
+      const newXP = currentXP + xpReward;
+      const newLevel = calculateLevelFromXP(newXP);
+
+      await prisma.party_members.update({
+        where: { id: pm.id },
+        data: {
+          xp: newXP,
+          level: newLevel,
+          focus_points: 10, // Full focus reset on monster defeat
+        },
+      });
+    }
 
     return {
       victoryReward,

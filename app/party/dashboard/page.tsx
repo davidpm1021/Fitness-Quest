@@ -17,6 +17,8 @@ interface PartyMember {
   maxHp: number;
   currentDefense: number;
   currentStreak: number;
+  level: number;
+  xp: number;
   user: {
     id: string;
     username: string;
@@ -246,10 +248,15 @@ export default function PartyDashboard() {
                           {member.user.displayName.charAt(0)}
                         </span>
                       </div>
-                      <div className="ml-3">
-                        <h4 className="font-pixel text-sm text-white">
-                          {member.user.displayName}
-                        </h4>
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-pixel text-sm text-white">
+                            {member.user.displayName}
+                          </h4>
+                          <PixelBadge variant="success" size="sm">
+                            LVL {member.level || 1}
+                          </PixelBadge>
+                        </div>
                         <p className="font-retro text-sm text-gray-400">
                           @{member.user.username}
                         </p>

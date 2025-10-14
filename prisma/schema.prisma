@@ -173,6 +173,8 @@ model party_members {
   current_streak                                                      Int                    @default(0)
   joined_at                                                           DateTime               @default(now())
   focus_points                                                        Int                    @default(0)
+  xp                                                                  Int                    @default(0)
+  level                                                               Int                    @default(1)
   check_ins                                                           check_ins[]
   encouragements                                                      encouragements[]
   healing_actions_healing_actions_from_party_member_idToparty_members healing_actions[]      @relation("healing_actions_from_party_member_idToparty_members")

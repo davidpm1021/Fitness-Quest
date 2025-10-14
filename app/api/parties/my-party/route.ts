@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
                 current_defense: true,
                 current_streak: true,
                 focus_points: true,
+                xp: true,
+                level: true,
                 users: {
                   select: {
                     id: true,
@@ -120,6 +122,8 @@ export async function GET(request: NextRequest) {
       currentDefense: member.current_defense,
       currentStreak: member.current_streak,
       focusPoints: member.focus_points,
+      xp: member.xp,
+      level: member.level,
       user: {
         id: member.users.id,
         username: member.users.username,

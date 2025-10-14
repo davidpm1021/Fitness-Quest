@@ -12,6 +12,11 @@ import {
   rollCounterattack,
   calculateCounterattackDamage,
 } from "@/lib/combat";
+import {
+  calculateCheckInXP,
+  calculateLevelFromXP,
+  didLevelUp,
+} from "@/lib/progression";
 import { createVictoryReward } from "@/lib/victoryRewards";
 import { cache, CacheKeys } from "@/lib/cache";
 
@@ -172,7 +177,36 @@ export async function POST(request: NextRequest) {
     );
 
     // Validate combat action requirements
-    if (selectedAction === "HEROIC_STRIKE") {
+    if (selectedAction === "ATTACK") {
+      if (partyMember.focus_points < 1) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Not enough focus! Attack requires 1 focus point.",
+          } as ApiResponse,
+          { status: 400 }
+        );
+      }
+    } else if (selectedAction === "SUPPORT") {
+      if (partyMember.focus_points < 2) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Not enough focus! Support requires 2 focus points.",
+          } as ApiResponse,
+          { status: 400 }
+        );
+      }
+      if (newStreak < 3) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Support requires a 3-day streak to unlock!",
+          } as ApiResponse,
+          { status: 400 }
+        );
+      }
+    } else if (selectedAction === "HEROIC_STRIKE") {
       if (partyMember.focus_points < 3) {
         return NextResponse.json(
           {
@@ -239,19 +273,20 @@ export async function POST(request: NextRequest) {
     // Apply combat action modifiers
     switch (selectedAction) {
       case "ATTACK":
-        // Standard attack - earn 1 focus
-        focusEarned = 1;
+        // Standard attack - costs 1 focus
+        focusEarned = -1;
         break;
 
       case "DEFEND":
-        // Deal 50% damage, but provide defense bonus (handled later)
+        // Deal 50% damage, generates 1 focus, provides defense bonus (handled later)
         damageMultiplier = 0.5;
+        focusEarned = 1;
         break;
 
       case "SUPPORT":
-        // Deal 50% damage, heal a teammate, earn 1 focus
+        // Deal 50% damage, heal a teammate, costs 2 focus
         damageMultiplier = 0.5;
-        focusEarned = 1;
+        focusEarned = -2;
 
         // Find a random teammate with less than max HP
         const injuredTeammates = partyMember.parties.party_members.filter(
@@ -267,10 +302,10 @@ export async function POST(request: NextRequest) {
         break;
 
       case "HEROIC_STRIKE":
-        // Auto-hit, double damage, costs 3 focus (no focus earned)
+        // Auto-hit, double damage, costs 3 focus
         autoHit = true;
         damageMultiplier = 2.0;
-        focusEarned = 0;
+        focusEarned = -3;
         break;
     }
 
@@ -331,6 +366,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Calculate XP earned and new level (before transaction)
+    const xpEarned = calculateCheckInXP(goalsMet);
+    const oldXP = partyMember.xp || 0;
+    const newXP = oldXP + xpEarned;
+    const newLevel = calculateLevelFromXP(newXP);
+    const levelUpInfo = didLevelUp(oldXP, newXP);
+
     // Create check-in with transaction
     let milestoneCrossed: 75 | 50 | 25 | null = null;
     let monsterWasDefeated = false;
@@ -367,11 +409,13 @@ export async function POST(request: NextRequest) {
         })),
       });
 
-      // Calculate new focus points
-      let newFocus = partyMember.focus_points + focusEarned;
-      if (selectedAction === "HEROIC_STRIKE") {
-        newFocus -= 3; // Deduct focus cost
-      }
+      // Calculate new focus points with base recovery and cap
+      // Base recovery: +2 for checking in, +1 per goal met
+      const baseFocusRecovery = 2 + goalsMet;
+      let newFocus = partyMember.focus_points + baseFocusRecovery + focusEarned;
+
+      // Cap focus at 10 (prevents hoarding)
+      newFocus = Math.min(10, Math.max(0, newFocus));
 
       // Update party member stats
       const newHp = Math.max(0, partyMember.current_hp - counterattackDamage);
@@ -382,6 +426,8 @@ export async function POST(request: NextRequest) {
           current_defense: newDefense,
           current_hp: newHp,
           focus_points: newFocus,
+          xp: newXP,
+          level: newLevel,
         },
       });
 
@@ -517,6 +563,10 @@ export async function POST(request: NextRequest) {
       // Don't fail the check-in if cache invalidation fails
     }
 
+    // Calculate new focus for response (same logic as in transaction)
+    const baseFocusRecovery = 2 + goalsMet;
+    const calculatedNewFocus = Math.min(10, Math.max(0, partyMember.focus_points + baseFocusRecovery + focusEarned));
+
     // Build combat action result message
     let actionMessage = "";
     if (selectedAction === "ATTACK") {
@@ -558,9 +608,11 @@ export async function POST(request: NextRequest) {
           },
           combatAction: {
             action: selectedAction,
-            focusEarned: focusEarned,
-            focusCost: selectedAction === "HEROIC_STRIKE" ? 3 : 0,
-            newFocusTotal: partyMember.focus_points + focusEarned - (selectedAction === "HEROIC_STRIKE" ? 3 : 0),
+            focusChange: focusEarned,
+            baseFocusRecovery: baseFocusRecovery,
+            focusCost: Math.abs(Math.min(0, focusEarned)),
+            oldFocusTotal: partyMember.focus_points,
+            newFocusTotal: calculatedNewFocus,
             healingTarget: healingTarget,
             healingAmount: healingAmount,
             defenseBonus: selectedAction === "DEFEND" ? 5 : 0,
@@ -579,6 +631,14 @@ export async function POST(request: NextRequest) {
           milestoneCrossed: milestoneCrossed,
           streakUpdated: newStreak,
           defenseUpdated: newDefense,
+          progression: {
+            xpEarned: xpEarned,
+            totalXP: newXP,
+            level: newLevel,
+            leveledUp: levelUpInfo.leveledUp,
+            oldLevel: levelUpInfo.oldLevel,
+            newLevel: levelUpInfo.newLevel,
+          },
           welcomeBackBonus: activeWelcomeBackBonus
             ? {
                 daysRemaining: Math.max(

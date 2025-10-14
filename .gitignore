@@ -46,5 +46,8 @@ next-env.d.ts
 nul
 public/sprites/lpc-temp/
 
+# archive folder (old roadmaps and deprecated files)
+/archive/
+
 # documentation (may contain sensitive info)
 *.md
