@@ -339,6 +339,7 @@ export async function POST(request: NextRequest) {
       // Create the check-in
       const checkIn = await tx.check_ins.create({
         data: {
+          id: crypto.randomUUID(),
           party_member_id: partyMember.id,
           party_id: partyMember.party_id,
           check_in_date: today,
@@ -357,6 +358,7 @@ export async function POST(request: NextRequest) {
       // Create goal check-in records
       await tx.goal_check_ins.createMany({
         data: goalResults.map((gr) => ({
+          id: crypto.randomUUID(),
           check_in_id: checkIn.id,
           goal_id: gr.goalId,
           actual_value: gr.actualValue,
