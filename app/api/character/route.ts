@@ -23,9 +23,21 @@ export async function GET(request: NextRequest) {
       where: { user_id: user.userId },
     });
 
+    // Map snake_case to camelCase for frontend if appearance exists
+    const mappedAppearance = appearance ? {
+      bodyType: appearance.body_type,
+      skinColor: appearance.skin_color,
+      hairStyle: appearance.hair_style,
+      hairColor: appearance.hair_color,
+      facialHair: appearance.facial_hair,
+      outfit: appearance.outfit,
+      outfitColor: appearance.outfit_color,
+      accessoryColor: appearance.accessory_color,
+    } : null;
+
     return NextResponse.json({
       success: true,
-      data: { appearance },
+      data: { appearance: mappedAppearance },
     } as ApiResponse);
   } catch (error) {
     console.error('Error fetching character appearance:', error);
