@@ -41,9 +41,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Map snake_case to camelCase for frontend
+    const mappedUser = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      displayName: user.display_name,
+      characterName: user.character_name,
+      timezone: user.timezone,
+      onboardingStep: user.onboarding_step,
+      onboardingCompletedAt: user.onboarding_completed_at,
+      createdAt: user.created_at,
+    };
+
     return NextResponse.json<ApiResponse>({
       success: true,
-      data: { user },
+      data: { user: mappedUser },
     });
   } catch (error) {
     console.error("Get user error:", error);

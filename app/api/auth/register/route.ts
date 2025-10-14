@@ -104,11 +104,24 @@ export async function POST(request: NextRequest) {
       email: user.email,
     });
 
+    // Map snake_case to camelCase for frontend
+    const mappedUser = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      displayName: user.display_name,
+      characterName: null,
+      timezone: user.timezone,
+      onboardingStep: 'character',
+      onboardingCompletedAt: null,
+      createdAt: user.created_at,
+    };
+
     return NextResponse.json<ApiResponse>(
       {
         success: true,
         data: {
-          user,
+          user: mappedUser,
           token,
         },
         message: "Registration successful!",

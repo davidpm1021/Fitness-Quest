@@ -44,13 +44,23 @@ export async function POST(request: NextRequest) {
       email: user.email,
     });
 
-    // Return user data (without password hash)
-    const { password_hash, ...userWithoutPassword } = user;
+    // Return user data (without password hash) and map to camelCase
+    const mappedUser = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      displayName: user.display_name,
+      characterName: user.character_name,
+      timezone: user.timezone,
+      onboardingStep: user.onboarding_step,
+      onboardingCompletedAt: user.onboarding_completed_at,
+      createdAt: user.created_at,
+    };
 
     return NextResponse.json<ApiResponse>({
       success: true,
       data: {
-        user: userWithoutPassword,
+        user: mappedUser,
         token,
       },
       message: "Login successful!",
