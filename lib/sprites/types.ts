@@ -142,6 +142,7 @@ export interface LayerDefinition {
   path: string;
   opacity?: number;
   colorMap?: Map<string, string>;
+  canvas?: HTMLCanvasElement;
 }
 
 export interface SpriteGenerationOptions {
