@@ -122,7 +122,7 @@ export function generateHeroAttackSprite(): string {
     // Legs
     ctx.fillStyle = '#4b5563';
     ctx.fillRect(offsetX + 13 + bodyOffsetX, 26, 2, 4);
-    ctx.fillRect(offsetX + 17 + bodyOffsetX, 26, 4);
+    ctx.fillRect(offsetX + 17 + bodyOffsetX, 26, 2, 4);
 
     // Weapon (sword)
     if (!isWindup) {
