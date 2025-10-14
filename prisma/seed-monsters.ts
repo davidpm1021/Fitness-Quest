@@ -123,6 +123,62 @@ const monsters: MonsterTemplate[] = [
     baseDamage: [3, 5],
     counterattackChance: 60,
   },
+
+  // Additional TANK Monsters
+  {
+    name: "The Inertia Behemoth",
+    description:
+      "A colossal stone giant that hasn't moved in years. It's incredibly hard to budge, representing the raw weight of old habits and routines that refuse to change.",
+    monsterType: MonsterType.TANK,
+    maxHp: 600,
+    armorClass: 10,
+    baseDamage: [3, 5],
+    counterattackChance: 20,
+  },
+
+  // Additional BALANCED Monsters
+  {
+    name: "The Sugar Rush Cyclops",
+    description:
+      "A one-eyed giant fueled by energy drinks and candy bars. Its unpredictable energy spikes make it a formidable opponent with balanced stats.",
+    monsterType: MonsterType.BALANCED,
+    maxHp: 400,
+    armorClass: 12,
+    baseDamage: [3, 5],
+    counterattackChance: 40,
+  },
+  {
+    name: "The Tomorrow Thief",
+    description:
+      "A shadowy figure that steals your plans for 'starting tomorrow.' It's moderately tough and has a knack for striking back when you least expect it.",
+    monsterType: MonsterType.BALANCED,
+    maxHp: 400,
+    armorClass: 12,
+    baseDamage: [3, 5],
+    counterattackChance: 40,
+  },
+
+  // Additional GLASS_CANNON Monsters
+  {
+    name: "The Comparison Wraith",
+    description:
+      "A wispy specter that shows you everyone else's highlight reel. Lightning-fast and evasive, but shatters under focused, consistent effort.",
+    monsterType: MonsterType.GLASS_CANNON,
+    maxHp: 300,
+    armorClass: 15,
+    baseDamage: [3, 5],
+    counterattackChance: 60,
+  },
+  {
+    name: "The All-or-Nothing Ninja",
+    description:
+      "A perfectionist assassin that demands 100% or nothing. Extremely hard to hit, but once you land a blow, it crumbles quickly.",
+    monsterType: MonsterType.GLASS_CANNON,
+    maxHp: 300,
+    armorClass: 15,
+    baseDamage: [3, 5],
+    counterattackChance: 60,
+  },
 ];
 
 async function seedMonsters() {

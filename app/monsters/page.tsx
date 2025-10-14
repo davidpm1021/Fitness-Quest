@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useToast } from "@/lib/context/ToastContext";
+import PageLayout from "@/components/layout/PageLayout";
+import PixelPanel from "@/components/ui/PixelPanel";
+import PixelButton from "@/components/ui/PixelButton";
 
 interface Monster {
   id: string;
@@ -73,7 +76,8 @@ export default function MonstersPage() {
 
       const data = await response.json();
       if (data.success) {
-        router.push("/party/dashboard");
+        toast.success(data.message || "Monster activated!");
+        router.push("/dashboard");
       } else {
         toast.error(data.error || "Failed to activate monster");
       }
@@ -112,8 +116,10 @@ export default function MonstersPage() {
 
   if (isLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-900 to-indigo-900">
+        <PixelPanel variant="dialog">
+          <p className="text-white font-retro text-2xl">LOADING MONSTERS...</p>
+        </PixelPanel>
       </div>
     );
   }
@@ -123,112 +129,107 @@ export default function MonstersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Select Monster
-              </h1>
-            </div>
-            <div className="flex items-center">
-              <button
-                onClick={() => router.push("/party/dashboard")}
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                Back to Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <PageLayout title="👹 SELECT MONSTER" showBackButton={true}>
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {activeMonster ? (
-          <div className="mb-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-            <h2 className="text-lg font-semibold text-yellow-900 dark:text-yellow-200 mb-2">
-              Active Monster: {activeMonster.name}
-            </h2>
-            <p className="text-yellow-800 dark:text-yellow-300">
-              Your party is currently fighting this monster. Defeat it before selecting a new one!
-            </p>
-          </div>
+          <PixelPanel variant="warning" className="mb-8">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-yellow-200 font-pixel mb-2">
+                ⚔️ CURRENTLY FIGHTING
+              </h2>
+              <p className="text-xl font-bold text-white font-pixel mb-2">
+                {activeMonster.name}
+              </p>
+              <p className="text-yellow-100 font-retro">
+                Defeat this monster before selecting a new one!
+              </p>
+              <div className="mt-4">
+                <PixelButton variant="primary" onClick={() => router.push("/dashboard")}>
+                  BACK TO BATTLE
+                </PixelButton>
+              </div>
+            </div>
+          </PixelPanel>
         ) : (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Choose Your Challenge
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold text-white font-pixel mb-3">
+              ⚔️ CHOOSE YOUR CHALLENGE
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-2">
-              Select a monster for your party to fight. Each type matches different motivation styles and pacing.
+            <p className="text-gray-300 font-retro mb-2 text-lg">
+              Select a monster for your party to fight
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              💡 First person to select chooses for the whole party. Choose wisely!
+            <p className="text-sm text-gray-400 font-retro">
+              💡 Each type has different stats and strategies!
             </p>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {monsters.map((monster) => (
-            <div
+            <PixelPanel
               key={monster.id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
+              variant="dialog"
+              className="hover:scale-[1.02] transition-transform"
             >
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {monster.name}
-                </h3>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-semibold ${getTypeColor(
-                    monster.monsterType
-                  )}`}
-                >
-                  {monster.monsterType}
-                </span>
-              </div>
+              <div className="mb-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-lg font-bold text-white font-pixel">
+                    {monster.name}
+                  </h3>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-bold font-pixel ${getTypeColor(
+                      monster.monsterType
+                    )}`}
+                  >
+                    {monster.monsterType}
+                  </span>
+                </div>
 
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
-                {monster.description}
-              </p>
-
-              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
-                <p className="text-xs text-gray-700 dark:text-gray-300">
-                  {getTypeStrategy(monster.monsterType)}
+                <p className="text-gray-300 font-retro text-sm mb-3 min-h-[3rem]">
+                  {monster.description}
                 </p>
+
+                <div className="mb-4 p-3 bg-gray-800/50 rounded border-2 border-purple-500/30">
+                  <p className="text-xs text-purple-200 font-retro">
+                    {getTypeStrategy(monster.monsterType)}
+                  </p>
+                </div>
+
+                <div className="space-y-2 mb-4 bg-gray-800/30 p-3 rounded border border-gray-700">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400 font-retro">HP:</span>
+                    <span className="font-bold text-green-400 font-pixel">
+                      {monster.maxHp}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400 font-retro">Armor Class:</span>
+                    <span className="font-bold text-blue-400 font-pixel">
+                      {monster.armorClass}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400 font-retro">Counterattack:</span>
+                    <span className="font-bold text-red-400 font-pixel">
+                      {monster.counterattackChance}%
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">HP:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {monster.maxHp}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Armor Class:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {monster.armorClass}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Counterattack:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {monster.counterattackChance}%
-                  </span>
-                </div>
-              </div>
-
-              <button
+              <PixelButton
+                variant="primary"
+                size="md"
                 onClick={() => activateMonster(monster.id)}
                 disabled={!!activeMonster || activating === monster.id}
-                className="w-full py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full"
               >
-                {activating === monster.id ? "Activating..." : "Select Monster"}
-              </button>
-            </div>
+                {activating === monster.id ? "⏳ ACTIVATING..." : "⚔️ SELECT"}
+              </PixelButton>
+            </PixelPanel>
           ))}
         </div>
       </main>
-    </div>
+    </PageLayout>
   );
 }

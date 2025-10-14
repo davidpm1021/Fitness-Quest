@@ -45,47 +45,55 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get one monster of each type (TANK, BALANCED, GLASS_CANNON)
-    // This gives players 3 strategic choices
-    const tankMonster = await prisma.monsters.findFirst({
+    // Get all undefeated monsters, grouped by type
+    const allMonsters = await prisma.monsters.findMany({
       where: {
         is_defeated: false,
-        monster_type: "TANK",
       },
-      orderBy: {
-        created_at: "asc",
-      },
+      orderBy: [
+        {
+          monster_type: "asc", // Group by type first
+        },
+        {
+          created_at: "asc", // Then by creation date
+        },
+      ],
     });
 
-    const balancedMonster = await prisma.monsters.findFirst({
-      where: {
-        is_defeated: false,
-        monster_type: "BALANCED",
-      },
-      orderBy: {
-        created_at: "asc",
-      },
-    });
+    // Map snake_case to camelCase for frontend
+    const availableMonsters = allMonsters.map((monster) => ({
+      id: monster.id,
+      name: monster.name,
+      description: monster.description,
+      monsterType: monster.monster_type,
+      maxHp: monster.max_hp,
+      currentHp: monster.current_hp,
+      armorClass: monster.armor_class,
+      baseDamage: monster.base_damage,
+      counterattackChance: monster.counterattack_chance,
+      isDefeated: monster.is_defeated,
+    }));
 
-    const glassCannon = await prisma.monsters.findFirst({
-      where: {
-        is_defeated: false,
-        monster_type: "GLASS_CANNON",
-      },
-      orderBy: {
-        created_at: "asc",
-      },
-    });
-
-    // Build available monsters array (filter out nulls)
-    const availableMonsters = [tankMonster, balancedMonster, glassCannon].filter(
-      (m) => m !== null
-    );
+    // Map active monster to camelCase if it exists
+    const mappedActiveMonster = activeMonster
+      ? {
+          id: activeMonster.monsters.id,
+          name: activeMonster.monsters.name,
+          description: activeMonster.monsters.description,
+          monsterType: activeMonster.monsters.monster_type,
+          maxHp: activeMonster.monsters.max_hp,
+          currentHp: activeMonster.monsters.current_hp,
+          armorClass: activeMonster.monsters.armor_class,
+          baseDamage: activeMonster.monsters.base_damage,
+          counterattackChance: activeMonster.monsters.counterattack_chance,
+          isDefeated: activeMonster.monsters.is_defeated,
+        }
+      : null;
 
     return NextResponse.json({
       success: true,
       data: {
-        activeMonster: activeMonster?.monsters || null,
+        activeMonster: mappedActiveMonster,
         availableMonsters,
       },
     } as ApiResponse);
