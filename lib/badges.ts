@@ -132,7 +132,7 @@ export async function checkBadgeCondition(
   badgeType: BadgeType
 ): Promise<boolean> {
   // Check if badge already earned
-  const existingBadge = await prisma.badge.findUnique({
+  const existingBadge = await prisma.badges.findUnique({
     where: {
       userId_badgeType: {
         userId,
@@ -146,7 +146,7 @@ export async function checkBadgeCondition(
   }
 
   // Get user's party memberships for stats
-  const partyMembers = await prisma.partyMember.findMany({
+  const partyMembers = await prisma.party_members.findMany({
     where: { userId },
     include: {
       checkIns: {
@@ -207,13 +207,13 @@ export async function checkBadgeCondition(
 
     // Team Player Badges
     case BadgeType.SUPPORT_HERO: {
-      const encouragementCount = await prisma.encouragement.count({
+      const encouragementCount = await prisma.encouragements.count({
         where: { fromUserId: userId },
       });
       return encouragementCount >= 50;
     }
     case BadgeType.HEALER: {
-      const healCount = await prisma.healingAction.count({
+      const healCount = await prisma.healing_actions.count({
         where: {
           fromPartyMember: {
             userId,
@@ -262,7 +262,7 @@ export async function checkBadgeCondition(
     }
     case BadgeType.COMEBACK_KID: {
       // Check if user has welcome back bonuses and has checked in 5+ times since
-      const welcomeBackBonuses = await prisma.welcomeBackBonus.findMany({
+      const welcomeBackBonuses = await prisma.welcome_back_bonuses.findMany({
         where: {
           partyMember: {
             userId,
@@ -307,7 +307,7 @@ export async function awardBadge(
   }
 
   try {
-    const badge = await prisma.badge.create({
+    const badge = await prisma.badges.create({
       data: {
         userId,
         badgeType,
@@ -341,7 +341,7 @@ export async function checkAndAwardAllBadges(
     }
   }
 
-  const totalBadges = await prisma.badge.count({
+  const totalBadges = await prisma.badges.count({
     where: { userId },
   });
 
@@ -353,14 +353,14 @@ export async function checkAndAwardAllBadges(
  */
 async function getMonstersDefeatedCount(userId: string): Promise<number> {
   // Check VictoryRewards where user was in the party
-  const partyIds = await prisma.partyMember
+  const partyIds = await prisma.party_members
     .findMany({
       where: { userId },
       select: { partyId: true },
     })
     .then((pms) => pms.map((pm) => pm.partyId));
 
-  const victories = await prisma.victoryReward.count({
+  const victories = await prisma.victory_rewards.count({
     where: {
       partyId: {
         in: partyIds,
@@ -375,7 +375,7 @@ async function getMonstersDefeatedCount(userId: string): Promise<number> {
  * Check if user has a perfect streak of meeting all goals
  */
 async function hasPerfectStreak(userId: string, days: number): Promise<boolean> {
-  const partyMembers = await prisma.partyMember.findMany({
+  const partyMembers = await prisma.party_members.findMany({
     where: { userId },
     include: {
       checkIns: {

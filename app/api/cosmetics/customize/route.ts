@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's customization
     const customization = await prisma.user_sprite_customizations.findUnique({
-      where: { userId },
+      where: { user_id: userId },
     });
 
     if (!customization) {
@@ -90,27 +90,29 @@ export async function POST(request: NextRequest) {
 
     // Upsert customization
     const customization = await prisma.user_sprite_customizations.upsert({
-      where: { userId },
+      where: { user_id: userId },
       create: {
-        userId,
-        baseSpritePath,
-        hairSpritePath: hairSpritePath || null,
-        clothingSpritePath: clothingSpritePath || null,
-        accessorySpritePath: accessorySpritePath || null,
-        weaponSpritePath: weaponSpritePath || null,
-        hairTintColor: hairTintColor || null,
-        clothingTintColor: clothingTintColor || null,
-        accessoryTintColor: accessoryTintColor || null,
+        id: crypto.randomUUID(),
+        user_id: userId,
+        base_sprite_path: baseSpritePath,
+        hair_sprite_path: hairSpritePath || null,
+        clothing_sprite_path: clothingSpritePath || null,
+        accessory_sprite_path: accessorySpritePath || null,
+        weapon_sprite_path: weaponSpritePath || null,
+        hair_tint_color: hairTintColor || null,
+        clothing_tint_color: clothingTintColor || null,
+        accessory_tint_color: accessoryTintColor || null,
+        updated_at: new Date(),
       },
       update: {
-        baseSpritePath,
-        hairSpritePath: hairSpritePath || null,
-        clothingSpritePath: clothingSpritePath || null,
-        accessorySpritePath: accessorySpritePath || null,
-        weaponSpritePath: weaponSpritePath || null,
-        hairTintColor: hairTintColor || null,
-        clothingTintColor: clothingTintColor || null,
-        accessoryTintColor: accessoryTintColor || null,
+        base_sprite_path: baseSpritePath,
+        hair_sprite_path: hairSpritePath || null,
+        clothing_sprite_path: clothingSpritePath || null,
+        accessory_sprite_path: accessorySpritePath || null,
+        weapon_sprite_path: weaponSpritePath || null,
+        hair_tint_color: hairTintColor || null,
+        clothing_tint_color: clothingTintColor || null,
+        accessory_tint_color: accessoryTintColor || null,
       },
     });
 

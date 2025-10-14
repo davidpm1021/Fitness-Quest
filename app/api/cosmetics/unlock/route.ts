@@ -139,6 +139,7 @@ export async function POST(request: NextRequest) {
     // Unlock the cosmetic
     const unlock = await prisma.user_cosmetic_unlocks.create({
       data: {
+        id: crypto.randomUUID(),
         user_id: userId,
         cosmetic_item_id: cosmeticItemId,
       },

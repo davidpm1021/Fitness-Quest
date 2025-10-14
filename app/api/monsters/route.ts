@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
     // Create party monster relationship and activate it
     const partyMonster = await prisma.party_monsters.create({
       data: {
+        id: crypto.randomUUID(),
         party_id: partyMember.party_id,
         monster_id: monster.id,
         is_active: true,

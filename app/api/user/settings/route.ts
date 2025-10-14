@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest) {
       data: {
         email,
         username,
-        displayName,
+        display_name: displayName,
         timezone: timezone || "UTC",
       },
       select: {

@@ -57,7 +57,8 @@
       "Bash(git reflog:*)",
       "Bash(git gc:*)",
       "Bash(powershell:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

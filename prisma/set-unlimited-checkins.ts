@@ -23,8 +23,8 @@ async function setUnlimitedCheckIns() {
     today.setHours(0, 0, 0, 0);
 
     // Get user's party membership
-    const partyMember = await prisma.partyMember.findFirst({
-      where: { userId: user.id }
+    const partyMember = await prisma.party_members.findFirst({
+      where: { user_id: user.id }
     });
 
     if (!partyMember) {
@@ -33,10 +33,10 @@ async function setUnlimitedCheckIns() {
     }
 
     // Delete today's check-ins and goal check-ins
-    const checkIns = await prisma.checkIn.findMany({
+    const checkIns = await prisma.check_ins.findMany({
       where: {
-        partyMemberId: partyMember.id,
-        checkInDate: today
+        party_member_id: partyMember.id,
+        check_in_date: today
       }
     });
 
@@ -44,16 +44,16 @@ async function setUnlimitedCheckIns() {
 
     // Delete goal check-ins first (foreign key)
     for (const checkIn of checkIns) {
-      await prisma.goalCheckIn.deleteMany({
-        where: { checkInId: checkIn.id }
+      await prisma.goal_check_ins.deleteMany({
+        where: { check_in_id: checkIn.id }
       });
     }
 
     // Delete check-ins
-    await prisma.checkIn.deleteMany({
+    await prisma.check_ins.deleteMany({
       where: {
-        partyMemberId: partyMember.id,
-        checkInDate: today
+        party_member_id: partyMember.id,
+        check_in_date: today
       }
     });
 

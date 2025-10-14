@@ -4,9 +4,9 @@ async function main() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const result = await prisma.checkIn.deleteMany({
+  const result = await prisma.check_ins.deleteMany({
     where: {
-      checkInDate: today
+      check_in_date: today
     }
   });
 

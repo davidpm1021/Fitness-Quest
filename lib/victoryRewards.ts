@@ -29,42 +29,45 @@ export async function createVictoryReward(stats: VictoryStats) {
       throw new Error('Monster not found');
     }
 
-    const monsterCreatedDate = new Date(monster.createdAt);
+    const monsterCreatedDate = new Date(monster.created_at);
     monsterCreatedDate.setHours(0, 0, 0, 0);
 
     // Get all check-ins since the monster was created
     const partyCheckIns = await prisma.check_ins.findMany({
       where: {
-        partyId: stats.partyId,
-        checkInDate: {
+        party_id: stats.partyId,
+        check_in_date: {
           gte: monsterCreatedDate,
         },
       },
       include: {
-        partyMember: {
+        party_members: {
           include: {
-            user: {
+            users: {
               select: {
                 id: true,
-                displayName: true,
+                display_name: true,
               },
             },
           },
         },
       },
       orderBy: {
-        createdAt: 'asc',
+        created_at: 'asc',
       },
     });
 
     // Calculate total damage and heals
-    const totalDamageDealt = partyCheckIns.reduce((sum, ci) => sum + ci.damageDealt, 0);
+    const totalDamageDealt = partyCheckIns.reduce((sum, ci) => sum + ci.damage_dealt, 0);
     const totalHeals = await prisma.healing_actions.count({
       where: {
-        fromPartyMember: {
-          partyId: stats.partyId,
+        from_party_member_id: {
+          in: (await prisma.party_members.findMany({
+            where: { party_id: stats.partyId },
+            select: { id: true },
+          })).map(pm => pm.id),
         },
-        actionDate: {
+        action_date: {
           gte: monsterCreatedDate,
         },
       },
@@ -77,9 +80,9 @@ export async function createVictoryReward(stats: VictoryStats) {
 
     // Get all party member user IDs
     const partyMembers = await prisma.party_members.findMany({
-      where: { partyId: stats.partyId },
+      where: { party_id: stats.partyId },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
           },
@@ -87,7 +90,7 @@ export async function createVictoryReward(stats: VictoryStats) {
       },
     });
 
-    const userIds = partyMembers.map((pm) => pm.user.id);
+    const userIds = partyMembers.map((pm) => pm.users.id);
 
     // Check and award badges for all party members
     const badgesAwarded: Array<{ userId: string; badgeType: string; badgeName: string }> = [];
@@ -107,15 +110,16 @@ export async function createVictoryReward(stats: VictoryStats) {
     // Create victory reward record
     const victoryReward = await prisma.victory_rewards.create({
       data: {
-        partyId: stats.partyId,
-        monsterId: stats.monsterId,
-        daysToDefeat: stats.daysToDefeat,
-        totalDamageDealt,
-        totalHeals,
-        mvpConsistent: mvpConsistent?.userId || null,
-        mvpSupportive: mvpSupportive?.userId || null,
-        mvpDamage: mvpDamage?.userId || null,
-        badgesAwarded: badgesAwarded,
+        id: crypto.randomUUID(),
+        party_id: stats.partyId,
+        monster_id: stats.monsterId,
+        days_to_defeat: stats.daysToDefeat,
+        total_damage_dealt: totalDamageDealt,
+        total_heals: totalHeals,
+        mvp_consistent: mvpConsistent?.userId || null,
+        mvp_supportive: mvpSupportive?.userId || null,
+        mvp_damage: mvpDamage?.userId || null,
+        badges_awarded: badgesAwarded,
       },
     });
 
@@ -150,7 +154,7 @@ function calculateMVPConsistent(checkIns: any[]): MVPData | null {
   // Group check-ins by user
   const userCheckIns = new Map<string, any[]>();
   checkIns.forEach((ci) => {
-    const userId = ci.partyMember.user.id;
+    const userId = ci.party_members.users.id;
     if (!userCheckIns.has(userId)) {
       userCheckIns.set(userId, []);
     }
@@ -163,15 +167,15 @@ function calculateMVPConsistent(checkIns: any[]): MVPData | null {
 
   userCheckIns.forEach((checkIns, userId) => {
     const sortedCheckIns = checkIns.sort(
-      (a, b) => new Date(a.checkInDate).getTime() - new Date(b.checkInDate).getTime()
+      (a, b) => new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime()
     );
 
     let currentStreak = 1;
     let longestStreak = 1;
 
     for (let i = 1; i < sortedCheckIns.length; i++) {
-      const prevDate = new Date(sortedCheckIns[i - 1].checkInDate);
-      const currDate = new Date(sortedCheckIns[i].checkInDate);
+      const prevDate = new Date(sortedCheckIns[i - 1].check_in_date);
+      const currDate = new Date(sortedCheckIns[i].check_in_date);
       const dayDiff = Math.floor(
         (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -188,7 +192,7 @@ function calculateMVPConsistent(checkIns: any[]): MVPData | null {
       maxStreak = longestStreak;
       mvp = {
         userId,
-        displayName: checkIns[0].partyMember.user.displayName,
+        displayName: checkIns[0].party_members.users.display_name,
         stat: longestStreak,
       };
     }
@@ -206,11 +210,11 @@ function calculateMVPSupportive(checkIns: any[]): MVPData | null {
   // Count support actions per user
   const userSupport = new Map<string, { displayName: string; count: number }>();
   checkIns.forEach((ci) => {
-    const userId = ci.partyMember.user.id;
-    if (ci.combatAction === 'SUPPORT') {
+    const userId = ci.party_members.users.id;
+    if (ci.combat_action === 'SUPPORT') {
       if (!userSupport.has(userId)) {
         userSupport.set(userId, {
-          displayName: ci.partyMember.user.displayName,
+          displayName: ci.party_members.users.display_name,
           count: 0,
         });
       }
@@ -245,14 +249,14 @@ function calculateMVPDamage(checkIns: any[]): MVPData | null {
   // Sum damage per user
   const userDamage = new Map<string, { displayName: string; damage: number }>();
   checkIns.forEach((ci) => {
-    const userId = ci.partyMember.user.id;
+    const userId = ci.party_members.users.id;
     if (!userDamage.has(userId)) {
       userDamage.set(userId, {
-        displayName: ci.partyMember.user.displayName,
+        displayName: ci.party_members.users.display_name,
         damage: 0,
       });
     }
-    userDamage.get(userId)!.damage += ci.damageDealt;
+    userDamage.get(userId)!.damage += ci.damage_dealt;
   });
 
   // Find user with most damage
@@ -287,21 +291,21 @@ export async function getVictoryRewardById(victoryId: string) {
 
   // Get monster details
   const monster = await prisma.monsters.findUnique({
-    where: { id: victory.monsterId },
+    where: { id: victory.monster_id },
   });
 
   // Get MVP user details
   const mvpUsers = await prisma.users.findMany({
     where: {
       id: {
-        in: [victory.mvpConsistent, victory.mvpSupportive, victory.mvpDamage].filter(
+        in: [victory.mvp_consistent, victory.mvp_supportive, victory.mvp_damage].filter(
           (id): id is string => id !== null
         ),
       },
     },
     select: {
       id: true,
-      displayName: true,
+      display_name: true,
     },
   });
 
@@ -309,29 +313,29 @@ export async function getVictoryRewardById(victoryId: string) {
 
   return {
     monsterName: monster?.name || 'Unknown Monster',
-    monsterType: monster?.monsterType || 'BALANCED',
-    daysToDefeat: victory.daysToDefeat,
-    totalDamageDealt: victory.totalDamageDealt,
-    totalHeals: victory.totalHeals,
+    monsterType: monster?.monster_type || 'BALANCED',
+    daysToDefeat: victory.days_to_defeat,
+    totalDamageDealt: victory.total_damage_dealt,
+    totalHeals: victory.total_heals,
     mvps: {
-      consistent: victory.mvpConsistent
+      consistent: victory.mvp_consistent
         ? {
-            userId: victory.mvpConsistent,
-            displayName: userMap.get(victory.mvpConsistent)?.displayName || 'Unknown',
+            userId: victory.mvp_consistent,
+            displayName: userMap.get(victory.mvp_consistent)?.display_name || 'Unknown',
             streak: 0, // Can calculate from check-ins if needed
           }
         : undefined,
-      supportive: victory.mvpSupportive
+      supportive: victory.mvp_supportive
         ? {
-            userId: victory.mvpSupportive,
-            displayName: userMap.get(victory.mvpSupportive)?.displayName || 'Unknown',
+            userId: victory.mvp_supportive,
+            displayName: userMap.get(victory.mvp_supportive)?.display_name || 'Unknown',
             healsGiven: 0, // Can calculate from check-ins if needed
           }
         : undefined,
-      damage: victory.mvpDamage
+      damage: victory.mvp_damage
         ? {
-            userId: victory.mvpDamage,
-            displayName: userMap.get(victory.mvpDamage)?.displayName || 'Unknown',
+            userId: victory.mvp_damage,
+            displayName: userMap.get(victory.mvp_damage)?.display_name || 'Unknown',
             damageDealt: 0, // Can calculate from check-ins if needed
           }
         : undefined,

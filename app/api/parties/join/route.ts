@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
     // Add user to party
     const partyMember = await prisma.party_members.create({
       data: {
+        id: crypto.randomUUID(),
         party_id: party.id,
         user_id: user.userId,
         current_hp: 100,

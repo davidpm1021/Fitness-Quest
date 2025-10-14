@@ -27,9 +27,9 @@ export async function GET(
     const party = await prisma.parties.findUnique({
       where: { id },
       include: {
-        members: {
+        party_members: {
           include: {
-            user: {
+            users: {
               select: {
                 id: true,
                 username: true,
@@ -38,7 +38,7 @@ export async function GET(
             },
           },
           orderBy: {
-            joinedAt: "asc",
+            joined_at: "asc",
           },
         },
       },
@@ -55,7 +55,7 @@ export async function GET(
     }
 
     // Check if user is a member of this party
-    const isMember = party.members.some((member) => member.userId === user.userId);
+    const isMember = party.party_members.some((member) => member.user_id === user.userId);
 
     if (!isMember) {
       return NextResponse.json(

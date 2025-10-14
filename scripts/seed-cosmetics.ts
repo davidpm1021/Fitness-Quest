@@ -233,7 +233,17 @@ async function seedCosmetics() {
 
   for (const cosmetic of cosmetics) {
     await prisma.cosmetic_items.create({
-      data: cosmetic,
+      data: {
+        id: crypto.randomUUID(),
+        name: cosmetic.name,
+        description: cosmetic.description,
+        category: cosmetic.category,
+        sprite_sheet_path: cosmetic.spriteSheetPath,
+        unlock_condition_type: cosmetic.unlockConditionType,
+        unlock_threshold: cosmetic.unlockThreshold,
+        is_starter_item: cosmetic.isStarterItem,
+        sort_order: cosmetic.sortOrder,
+      },
     });
     console.log(`✓ Seeded: ${cosmetic.name}`);
   }

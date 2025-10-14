@@ -2,11 +2,11 @@ import { prisma } from '../lib/prisma';
 
 async function checkMonsters() {
   try {
-    const monsters = await prisma.monster.findMany({
+    const monsters = await prisma.monsters.findMany({
       include: {
-        partyMonsters: {
+        party_monsters: {
           include: {
-            party: true,
+            parties: true,
           },
         },
       },

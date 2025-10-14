@@ -38,7 +38,7 @@ export async function PUT(
       );
     }
 
-    if (existingGoal.userId !== user.userId) {
+    if (existingGoal.user_id !== user.userId) {
       return NextResponse.json(
         {
           success: false,
@@ -110,7 +110,7 @@ export async function DELETE(
       );
     }
 
-    if (existingGoal.userId !== user.userId) {
+    if (existingGoal.user_id !== user.userId) {
       return NextResponse.json(
         {
           success: false,

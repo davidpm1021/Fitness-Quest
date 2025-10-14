@@ -59,7 +59,7 @@ export async function PATCH(req: NextRequest) {
     // Verify current password
     const isValidPassword = await bcrypt.compare(
       currentPassword,
-      userData.passwordHash
+      userData.password_hash
     );
 
     if (!isValidPassword) {

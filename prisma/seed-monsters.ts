@@ -129,15 +129,15 @@ async function seedMonsters() {
   console.log("🌱 Seeding monsters...");
 
   for (const monster of monsters) {
-    const existing = await prisma.monster.findFirst({
+    const existing = await prisma.monsters.findFirst({
       where: { name: monster.name },
     });
 
     if (!existing) {
-      await prisma.monster.create({
+      await prisma.monsters.create({
         data: {
           ...monster,
-          currentHp: monster.maxHp,
+          current_hp: monster.maxHp,
         },
       });
       console.log(`✅ Created monster: ${monster.name}`);

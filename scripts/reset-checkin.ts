@@ -21,8 +21,8 @@ async function resetCheckIn() {
     }
 
     // Find their party member record
-    const partyMember = await prisma.partyMember.findFirst({
-      where: { userId: user.id },
+    const partyMember = await prisma.party_members.findFirst({
+      where: { user_id: user.id },
     });
 
     if (!partyMember) {
@@ -31,10 +31,10 @@ async function resetCheckIn() {
     }
 
     // Delete today's check-in
-    const deleted = await prisma.checkIn.deleteMany({
+    const deleted = await prisma.check_ins.deleteMany({
       where: {
-        partyMemberId: partyMember.id,
-        checkInDate: today,
+        party_member_id: partyMember.id,
+        check_in_date: today,
       },
     });
 
