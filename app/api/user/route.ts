@@ -20,15 +20,15 @@ export async function PATCH(request: NextRequest) {
     const updateData: any = {};
 
     if (characterName !== undefined) {
-      updateData.characterName = characterName;
+      updateData.character_name = characterName;
     }
 
     if (onboardingStep !== undefined) {
-      updateData.onboardingStep = onboardingStep;
+      updateData.onboarding_step = onboardingStep;
     }
 
     if (onboardingCompletedAt !== undefined) {
-      updateData.onboardingCompletedAt = onboardingCompletedAt ? new Date() : null;
+      updateData.onboarding_completed_at = onboardingCompletedAt ? new Date() : null;
     }
 
     const updatedUser = await prisma.users.update({
