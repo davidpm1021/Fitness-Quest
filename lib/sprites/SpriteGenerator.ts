@@ -214,7 +214,9 @@ export class SpriteGenerator {
     if (this.layerCache.size >= this.maxCacheSize) {
       // Remove oldest entry
       const firstKey = this.layerCache.keys().next().value;
-      this.layerCache.delete(firstKey);
+      if (firstKey) {
+        this.layerCache.delete(firstKey);
+      }
     }
     this.layerCache.set(cacheKey, cloneCanvas(frameCanvas));
 
