@@ -24,15 +24,16 @@ export async function GET(request: NextRequest) {
     });
 
     // Map snake_case to camelCase for frontend if appearance exists
+    // Provide defaults for any null values from database
     const mappedAppearance = appearance ? {
-      bodyType: appearance.body_type,
-      skinColor: appearance.skin_color,
-      hairStyle: appearance.hair_style,
-      hairColor: appearance.hair_color,
-      facialHair: appearance.facial_hair,
-      outfit: appearance.outfit,
-      outfitColor: appearance.outfit_color,
-      accessoryColor: appearance.accessory_color,
+      bodyType: appearance.body_type || 'AVERAGE',
+      skinColor: appearance.skin_color || '#fbbf24',
+      hairStyle: appearance.hair_style || 'SHORT',
+      hairColor: appearance.hair_color || '#92400e',
+      facialHair: appearance.facial_hair || 'NONE',
+      outfit: appearance.outfit || 'CASUAL',
+      outfitColor: appearance.outfit_color || '#3b82f6',
+      accessoryColor: appearance.accessory_color || '#9ca3af',
     } : null;
 
     return NextResponse.json({
