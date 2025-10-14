@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
                     id: true,
                     username: true,
                     display_name: true,
+                    character_name: true,
                   },
                 },
               },
@@ -110,6 +111,37 @@ export async function GET(request: NextRequest) {
     // Extract active monster from optimized query result
     const activeMonster = membership.parties.party_monsters[0]?.monsters || null;
 
+    // Map party members to camelCase
+    const mappedMembers = membership.parties.party_members.map((member: any) => ({
+      id: member.id,
+      userId: member.users.id,
+      currentHp: member.current_hp,
+      maxHp: member.max_hp,
+      currentDefense: member.current_defense,
+      currentStreak: member.current_streak,
+      focusPoints: member.focus_points,
+      user: {
+        id: member.users.id,
+        username: member.users.username,
+        displayName: member.users.display_name,
+        characterName: member.users.character_name,
+      },
+    }));
+
+    // Map active monster to camelCase if it exists
+    const mappedMonster = activeMonster ? {
+      id: activeMonster.id,
+      name: activeMonster.name,
+      description: activeMonster.description,
+      monsterType: activeMonster.monster_type,
+      maxHp: activeMonster.max_hp,
+      currentHp: activeMonster.current_hp,
+      armorClass: activeMonster.armor_class,
+      baseDamage: activeMonster.base_damage,
+      counterattackChance: activeMonster.counterattack_chance,
+      isDefeated: activeMonster.is_defeated,
+    } : null;
+
     const responseData = {
       success: true,
       data: {
@@ -123,8 +155,8 @@ export async function GET(request: NextRequest) {
           activeMonsterId: membership.parties.active_monster_id,
           created_at: membership.parties.created_at,
           updated_at: membership.parties.updated_at,
-          members: membership.parties.party_members,
-          activeMonster,
+          members: mappedMembers,
+          activeMonster: mappedMonster,
         },
         membership: {
           id: membership.id,
