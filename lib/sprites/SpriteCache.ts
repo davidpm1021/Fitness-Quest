@@ -177,7 +177,9 @@ export class SpriteCache {
     // Evict oldest if at capacity
     if (this.memoryCache.size >= this.MAX_MEMORY_CACHE_SIZE) {
       const firstKey = this.memoryCache.keys().next().value;
-      this.memoryCache.delete(firstKey);
+      if (firstKey) {
+        this.memoryCache.delete(firstKey);
+      }
     }
 
     this.memoryCache.set(key, canvas);
