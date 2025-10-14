@@ -372,7 +372,7 @@ export default function SkillsPage() {
                 No Skill Trees Available
               </h3>
               <p className="font-retro text-lg text-gray-300 mb-6">
-                Skill trees haven't been seeded yet. Contact your administrator.
+                Skill trees haven&apos;t been seeded yet. Contact your administrator.
               </p>
             </div>
           </PixelPanel>
