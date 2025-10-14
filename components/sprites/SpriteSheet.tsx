@@ -129,8 +129,8 @@ export default function SpriteSheet({
         overflow: 'hidden',
         position: 'relative',
         imageRendering: 'pixelated', // Crisp pixel scaling
-        WebkitImageRendering: 'pixelated',
-      }}
+        WebkitImageRendering: 'pixelated' as any, // Vendor prefix for Safari
+      } as React.CSSProperties}
     >
       <div
         className="sprite-sheet-inner"
