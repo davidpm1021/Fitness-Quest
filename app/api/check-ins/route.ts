@@ -16,6 +16,7 @@ import {
   calculateCheckInXP,
   calculateLevelFromXP,
   didLevelUp,
+  calculateSkillPointsEarned,
 } from "@/lib/progression";
 import { createVictoryReward } from "@/lib/victoryRewards";
 import { cache, CacheKeys } from "@/lib/cache";
@@ -417,6 +418,10 @@ export async function POST(request: NextRequest) {
       // Cap focus at 10 (prevents hoarding)
       newFocus = Math.min(10, Math.max(0, newFocus));
 
+      // Calculate skill points earned if leveled up
+      const skillPointsEarned = calculateSkillPointsEarned(levelUpInfo.oldLevel, levelUpInfo.newLevel);
+      const newSkillPoints = partyMember.skill_points + skillPointsEarned;
+
       // Update party member stats
       const newHp = Math.max(0, partyMember.current_hp - counterattackDamage);
       await tx.party_members.update({
@@ -428,6 +433,7 @@ export async function POST(request: NextRequest) {
           focus_points: newFocus,
           xp: newXP,
           level: newLevel,
+          skill_points: newSkillPoints,
         },
       });
 

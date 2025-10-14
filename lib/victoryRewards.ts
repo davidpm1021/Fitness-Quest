@@ -1,6 +1,6 @@
 import { checkAndAwardAllBadges } from './badges';
 import { prisma } from '@/lib/prisma';
-import { calculateMonsterDefeatXP, calculateLevelFromXP } from './progression';
+import { calculateMonsterDefeatXP, calculateLevelFromXP, calculateSkillPointsEarned } from './progression';
 
 interface VictoryStats {
   partyId: string;
@@ -86,6 +86,7 @@ export async function createVictoryReward(stats: VictoryStats) {
         id: true,
         xp: true,
         level: true,
+        skill_points: true,
         users: {
           select: {
             id: true,
@@ -136,13 +137,17 @@ export async function createVictoryReward(stats: VictoryStats) {
     for (const pm of partyMembers) {
       const currentXP = pm.xp || 0;
       const newXP = currentXP + xpReward;
+      const oldLevel = pm.level || 1;
       const newLevel = calculateLevelFromXP(newXP);
+      const skillPointsEarned = calculateSkillPointsEarned(oldLevel, newLevel);
+      const newSkillPoints = (pm.skill_points || 0) + skillPointsEarned;
 
       await prisma.party_members.update({
         where: { id: pm.id },
         data: {
           xp: newXP,
           level: newLevel,
+          skill_points: newSkillPoints,
           focus_points: 10, // Full focus reset on monster defeat
         },
       });

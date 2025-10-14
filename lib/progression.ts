@@ -101,3 +101,11 @@ export function didLevelUp(oldXP: number, newXP: number): {
     newLevel,
   };
 }
+
+/**
+ * Calculate skill points earned when leveling up
+ * Players earn 1 skill point per level
+ */
+export function calculateSkillPointsEarned(oldLevel: number, newLevel: number): number {
+  return Math.max(0, newLevel - oldLevel);
+}
