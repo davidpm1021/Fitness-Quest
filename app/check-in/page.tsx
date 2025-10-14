@@ -696,12 +696,14 @@ export default function CheckInPage() {
                     onClick={() => setCombatAction("ATTACK")}
                     icon="⚔️"
                     title="ATTACK"
-                    description="Deal standard damage and build focus."
+                    description="Standard attack with guaranteed base damage."
                     details={[
                       "Base damage: 3-5",
                       "Apply all bonuses",
-                      "Gain +1 Focus",
+                      "Always costs 1 focus",
                     ]}
+                    focusRequired={1}
+                    currentFocus={focusPoints}
                   />
 
                   <CombatActionCard
@@ -710,11 +712,11 @@ export default function CheckInPage() {
                     onClick={() => setCombatAction("DEFEND")}
                     icon="🛡️"
                     title="DEFEND"
-                    description="Protect yourself and boost team defense."
+                    description="Protect yourself and generate focus."
                     details={[
-                      "Reduce damage by 50%",
-                      "-50% counterattack chance",
-                      "+5 team defense",
+                      "Deal 50% damage",
+                      "Generates +1 focus",
+                      "+5 team defense bonus",
                     ]}
                   />
 
@@ -728,8 +730,11 @@ export default function CheckInPage() {
                     details={[
                       "Heal teammate +10 HP",
                       "Deal 50% damage",
-                      "Gain +1 Focus",
+                      "Requires 3-day streak",
                     ]}
+                    disabled={currentStreak < 3}
+                    focusRequired={2}
+                    currentFocus={focusPoints}
                   />
 
                   <CombatActionCard
@@ -742,7 +747,7 @@ export default function CheckInPage() {
                     details={[
                       "Automatic hit",
                       "Double damage",
-                      "No focus gained",
+                      "Requires 7-day streak",
                     ]}
                     disabled={currentStreak < 7}
                     focusRequired={3}
@@ -750,10 +755,15 @@ export default function CheckInPage() {
                   />
                 </div>
 
-                {currentStreak < 7 && (
-                  <p className="mt-4 text-center font-retro text-sm text-gray-400">
-                    🔒 Heroic Strike unlocks after 7-day streak
-                  </p>
+                {(currentStreak < 3 || currentStreak < 7) && (
+                  <div className="mt-4 text-center font-retro text-sm text-gray-400 space-y-1">
+                    {currentStreak < 3 && (
+                      <p>🔒 Support unlocks after 3-day streak (Current: {currentStreak})</p>
+                    )}
+                    {currentStreak < 7 && (
+                      <p>🔒 Heroic Strike unlocks after 7-day streak (Current: {currentStreak})</p>
+                    )}
+                  </div>
                 )}
               </div>
 
