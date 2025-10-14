@@ -175,6 +175,7 @@ model party_members {
   focus_points                                                        Int                    @default(0)
   xp                                                                  Int                    @default(0)
   level                                                               Int                    @default(1)
+  skill_points                                                        Int                    @default(0)
   check_ins                                                           check_ins[]
   encouragements                                                      encouragements[]
   healing_actions_healing_actions_from_party_member_idToparty_members healing_actions[]      @relation("healing_actions_from_party_member_idToparty_members")
@@ -182,6 +183,7 @@ model party_members {
   parties                                                             parties                @relation(fields: [party_id], references: [id], onDelete: Cascade)
   users                                                               users                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
   welcome_back_bonuses                                                welcome_back_bonuses[]
+  party_member_skills                                                 party_member_skills[]
 
   @@unique([party_id, user_id])
   @@index([party_id])
@@ -290,6 +292,51 @@ model welcome_back_bonuses {
   created_at                DateTime      @default(now())
   expires_at                DateTime?
   party_members             party_members @relation(fields: [party_member_id], references: [id], onDelete: Cascade)
+}
+
+model skill_trees {
+  id          String      @id
+  name        String      @unique
+  description String
+  icon        String
+  color       String
+  sort_order  Int         @default(0)
+  skills      skills[]
+  created_at  DateTime    @default(now())
+}
+
+model skills {
+  id                    String                @id
+  skill_tree_id         String
+  name                  String
+  description           String
+  tier                  Int
+  position              Int                   @default(0)
+  skill_type            SkillType
+  effect_type           SkillEffectType
+  effect_value          Float
+  prerequisite_skill_id String?
+  required_level        Int                   @default(1)
+  created_at            DateTime              @default(now())
+  skill_trees           skill_trees           @relation(fields: [skill_tree_id], references: [id], onDelete: Cascade)
+  prerequisite_skill    skills?               @relation("SkillPrerequisites", fields: [prerequisite_skill_id], references: [id])
+  dependent_skills      skills[]              @relation("SkillPrerequisites")
+  party_member_skills   party_member_skills[]
+
+  @@index([skill_tree_id])
+  @@index([tier])
+}
+
+model party_member_skills {
+  id              String        @id
+  party_member_id String
+  skill_id        String
+  unlocked_at     DateTime      @default(now())
+  party_members   party_members @relation(fields: [party_member_id], references: [id], onDelete: Cascade)
+  skills          skills        @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([party_member_id, skill_id])
+  @@index([party_member_id])
 }
 
 enum BadgeType {
@@ -403,4 +450,26 @@ enum UnlockConditionType {
   MONSTERS_DEFEATED
   FOCUS_POINTS
   STARTER_ITEM
+}
+
+enum SkillType {
+  PASSIVE
+  ACTIVE
+  MODIFIER
+}
+
+enum SkillEffectType {
+  DAMAGE_BOOST
+  HP_BOOST
+  MAX_HP_BOOST
+  DEFENSE_BOOST
+  FOCUS_REGEN
+  FOCUS_MAX_BOOST
+  HEALING_BOOST
+  COUNTERATTACK_REDUCTION
+  CRITICAL_CHANCE
+  STREAK_PROTECTION
+  TEAM_DAMAGE_BOOST
+  TEAM_DEFENSE_BOOST
+  XP_BOOST
 }
