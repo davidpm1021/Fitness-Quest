@@ -636,8 +636,9 @@ export default function CheckInPage() {
                         {goal.name}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Target: {goal.targetValue} {goal.targetUnit} (±
-                        {goal.flexPercentage}%)
+                        {goal.targetValue && goal.targetUnit
+                          ? `Target: ${goal.targetValue} ${goal.targetUnit} (±${goal.flexPercentage}%)`
+                          : 'Target: Track daily'}
                       </p>
                     </div>
                     <label className="flex items-center space-x-2 cursor-pointer">
