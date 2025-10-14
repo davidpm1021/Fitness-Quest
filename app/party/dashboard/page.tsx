@@ -131,6 +131,13 @@ export default function PartyDashboard() {
                 ⚔️ DAILY CHECK-IN
               </PixelButton>
               <PixelButton
+                onClick={() => router.push("/skills")}
+                variant="warning"
+                size="md"
+              >
+                🌳 SKILL TREES
+              </PixelButton>
+              <PixelButton
                 onClick={() => setShowInviteCode(!showInviteCode)}
                 variant="primary"
                 size="md"
