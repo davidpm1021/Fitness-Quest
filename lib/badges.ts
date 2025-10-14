@@ -134,9 +134,9 @@ export async function checkBadgeCondition(
   // Check if badge already earned
   const existingBadge = await prisma.badges.findUnique({
     where: {
-      userId_badgeType: {
-        userId,
-        badgeType,
+      user_id_badge_type: {
+        user_id: userId,
+        badge_type: badgeType,
       },
     },
   });
@@ -147,22 +147,22 @@ export async function checkBadgeCondition(
 
   // Get user's party memberships for stats
   const partyMembers = await prisma.party_members.findMany({
-    where: { userId },
+    where: { user_id: userId },
     include: {
-      checkIns: {
+      check_ins: {
         include: {
-          goalCheckIns: true,
+          goal_check_ins: true,
         },
       },
     },
   });
 
   // Calculate total check-ins across all parties
-  const allCheckIns = partyMembers.flatMap((pm) => pm.checkIns);
+  const allCheckIns = partyMembers.flatMap((pm: any) => pm.check_ins);
   const totalCheckIns = allCheckIns.length;
 
   // Get current streak (use highest across all parties)
-  const maxStreak = Math.max(...partyMembers.map((pm) => pm.currentStreak), 0);
+  const maxStreak = Math.max(...partyMembers.map((pm: any) => pm.current_streak), 0);
 
   switch (badgeType) {
     // Monster Defeat Badges (check via victory rewards)
@@ -197,9 +197,9 @@ export async function checkBadgeCondition(
       return await hasPerfectStreak(userId, 30);
     case BadgeType.GOAL_MASTER: {
       const totalGoalsMet = allCheckIns.reduce(
-        (sum, checkIn) =>
+        (sum: number, checkIn: any) =>
           sum +
-          checkIn.goalCheckIns.filter((gc) => gc.wasMet).length,
+          checkIn.goal_check_ins.filter((gc: any) => gc.was_met).length,
         0
       );
       return totalGoalsMet >= 100;
@@ -208,15 +208,18 @@ export async function checkBadgeCondition(
     // Team Player Badges
     case BadgeType.SUPPORT_HERO: {
       const encouragementCount = await prisma.encouragements.count({
-        where: { fromUserId: userId },
+        where: { from_user_id: userId },
       });
       return encouragementCount >= 50;
     }
     case BadgeType.HEALER: {
       const healCount = await prisma.healing_actions.count({
         where: {
-          fromPartyMember: {
-            userId,
+          from_party_member_id: {
+            in: (await prisma.party_members.findMany({
+              where: { user_id: userId },
+              select: { id: true },
+            })).map(pm => pm.id),
           },
         },
       });
@@ -224,38 +227,38 @@ export async function checkBadgeCondition(
     }
     case BadgeType.DEFENDER: {
       const defendCount = allCheckIns.filter(
-        (ci) => ci.combatAction === 'DEFEND'
+        (ci: any) => ci.combat_action === 'DEFEND'
       ).length;
       return defendCount >= 20;
     }
 
     // Combat Badges
     case BadgeType.CRITICAL_HERO: {
-      const nat20Count = allCheckIns.filter((ci) => ci.attackRoll === 20).length;
+      const nat20Count = allCheckIns.filter((ci: any) => ci.attack_roll === 20).length;
       return nat20Count >= 10;
     }
     case BadgeType.FOCUS_MASTER: {
-      const totalFocus = partyMembers.reduce((sum, pm) => sum + pm.focusPoints, 0);
+      const totalFocus = partyMembers.reduce((sum: number, pm: any) => sum + pm.focus_points, 0);
       return totalFocus >= 50;
     }
     case BadgeType.HEROIC_WARRIOR: {
       const heroicStrikeCount = allCheckIns.filter(
-        (ci) => ci.combatAction === 'HEROIC_STRIKE'
+        (ci: any) => ci.combat_action === 'HEROIC_STRIKE'
       ).length;
       return heroicStrikeCount >= 10;
     }
 
     // Consistency Badges
     case BadgeType.EARLY_BIRD: {
-      const earlyCheckIns = allCheckIns.filter((ci) => {
-        const hour = new Date(ci.createdAt).getHours();
+      const earlyCheckIns = allCheckIns.filter((ci: any) => {
+        const hour = new Date(ci.created_at).getHours();
         return hour < 8;
       });
       return earlyCheckIns.length >= 10;
     }
     case BadgeType.NIGHT_OWL: {
-      const lateCheckIns = allCheckIns.filter((ci) => {
-        const hour = new Date(ci.createdAt).getHours();
+      const lateCheckIns = allCheckIns.filter((ci: any) => {
+        const hour = new Date(ci.created_at).getHours();
         return hour >= 22;
       });
       return lateCheckIns.length >= 10;
@@ -264,15 +267,15 @@ export async function checkBadgeCondition(
       // Check if user has welcome back bonuses and has checked in 5+ times since
       const welcomeBackBonuses = await prisma.welcome_back_bonuses.findMany({
         where: {
-          partyMember: {
-            userId,
+          party_members: {
+            user_id: userId,
           },
-          daysAbsent: {
+          days_absent: {
             gte: 7,
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
         take: 1,
       });
@@ -281,7 +284,7 @@ export async function checkBadgeCondition(
 
       const lastWelcomeBack = welcomeBackBonuses[0];
       const checkInsSinceReturn = allCheckIns.filter(
-        (ci) => new Date(ci.createdAt) > lastWelcomeBack.createdAt
+        (ci: any) => new Date(ci.created_at) > lastWelcomeBack.created_at
       ).length;
 
       return checkInsSinceReturn >= 5;
@@ -309,8 +312,9 @@ export async function awardBadge(
   try {
     const badge = await prisma.badges.create({
       data: {
-        userId,
-        badgeType,
+        id: crypto.randomUUID(),
+        user_id: userId,
+        badge_type: badgeType,
         metadata: metadata || {},
       },
     });
@@ -342,7 +346,7 @@ export async function checkAndAwardAllBadges(
   }
 
   const totalBadges = await prisma.badges.count({
-    where: { userId },
+    where: { user_id: userId },
   });
 
   return { newBadges, totalBadges };
@@ -355,14 +359,14 @@ async function getMonstersDefeatedCount(userId: string): Promise<number> {
   // Check VictoryRewards where user was in the party
   const partyIds = await prisma.party_members
     .findMany({
-      where: { userId },
-      select: { partyId: true },
+      where: { user_id: userId },
+      select: { party_id: true },
     })
-    .then((pms) => pms.map((pm) => pm.partyId));
+    .then((pms: any[]) => pms.map((pm: any) => pm.party_id));
 
   const victories = await prisma.victory_rewards.count({
     where: {
-      partyId: {
+      party_id: {
         in: partyIds,
       },
     },
@@ -376,15 +380,15 @@ async function getMonstersDefeatedCount(userId: string): Promise<number> {
  */
 async function hasPerfectStreak(userId: string, days: number): Promise<boolean> {
   const partyMembers = await prisma.party_members.findMany({
-    where: { userId },
+    where: { user_id: userId },
     include: {
-      checkIns: {
+      check_ins: {
         orderBy: {
-          checkInDate: 'desc',
+          check_in_date: 'desc',
         },
         take: days,
         include: {
-          goalCheckIns: true,
+          goal_check_ins: true,
         },
       },
     },
@@ -392,20 +396,20 @@ async function hasPerfectStreak(userId: string, days: number): Promise<boolean> 
 
   // Get most recent check-ins across all parties
   const recentCheckIns = partyMembers
-    .flatMap((pm) => pm.checkIns)
+    .flatMap((pm: any) => pm.check_ins)
     .sort(
-      (a, b) =>
-        new Date(b.checkInDate).getTime() - new Date(a.checkInDate).getTime()
+      (a: any, b: any) =>
+        new Date(b.check_in_date).getTime() - new Date(a.check_in_date).getTime()
     )
     .slice(0, days);
 
   if (recentCheckIns.length < days) return false;
 
   // Check if all check-ins had all goals met
-  return recentCheckIns.every((checkIn) => {
-    const goalCheckIns = checkIn.goalCheckIns;
+  return recentCheckIns.every((checkIn: any) => {
+    const goalCheckIns = checkIn.goal_check_ins;
     return (
-      goalCheckIns.length > 0 && goalCheckIns.every((gc) => gc.wasMet)
+      goalCheckIns.length > 0 && goalCheckIns.every((gc: any) => gc.was_met)
     );
   });
 }

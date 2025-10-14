@@ -136,8 +136,16 @@ async function seedMonsters() {
     if (!existing) {
       await prisma.monsters.create({
         data: {
-          ...monster,
+          id: `mon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: monster.name,
+          description: monster.description,
+          monster_type: monster.monsterType,
+          max_hp: monster.maxHp,
           current_hp: monster.maxHp,
+          armor_class: monster.armorClass,
+          base_damage: monster.baseDamage,
+          counterattack_chance: monster.counterattackChance,
+          is_defeated: false,
         },
       });
       console.log(`✅ Created monster: ${monster.name}`);
