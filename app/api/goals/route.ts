@@ -29,9 +29,22 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Map snake_case DB fields to camelCase for frontend
+    const mappedGoals = goals.map((goal) => ({
+      id: goal.id,
+      name: goal.name,
+      goalType: goal.goal_type,
+      targetValue: goal.target_value,
+      targetUnit: goal.target_unit,
+      flexPercentage: goal.flex_percentage,
+      isActive: goal.is_active,
+      createdAt: goal.created_at,
+      updatedAt: goal.updated_at,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: { goals },
+      data: { goals: mappedGoals },
     } as ApiResponse);
   } catch (error) {
     console.error("Error fetching goals:", error);
@@ -103,10 +116,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Map snake_case DB fields to camelCase for frontend
+    const mappedGoal = {
+      id: goal.id,
+      name: goal.name,
+      goalType: goal.goal_type,
+      targetValue: goal.target_value,
+      targetUnit: goal.target_unit,
+      flexPercentage: goal.flex_percentage,
+      isActive: goal.is_active,
+      createdAt: goal.created_at,
+      updatedAt: goal.updated_at,
+    };
+
     return NextResponse.json(
       {
         success: true,
-        data: { goal },
+        data: { goal: mappedGoal },
         message: "Goal created successfully",
       } as ApiResponse,
       { status: 201 }
