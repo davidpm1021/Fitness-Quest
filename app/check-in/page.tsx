@@ -86,38 +86,7 @@ export default function CheckInPage() {
     newLevel?: number;
   } | null>(null);
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isLoading, router]);
-
-  useEffect(() => {
-    if (user && token) {
-      checkWelcomeBack();
-      fetchGoals();
-      fetchCharacterAppearance();
-      fetchPartyMemberData();
-    }
-  }, [user, token, checkWelcomeBack, fetchGoals, fetchCharacterAppearance, fetchPartyMemberData]);
-
-  // Sequential reveal animation for results screen
-  useEffect(() => {
-    if (showResult && revealStep < 5) {
-      const timer = setTimeout(() => {
-        setRevealStep((prev) => prev + 1);
-      }, 600); // Show each section after 600ms
-      return () => clearTimeout(timer);
-    }
-  }, [showResult, revealStep]);
-
-  // Fetch party members when results are shown
-  useEffect(() => {
-    if (showResult && token) {
-      fetchPartyMembers();
-    }
-  }, [showResult, token, fetchPartyMembers]);
-
+  // Define all callback functions first before useEffect hooks
   const checkWelcomeBack = useCallback(async () => {
     try {
       const response = await fetch('/api/check-ins/welcome-back', {
@@ -226,6 +195,39 @@ export default function CheckInPage() {
       console.error('Error fetching party members:', err);
     }
   }, [token, user]);
+
+  // useEffect hooks after all callback declarations
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
+  useEffect(() => {
+    if (user && token) {
+      checkWelcomeBack();
+      fetchGoals();
+      fetchCharacterAppearance();
+      fetchPartyMemberData();
+    }
+  }, [user, token, checkWelcomeBack, fetchGoals, fetchCharacterAppearance, fetchPartyMemberData]);
+
+  // Sequential reveal animation for results screen
+  useEffect(() => {
+    if (showResult && revealStep < 5) {
+      const timer = setTimeout(() => {
+        setRevealStep((prev) => prev + 1);
+      }, 600); // Show each section after 600ms
+      return () => clearTimeout(timer);
+    }
+  }, [showResult, revealStep]);
+
+  // Fetch party members when results are shown
+  useEffect(() => {
+    if (showResult && token) {
+      fetchPartyMembers();
+    }
+  }, [showResult, token, fetchPartyMembers]);
 
   async function sendEncouragement(memberId: string) {
     setSendingEncouragement(memberId);

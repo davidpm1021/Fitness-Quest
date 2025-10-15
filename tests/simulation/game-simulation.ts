@@ -150,12 +150,13 @@ export async function createTestParty(
     });
 
     // Create 5 goals for this user
+    const goalTypes = ['CARDIO', 'STRENGTH', 'PROTEIN', 'SLEEP', 'CUSTOM'] as const;
     for (let g = 0; g < 5; g++) {
       await prisma.goals.create({
         data: {
           id: `sim_goal_${testId}_${i}_${g}_${Date.now()}`,
           user_id: userId,
-          goal_type: ['CARDIO', 'STRENGTH', 'PROTEIN', 'SLEEP', 'CUSTOM'][g],
+          goal_type: goalTypes[g],
           name: `Goal ${g + 1}`,
           target_value: 30,
           target_unit: 'minutes',

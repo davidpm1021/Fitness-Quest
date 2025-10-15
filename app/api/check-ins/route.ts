@@ -20,6 +20,13 @@ import {
 } from "@/lib/progression";
 import { createVictoryReward } from "@/lib/victoryRewards";
 import { cache, CacheKeys } from "@/lib/cache";
+import {
+  applyBuffToAttackRoll,
+  applyBuffToDamage,
+  applyBuffToDefense,
+  getBuffNotification,
+  type BuffType,
+} from "@/lib/encouragementBuffs";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -56,7 +63,20 @@ export async function POST(request: NextRequest) {
     // Get user's party membership
     const partyMember = await prisma.party_members.findFirst({
       where: { user_id: user.userId },
-      include: {
+      select: {
+        id: true,
+        user_id: true,
+        party_id: true,
+        current_hp: true,
+        max_hp: true,
+        current_defense: true,
+        current_streak: true,
+        focus_points: true,
+        xp: true,
+        level: true,
+        skill_points: true,
+        active_buff_type: true,
+        active_buff_value: true,
         parties: {
           include: {
             party_members: {
@@ -78,6 +98,9 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Extract active buff for combat (will be cleared after use)
+    const activeBuff = partyMember?.active_buff_type as BuffType | null;
 
     if (!partyMember) {
       return NextResponse.json(
@@ -300,16 +323,38 @@ export async function POST(request: NextRequest) {
     const monsterAC = activeMonster?.monsters.armor_class || 12;
 
     // Roll multiple attacks (one per goal met)
-    const attacks = [];
+    const attacks: Array<{ hit: boolean; damage: number; roll: number; bonus: number }> = [];
     let totalDamage = 0;
+    let buffWasUsed = false;
 
     for (let i = 0; i < numAttacks; i++) {
-      const attackRoll = rollD20();
+      const baseRoll = rollD20();
+
+      // Apply buff to attack roll (MOTIVATED = +2, FOCUSED = advantage)
+      // Only apply buff to first attack
+      const rollWithBuff = i === 0 && activeBuff
+        ? applyBuffToAttackRoll(baseRoll, activeBuff)
+        : { roll: baseRoll, usedBuff: false };
+
+      if (rollWithBuff.usedBuff) {
+        buffWasUsed = true;
+      }
+
       let baseDamage = rollBaseDamage();
 
       // Apply welcome back catch-up damage bonus (+5 damage per attack)
       if (activeWelcomeBackBonus) {
         baseDamage += 5;
+      }
+
+      // Apply buff to damage (ENERGIZED = +3)
+      // Only apply buff to first attack
+      const damageWithBuff = i === 0 && activeBuff
+        ? applyBuffToDamage(baseDamage, activeBuff)
+        : { damage: baseDamage, usedBuff: false };
+
+      if (damageWithBuff.usedBuff) {
+        buffWasUsed = true;
       }
 
       // Each attack gets +1 modifier plus existing bonuses
@@ -320,21 +365,21 @@ export async function POST(request: NextRequest) {
         // Heroic Strike always hits
         attackResult = {
           hit: true,
-          damage: Math.floor(baseDamage * damageMultiplier),
-          roll: attackRoll,
+          damage: Math.floor(damageWithBuff.damage * damageMultiplier),
+          roll: rollWithBuff.roll,
           bonus: attackBonus,
         };
       } else {
         const damageCalc = calculateDamage(
-          attackRoll,
+          rollWithBuff.roll,
           attackBonus,
-          Math.floor(baseDamage * damageMultiplier),
+          Math.floor(damageWithBuff.damage * damageMultiplier),
           monsterAC
         );
         attackResult = {
           hit: damageCalc.hit,
           damage: damageCalc.damage,
-          roll: attackRoll,
+          roll: rollWithBuff.roll,
           bonus: attackBonus,
         };
       }
@@ -363,8 +408,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Calculate new defense (streak + encouragements)
-    const newDefense = calculateDefense(newStreak, recentEncouragementsCount);
+    // Calculate new defense (streak + encouragements + buff)
+    const baseDefense = calculateDefense(newStreak, recentEncouragementsCount);
+    const newDefense = applyBuffToDefense(baseDefense, activeBuff);
 
     // Roll for counterattack if there's an active monster and player hit
     let wasCounterattacked = false;
@@ -451,7 +497,7 @@ export async function POST(request: NextRequest) {
       const skillPointsEarned = calculateSkillPointsEarned(levelUpInfo.oldLevel, levelUpInfo.newLevel);
       const newSkillPoints = partyMember.skill_points + skillPointsEarned;
 
-      // Update party member stats
+      // Update party member stats and clear buff (consumed after use)
       const newHp = Math.max(0, partyMember.current_hp - counterattackDamage);
       await tx.party_members.update({
         where: { id: partyMember.id },
@@ -463,6 +509,9 @@ export async function POST(request: NextRequest) {
           xp: newXP,
           level: newLevel,
           skill_points: newSkillPoints,
+          // Clear buff after use (one-time consumable)
+          active_buff_type: null,
+          active_buff_value: null,
         },
       });
 
@@ -678,6 +727,15 @@ export async function POST(request: NextRequest) {
             healingAmount: healingAmount,
             defenseBonus: selectedAction === "DEFEND" ? 5 : 0,
           },
+          buff: activeBuff
+            ? {
+                type: activeBuff,
+                wasUsed: buffWasUsed,
+                notification: buffWasUsed
+                  ? `${activeBuff === "INSPIRED" ? "🛡️" : activeBuff === "MOTIVATED" ? "⚡" : activeBuff === "ENERGIZED" ? "💥" : "🎯"} Your ${activeBuff.toLowerCase()} buff was consumed!`
+                  : null,
+              }
+            : null,
           monster: activeMonster
             ? {
                 name: activeMonster.monsters.name,
