@@ -95,6 +95,10 @@ export async function POST(request: NextRequest) {
           max_hp: 100,
           current_defense: 0,
           current_streak: 0,
+          focus_points: 5, // Start with 5 focus points
+          xp: 0,
+          level: 1,
+          skill_points: 0,
         },
       });
 
