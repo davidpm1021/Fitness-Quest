@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
+import { cache, CacheKeys } from "@/lib/cache";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -182,6 +183,22 @@ export async function POST(request: NextRequest) {
         monsters: true,
       },
     });
+
+    // Invalidate party dashboard cache for all party members
+    try {
+      const allPartyMembers = await prisma.party_members.findMany({
+        where: { party_id: partyMember.party_id },
+        select: { user_id: true },
+      });
+
+      // Clear cache for all party members since their party data changed
+      allPartyMembers.forEach((pm) => {
+        cache.delete(CacheKeys.partyDashboard(pm.user_id));
+      });
+    } catch (error) {
+      console.error("Error invalidating cache:", error);
+      // Don't fail the monster activation if cache invalidation fails
+    }
 
     return NextResponse.json(
       {
