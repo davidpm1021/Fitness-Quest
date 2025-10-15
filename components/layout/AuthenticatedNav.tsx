@@ -43,9 +43,9 @@ export default function AuthenticatedNav({
     <>
       <nav className="relative z-50 bg-gradient-to-r from-gray-900 to-gray-800 border-b-4 border-yellow-500 shadow-[0_4px_0_0_rgba(0,0,0,0.3)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Left side - Hamburger + Title */}
-            <div className="flex items-center gap-4">
+          <div className="flex items-center h-16 relative">
+            {/* Left side - Hamburger */}
+            <div className="flex items-center">
               {/* Hamburger Button */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -75,17 +75,17 @@ export default function AuthenticatedNav({
                   )}
                 </svg>
               </button>
+            </div>
 
-              <h1 className="font-pixel text-lg md:text-xl text-yellow-400 drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
-                {title || "FITNESS QUEST"}
+            {/* Center - Hero Name */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <h1 className="font-pixel text-2xl md:text-3xl text-yellow-400 drop-shadow-[3px_3px_0_rgba(0,0,0,0.8)] font-bold whitespace-nowrap">
+                {user?.characterName || user?.displayName}
               </h1>
             </div>
 
-            {/* Right side - User info */}
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:block text-white font-retro text-xs md:text-sm">
-                <span className="text-gray-400">HERO:</span> {user?.displayName}
-              </div>
+            {/* Right side - Logout */}
+            <div className="ml-auto">
               <PixelButton variant="danger" size="sm" onClick={logout}>
                 ↩
               </PixelButton>
