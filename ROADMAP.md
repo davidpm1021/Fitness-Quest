@@ -129,11 +129,13 @@
 
 ---
 
-## 🎨 PHASE 0.5: Visual Polish (CURRENT PHASE)
+## ~~🎨 PHASE 0.5: Visual Polish~~ (DEPRECATED)
 
-**Status:** Infrastructure Complete, Art Creation In Progress
-**Timeline:** 2-4 weeks (parallel with internal testing)
-**Priority:** HIGH - Professional visuals create strong first impression
+**Status:** ⚠️ **DEPRECATED** - See Phase 8 for complete character/animation overhaul
+**New Approach:** Complete technical rebuild with PixiJS + Aseprite sprite sheets (Phase 8)
+**Priority:** LOW - Current procedural system adequate for internal testing
+
+**⚠️ This phase is deprecated in favor of Phase 8's comprehensive overhaul.** The current procedural Canvas 2D system is functional for beta testing but will be completely replaced with a production-ready PixiJS-based architecture. All custom sprite creation tasks below are on hold pending the Phase 8 implementation.
 
 ### ✅ Infrastructure Complete (2025-10-13 + 2025-10-14)
 
@@ -638,59 +640,252 @@ Color Palettes:
 
 ---
 
-## 🏗️ PHASE 8: Technical Architecture & Infrastructure Improvements
+## 🏗️ PHASE 8: Character & Animation System Overhaul
 
-**Goal:** Address technical debt and prepare for long-term scalability
-**Timeline:** TBD - Prioritize based on pain points and growth needs
-**Priority:** MEDIUM - Important for scale, but not blocking current features
-**Status:** Planned - Implementation after internal testing feedback
+**Goal:** Complete technical overhaul of character rendering, animations, and related systems
+**Timeline:** 8-10 weeks (4 sub-phases)
+**Priority:** HIGH - Required before public launch
+**Status:** 🚧 **SEPARATE DEVELOPMENT TRACK** - Build in isolation, deploy when complete
 
-### Context
+---
 
-**What's Solid (Keep):**
+### 🚨 CRITICAL: SEPARATE DEVELOPMENT TRACK 🚨
+
+**⚠️ THIS OVERHAUL WILL BE BUILT ENTIRELY SEPARATELY FROM THE MAIN APPLICATION**
+
+**Build Location:** `/app/character-system-v2/` (or similar isolated directory)
+**Integration:** Only after complete implementation, testing, and approval
+**Production Impact:** **ZERO** until explicitly deployed
+**Current System:** Beta testers continue using existing procedural Canvas system unaffected
+
+**Why Separate:**
+- Beta testers rely on current system daily - cannot disrupt their experience
+- Major architectural changes require extended development and testing
+- Allows parallel development of gameplay features (Phase 1-7) while building new foundation
+- Prevents half-finished system from affecting production stability
+- Enables thorough testing before cutover
+
+**Development Approach:**
+1. Build new character/animation system in isolated components
+2. Create dedicated test pages (e.g., `/character-system-v2/test`)
+3. Do NOT import or link from main application pages
+4. Only integrate after Phase 8.4 is 100% complete and approved
+5. Plan cutover migration strategy before deployment
+
+---
+
+### 📋 Executive Summary
+
+**Current State:** Procedural Canvas 2D rendering with runtime transforms
+**Target State:** PixiJS WebGL rendering with Aseprite sprite sheets and hybrid asset pipeline
+
+**Core Changes:**
+1. **Rendering:** Canvas 2D → PixiJS (WebGL-accelerated, sprite batching)
+2. **Art Pipeline:** Procedural-only → Hybrid (sprite sheets + procedural fallback)
+3. **Workflow:** Code-based → Aseprite with tagged animations + JSON export
+4. **Database:** Single character → Multiple characters with inventory system
+5. **Auth:** JWT → Cookie-based sessions with argon2id
+6. **State:** Props drilling → Zustand
+7. **Testing:** Manual QA → Automated unit + visual regression tests
+
+---
+
+### ✅ What's Solid (Keep These)
+
 - ✅ Next.js 15 + React 19 + TypeScript - Modern, type-safe foundation
-- ✅ Prisma ORM - Good database abstraction with migrations
-- ✅ HTML5 Canvas API - Working well for current character rendering
-- ✅ Animation state machine - Clean separation of animation logic
+- ✅ Prisma ORM with PostgreSQL - Excellent for persistence, migrations, type safety
+- ✅ Procedural Canvas proof-of-concept - Validated the approach, enabled fast iteration
+- ✅ Animation state machine - Clean 12-phase combat flow and animation state list
+- ✅ Unlockables as data - Cosmetics stored in database, good foundation
+- ✅ Tailwind + component library - Solid UI foundation
+- ✅ Confetti and Recharts - Good player feedback mechanisms
 
-**What Will Bite Later (Technical Debt):**
-- ⚠️ Procedural-only sprites - Limited visual quality, hard to iterate on art
-- ⚠️ Canvas transform-based animations - Difficult to debug, position calculations complex
-- ⚠️ Cosmetic unlock rules in client code - Not server-authoritative, vulnerable to cheating
-- ⚠️ JWT-only auth - No session management, refresh token complexity
-- ⚠️ No state management library - Props drilling getting messy as app grows
-- ⚠️ No automated testing - Manual QA catches bugs late
-- ⚠️ Single character per user - Database schema doesn't support multiple characters
+---
+
+### ⚠️ What Will Bite Later (Technical Debt)
+
+**1. Procedural-Only Art**
+- **Problem:** Inconsistent alignment across frames, outfits, animations. Rotating pixel swords causes jaggies and shimmer. Difficult for pixel artists to collaborate.
+- **Impact:** Visual quality ceiling, hard to iterate, can't work with external artists
+
+**2. Two Rendering Paths (24×24 and 64×64)**
+- **Problem:** Maintaining two systems with different proportions and frame logic causes drift
+- **Impact:** Double maintenance burden, inconsistent visual style
+
+**3. Canvas 2D for Everything**
+- **Problem:** Once you add party vs monster, layered cosmetics, particles, floating damage, screen shake in one scene, Canvas 2D stutters on laptops and phones
+- **Impact:** Performance issues at scale, no sprite batching or texture atlases
+
+**4. Animation Transforms in Code**
+- **Problem:** Frame-time rotations and translations for pixel elements look blurry unless you pre-bake frames or snap to device pixels. Causes "swimming" pixels.
+- **Impact:** Visual quality suffers, hard to debug
+
+**5. Single Character Per User**
+- **Problem:** `user_id: unique` in `character_appearances` blocks multiple characters, alts, test dummies, or NPCs
+- **Impact:** Can't support character slots, limits future features
+
+**6. Cosmetic Unlock Rules in Client Code**
+- **Problem:** Not server-authoritative, vulnerable to cheating
+- **Impact:** Exploitable unlock system
+
+**7. JWT with Manual bcryptjs**
+- **Problem:** Easy to misconfigure. Long JWT lifetimes, CSRF vulnerabilities, weak password hashing
+- **Impact:** Security risks, token management complexity
+
+**8. No State Management Library**
+- **Problem:** Props drilling getting messy as app grows
+- **Impact:** Hard to maintain, difficult to debug state issues
+
+---
 
 ### Priority 1: Rendering Engine & Art Pipeline (8-12 days)
 
 **Goal:** Professional 2D rendering with artist-friendly workflow
 
+#### 1. Adopt PixiJS for 2D Rendering (3-4 days)
+
+**Why PixiJS:**
+- WebGL-accelerated sprite batching
+- Texture atlas support (reduce HTTP requests)
+- Built-in nearest-neighbor filtering for pixel art
+- Handles layered sprites efficiently
+- Industry standard for 2D web games
+
+**Implementation:**
+```typescript
+// Example PixiJS setup
+import { Application, Sprite, Texture } from 'pixi.js';
+
+const app = new Application({
+  width: 800,
+  height: 600,
+  antialias: false,
+  resolution: window.devicePixelRatio,
+  autoDensity: true,
+});
+
+// Enable nearest-neighbor for crisp pixels
+app.renderer.roundPixels = true;
+PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+```
+
 **Tasks:**
+- [ ] Install PixiJS + React integration (`npm install pixi.js @pixi/react`)
+- [ ] Create `<PixiStage>` wrapper component for React integration
+- [ ] Create PixiJS character sprite component (replace Canvas component)
+- [ ] Implement texture loading and sprite sheet parsing
+- [ ] Add animation controller (frame-based, not transform-based)
+- [ ] Turn on: `roundPixels`, `resolution = devicePixelRatio`, `SCALE_MODE = NEAREST`
+- [ ] Test performance with 8+ characters on screen
+- [ ] Fallback to Canvas for browsers without WebGL support
 
-1. **Adopt PixiJS for 2D Rendering (3-4 days)**
-   - [ ] Install PixiJS + React integration (`@pixi/react`)
-   - [ ] Create PixiJS character sprite component (replace Canvas component)
-   - [ ] Implement texture loading and sprite sheet parsing
-   - [ ] Add animation controller (frame-based, not transform-based)
-   - [ ] Test performance with 8+ characters on screen
-   - [ ] Fallback to Canvas for unsupported browsers
+---
 
-2. **Standardize Art Format & Pipeline (2-3 days)**
-   - [ ] Adopt Aseprite as official tool (.ase/.aseprite source format)
-   - [ ] Create art style guide (color palette, dimensions, frame timing)
-   - [ ] Set up export scripts (Aseprite → PNG sprite sheets)
-   - [ ] Document sprite sheet format (JSON metadata)
-   - [ ] Version control for source files (`/art-src` directory)
-   - [ ] Build process integration (auto-export on build)
+#### 2. Standardize Art Format & Pipeline (2-3 days)
 
-3. **Replace Procedural-Only with Hybrid Assets (3-5 days)**
-   - [ ] Commission or create 1 reference character sprite (all animation states)
-   - [ ] Build color palette swap system (work with real sprites, not procedural)
-   - [ ] Keep procedural generation as fallback for missing assets
-   - [ ] Create modular layer system (base body, outfit, hair, accessories)
-   - [ ] Test customization with real sprite layers
-   - [ ] Document layer naming conventions
+**Canonical Frame Size:** 32×32 pixels (or 48×48 for higher detail)
+**Source of Truth:** Aseprite files with tagged animations
+**Export:** PNG sprite sheets + JSON metadata
+
+**Sprite Metadata Schema:**
+```typescript
+type AnimKey = "idle"|"walk"|"attack"|"hit"|"victory"|"defend"|"support"|"heroic_strike";
+
+interface SpriteMeta {
+  frameWidth: number;           // 32 or 48
+  frameHeight: number;          // 32 or 48
+  columns: number;              // Frames per row
+  rows: number;                 // Number of rows
+  animations: Record<AnimKey, number[]>;  // Frame indices for each animation
+  anchors?: { x: number, y: number };    // 0..1, sprite origin point
+  layers?: string[];            // ["base","hair","hat","shirt","pants","weapon"]
+  offsets?: Record<string, {x:number, y:number}[]>; // Per-layer per-frame pixel offsets
+  version: string;              // Asset version pin (e.g., "1.0.0")
+}
+```
+
+**Example Metadata:**
+```json
+{
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "columns": 8,
+  "rows": 4,
+  "animations": {
+    "idle": [0, 1, 2, 3],
+    "walk": [8, 9, 10, 11],
+    "attack": [16, 17, 18, 19, 20, 21],
+    "hit": [24, 25, 26, 27]
+  },
+  "anchors": { "x": 0.5, "y": 0.9 },
+  "layers": ["base", "hair", "outfit", "weapon"],
+  "version": "1.0.0"
+}
+```
+
+**Workflow:**
+1. Artist creates/edits `.ase` file in Aseprite
+2. Tag animations (idle, walk, attack, etc.)
+3. Export script generates PNG sprite sheet + JSON metadata
+4. CI validates sprite sheet dimensions and frame counts
+5. Deploy to `/public/sprites/` with version number in filename
+
+**Tasks:**
+- [ ] Adopt Aseprite as official tool (.ase/.aseprite source format)
+- [ ] Create art style guide (color palette, dimensions, frame timing)
+- [ ] Set up export scripts (Aseprite → PNG sprite sheets + JSON)
+- [ ] Document sprite sheet format and metadata schema
+- [ ] Create `/art-src` directory for source files in version control
+- [ ] Build process integration (auto-export on build)
+- [ ] **Pre-bake rotations:** Draw weapon rotations in sprite sheet, not runtime
+
+---
+
+#### 3. Replace Procedural-Only with Hybrid Assets (3-5 days)
+
+**Goal:** Layerable PNG sprite sheets with procedural fallback
+
+**Asset Structure:**
+```
+/public/sprites/
+  /characters/
+    /base/
+      body-32x32.png          # Base character body
+      body-32x32.json         # Metadata
+    /hair/
+      short-32x32.png         # Layered hair sprite
+      short-32x32.json
+    /outfits/
+      knight-32x32.png        # Layered outfit
+      knight-32x32.json
+    /weapons/
+      sword-32x32.png         # Layered weapon
+      sword-32x32.json
+```
+
+**Palette Swapping:**
+```typescript
+// Color map for palette swaps
+interface ColorMap {
+  from: string;  // Original hex color
+  to: string;    // Replacement hex color
+}
+
+// Example: Recolor skin tone
+const skinToneMap: ColorMap[] = [
+  { from: '#fbbf24', to: '#d97706' },  // Light → Medium
+  { from: '#f59e0b', to: '#b45309' },
+];
+```
+
+**Tasks:**
+- [ ] Commission or create 1 reference character sprite (all animation states)
+- [ ] Build color palette swap system (work with real sprites, not procedural)
+- [ ] Keep procedural generation as fallback for missing assets
+- [ ] Create modular layer system (base body, outfit, hair, accessories, weapon)
+- [ ] Test customization with real sprite layers
+- [ ] Document layer naming conventions
+- [ ] Add pixel-level visual tests using `pixelmatch` in CI
 
 **Why This Matters:**
 - Professional visuals = higher retention
@@ -698,35 +893,148 @@ Color Palettes:
 - PixiJS = better performance at scale (WebGL rendering)
 - Sprite sheets easier to debug than procedural code
 
+---
+
 ### Priority 2: Database & Reward System (5-7 days)
 
 **Goal:** Server-authoritative rewards and flexible character system
 
+#### 1. Fix Database Model for Multiple Characters (2-3 days)
+
+**New Database Schema:**
+```prisma
+model users {
+  id         String      @id
+  email      String      @unique
+  // Remove character_name, onboarding_step - move to characters table
+  characters Character[]
+  created_at DateTime    @default(now())
+}
+
+model characters {
+  id                 String    @id
+  user_id            String
+  character_name     String
+  appearance_id      String?
+  level              Int       @default(1)
+  xp                 Int       @default(0)
+  created_at         DateTime  @default(now())
+  users              users     @relation(fields: [user_id], references: [id])
+  party_members      PartyMember[]
+  cosmetic_inventory CosmeticInventory[]
+
+  @@index([user_id])
+}
+
+model cosmetic_inventory {
+  id               String    @id
+  character_id     String    // Changed from user_id
+  cosmetic_item_id String
+  equipped         Boolean   @default(false)  // NEW: Track if currently wearing
+  acquired_at      DateTime  @default(now())  // NEW: When unlocked
+  characters       characters @relation(fields: [character_id], references: [id])
+  cosmetic_items   cosmetic_items @relation(fields: [cosmetic_item_id], references: [id])
+
+  @@unique([character_id, cosmetic_item_id])
+}
+```
+
+**Migration Strategy:**
+1. Create `characters` table
+2. Migrate existing `users.character_name` → `characters.character_name`
+3. Create character record for each existing user
+4. Update `party_members.user_id` → `party_members.character_id`
+5. Rename `user_cosmetic_unlocks` → `cosmetic_inventory`
+6. Add `equipped` and `acquired_at` columns
+
 **Tasks:**
+- [ ] Add `characters` table to Prisma schema
+- [ ] Add `character_id` foreign key to `party_members`
+- [ ] Create migration to move character data from users table
+- [ ] Update onboarding flow to create character record
+- [ ] Allow users to create multiple characters (UI in Phase 9+)
+- [ ] Update all queries to join through characters table
 
-1. **Fix Database Model for Multiple Characters (2-3 days)**
-   - [ ] Add `characters` table (id, user_id, character_name, appearance_id, created_at)
-   - [ ] Add `character_id` foreign key to `party_members` (one character per party)
-   - [ ] Migrate existing character data from `users.character_name` to new table
-   - [ ] Update onboarding flow to create character record
-   - [ ] Allow users to create multiple characters (UI in Phase 9+)
-   - [ ] Update all queries to join through characters table
+---
 
-2. **Cosmetics as Inventory System (2-3 days)**
-   - [ ] Rename `user_cosmetic_unlocks` → `character_cosmetic_inventory`
-   - [ ] Add `equipped` boolean flag (unlock vs. currently wearing)
-   - [ ] Add `acquired_at` timestamp (track when unlocked)
-   - [ ] Update API to return separate unlocked/equipped lists
-   - [ ] Add equip/unequip endpoints (`/api/cosmetics/equip`)
-   - [ ] Update character customization UI to show inventory
+#### 2. Cosmetics as Inventory System (2-3 days)
 
-3. **Make Server Authoritative for Rewards (1-2 days)**
-   - [ ] Move cosmetic unlock logic to server (`/api/cosmetics/check-unlocks`)
-   - [ ] Run unlock checks after every check-in, level-up, and monster defeat
-   - [ ] Return newly unlocked items in API responses
-   - [ ] Show unlock celebration UI on client (after server confirms)
-   - [ ] Add audit log for unlock events (prevent cheating)
-   - [ ] Remove client-side unlock logic
+**Tasks:**
+- [ ] Rename `user_cosmetic_unlocks` → `cosmetic_inventory`
+- [ ] Add `equipped` boolean flag (unlock vs. currently wearing)
+- [ ] Add `acquired_at` timestamp (track when unlocked)
+- [ ] Add `asset_version` to cosmetic_items (track sprite version)
+- [ ] Add `procedural_seed` to cosmetic_items (deterministic procedural fallback)
+- [ ] Update API to return separate unlocked/equipped lists
+- [ ] Add equip/unequip endpoints (`/api/cosmetics/equip`)
+- [ ] Update character customization UI to show inventory
+
+---
+
+#### 3. Make Server Authoritative for Rewards (1-2 days)
+
+**Implementation:**
+```typescript
+// Server-side unlock logic
+// app/api/cosmetics/check-unlocks/route.ts
+
+export async function POST(request: NextRequest) {
+  const { characterId } = await request.json();
+
+  // Get character stats
+  const character = await prisma.characters.findUnique({
+    where: { id: characterId },
+    include: { party_members: true },
+  });
+
+  // Check unlock conditions
+  const newUnlocks = [];
+  const allCosmetics = await prisma.cosmetic_items.findMany();
+
+  for (const cosmetic of allCosmetics) {
+    // Check if already unlocked
+    const existing = await prisma.cosmetic_inventory.findUnique({
+      where: {
+        character_id_cosmetic_item_id: {
+          character_id: characterId,
+          cosmetic_item_id: cosmetic.id,
+        },
+      },
+    });
+
+    if (existing) continue;
+
+    // Check unlock condition
+    const unlocked = checkUnlockCondition(character, cosmetic);
+
+    if (unlocked) {
+      await prisma.cosmetic_inventory.create({
+        data: {
+          id: crypto.randomUUID(),
+          character_id: characterId,
+          cosmetic_item_id: cosmetic.id,
+          equipped: false,
+          acquired_at: new Date(),
+        },
+      });
+
+      newUnlocks.push(cosmetic);
+    }
+  }
+
+  return NextResponse.json({ success: true, newUnlocks });
+}
+```
+
+**Tasks:**
+- [ ] Move cosmetic unlock logic to server (`/api/cosmetics/check-unlocks`)
+- [ ] Run unlock checks after every check-in, level-up, and monster defeat
+- [ ] Return newly unlocked items in API responses
+- [ ] Show unlock celebration UI on client (after server confirms)
+- [ ] Add audit log for unlock events (prevent cheating)
+- [ ] Remove client-side unlock logic
+- [ ] Add streak logic with grace windows (1 missed day doesn't break streak)
+- [ ] Add anti-cheat checks (server validates streak based on timestamps)
 
 **Why This Matters:**
 - Multiple characters = more customization, more engagement
@@ -734,27 +1042,100 @@ Color Palettes:
 - Server authority = prevent cheating, ensure fairness
 - Future-proof for trading/gifting (Phase 9+)
 
+---
+
 ### Priority 3: Auth & Security (3-4 days)
 
 **Goal:** Production-grade authentication and security
 
+#### 1. Migrate to Cookie-Based Sessions (2-3 days)
+
+**Implementation:**
+```typescript
+// Use iron-session or next-auth
+import { withIronSessionApiRoute } from 'iron-session/next';
+
+export const sessionOptions = {
+  password: process.env.SESSION_SECRET as string,
+  cookieName: 'fitness_quest_session',
+  cookieOptions: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  },
+};
+
+// Middleware for API routes
+export function withSession(handler: any) {
+  return withIronSessionApiRoute(handler, sessionOptions);
+}
+```
+
 **Tasks:**
+- [ ] Install `iron-session` or `next-auth` (cookie-based session management)
+- [ ] Create session middleware for API routes
+- [ ] Replace JWT token passing with httpOnly cookies
+- [ ] Add CSRF protection
+- [ ] Implement session refresh (no manual token refresh)
+- [ ] Update all client-side auth checks
+- [ ] Test session expiration and renewal
 
-1. **Migrate to Cookie-Based Sessions (2-3 days)**
-   - [ ] Install `iron-session` or `next-auth` (cookie-based session management)
-   - [ ] Create session middleware for API routes
-   - [ ] Replace JWT token passing with httpOnly cookies
-   - [ ] Add CSRF protection
-   - [ ] Implement session refresh (no manual token refresh)
-   - [ ] Update all client-side auth checks
-   - [ ] Test session expiration and renewal
+---
 
-2. **Upgrade Password Hashing (1 day)**
-   - [ ] Install `@node-rs/argon2` (faster, more secure than bcryptjs)
-   - [ ] Migrate password verification to use both (check bcrypt first, upgrade on next login)
-   - [ ] Update registration to use argon2id
-   - [ ] Add password strength requirements (min 12 chars, complexity check)
-   - [ ] Add rate limiting on login endpoint (prevent brute force)
+#### 2. Upgrade Password Hashing (1 day)
+
+**Implementation:**
+```typescript
+import argon2 from '@node-rs/argon2';
+
+// Hash password on registration
+const hashedPassword = await argon2.hash(password);
+
+// Verify password on login
+const valid = await argon2.verify(storedHash, password);
+```
+
+**Add Zod Validation:**
+```typescript
+import { z } from 'zod';
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(12),
+});
+
+// In API route
+const { email, password } = loginSchema.parse(await request.json());
+```
+
+**Add Rate Limiting:**
+```typescript
+// Simple rate limiter with Upstash Redis or in-memory Map
+const rateLimiter = new Map<string, number[]>();
+
+function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const requests = rateLimiter.get(ip) || [];
+  const recentRequests = requests.filter(time => now - time < windowMs);
+
+  if (recentRequests.length >= maxRequests) {
+    return false; // Rate limit exceeded
+  }
+
+  recentRequests.push(now);
+  rateLimiter.set(ip, recentRequests);
+  return true;
+}
+```
+
+**Tasks:**
+- [ ] Install `@node-rs/argon2` (faster, more secure than bcryptjs)
+- [ ] Migrate password verification to use both (check bcrypt first, upgrade on next login)
+- [ ] Update registration to use argon2id
+- [ ] Add password strength requirements (min 12 chars, complexity check)
+- [ ] Add rate limiting on login endpoint (prevent brute force)
+- [ ] Install and configure Zod for schema validation
 
 **Why This Matters:**
 - Cookies = simpler auth flow, less client-side token management
@@ -762,27 +1143,65 @@ Color Palettes:
 - Session management = better UX (auto-refresh, no expired tokens)
 - Rate limiting = prevent brute force attacks
 
+---
+
 ### Priority 4: Performance & UX Guardrails (4-6 days)
 
 **Goal:** Smooth performance at scale with 50+ concurrent users
 
+#### 1. Offload Heavy Work to Web Workers (2-3 days)
+
 **Tasks:**
+- [ ] Identify CPU-heavy tasks (sprite generation, large data processing)
+- [ ] Create Web Worker for procedural sprite generation
+- [ ] Move combat calculations to worker (if complex)
+- [ ] Add worker pool management (reuse workers)
+- [ ] Test with slow devices (throttled CPU)
+- [ ] Add loading states while worker runs
 
-1. **Offload Heavy Work to Web Workers (2-3 days)**
-   - [ ] Identify CPU-heavy tasks (sprite generation, large data processing)
-   - [ ] Create Web Worker for procedural sprite generation
-   - [ ] Move combat calculations to worker (if complex)
-   - [ ] Add worker pool management (reuse workers)
-   - [ ] Test with slow devices (throttled CPU)
-   - [ ] Add loading states while worker runs
+---
 
-2. **Texture Atlases & Asset Optimization (2-3 days)**
-   - [ ] Combine sprite sheets into texture atlases (reduce HTTP requests)
-   - [ ] Use image sprites for UI elements (buttons, icons)
-   - [ ] Implement progressive image loading (low-res placeholder → high-res)
-   - [ ] Add WebP format with PNG fallback
-   - [ ] Set up CDN caching headers (1 year for sprites)
-   - [ ] Lazy load non-critical images
+#### 2. Texture Atlases & Asset Optimization (2-3 days)
+
+**Use Texture Atlases:**
+```typescript
+// Combine multiple sprite sheets into one atlas
+// Use TexturePacker or similar tool
+{
+  "frames": {
+    "character-idle-0": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "character-idle-1": { "x": 32, "y": 0, "w": 32, "h": 32 },
+    "monster-attack-0": { "x": 64, "y": 0, "w": 64, "h": 64 },
+  },
+  "meta": {
+    "image": "atlas.png",
+    "size": { "w": 512, "h": 512 }
+  }
+}
+```
+
+**Snap Positions to Integer Pixels:**
+```typescript
+sprite.position.x = Math.round(sprite.position.x);
+sprite.position.y = Math.round(sprite.position.y);
+```
+
+**Memoize Composition:**
+```typescript
+const cacheKey = `${metaVersion}_${baseId}_${cosmeticIds.join(',')}_${paletteMap}_${animKey}_${frameIndex}`;
+const cached = spriteCache.get(cacheKey);
+if (cached) return cached;
+```
+
+**Tasks:**
+- [ ] Combine sprite sheets into texture atlases (reduce HTTP requests)
+- [ ] Use image sprites for UI elements (buttons, icons)
+- [ ] Implement progressive image loading (low-res placeholder → high-res)
+- [ ] Add WebP format with PNG fallback
+- [ ] Set up CDN caching headers (1 year for sprites)
+- [ ] Lazy load non-critical images
+- [ ] Preload assets on route hover
+- [ ] Add low-end mode (reduce particles, shorter combat sequences)
 
 **Why This Matters:**
 - Web Workers = responsive UI even with heavy processing
@@ -790,34 +1209,108 @@ Color Palettes:
 - Progressive loading = perceived performance improvement
 - Mobile users on slow connections need optimized assets
 
+---
+
 ### Priority 5: State Management & Testing (5-7 days)
 
 **Goal:** Maintainable codebase with automated testing
 
+#### 1. Add Zustand for State Management (2-3 days)
+
+**Implementation:**
+```typescript
+// store/gameStore.ts
+import create from 'zustand';
+
+interface GameState {
+  currentHp: number;
+  maxHp: number;
+  level: number;
+  xp: number;
+  focusPoints: number;
+  setHp: (hp: number) => void;
+  takeDamage: (damage: number) => void;
+}
+
+export const useGameStore = create<GameState>((set) => ({
+  currentHp: 100,
+  maxHp: 100,
+  level: 1,
+  xp: 0,
+  focusPoints: 5,
+  setHp: (hp) => set({ currentHp: hp }),
+  takeDamage: (damage) => set((state) => ({ currentHp: Math.max(0, state.currentHp - damage) })),
+}));
+```
+
 **Tasks:**
+- [ ] Install `zustand` (lightweight React state management)
+- [ ] Create stores for user, party, goals, character appearance
+- [ ] Replace props drilling with store hooks
+- [ ] Add persistence layer (sync store with localStorage)
+- [ ] Test state updates across components
+- [ ] Document store usage patterns
 
-1. **Add Zustand for State Management (2-3 days)**
-   - [ ] Install `zustand` (lightweight React state management)
-   - [ ] Create stores for user, party, goals, character appearance
-   - [ ] Replace props drilling with store hooks
-   - [ ] Add persistence layer (sync store with localStorage)
-   - [ ] Test state updates across components
-   - [ ] Document store usage patterns
+---
 
-2. **Add Unit Tests for Core Logic (2-3 days)**
-   - [ ] Install Vitest (fast unit test runner)
-   - [ ] Write tests for combat calculations (`lib/combat.ts`)
-   - [ ] Write tests for XP/leveling logic
-   - [ ] Write tests for skill tree validation
-   - [ ] Write tests for goal completion checks
-   - [ ] Aim for 80%+ coverage on core game logic
+#### 2. Add Unit Tests for Core Logic (2-3 days)
 
-3. **Visual Regression Tests (1-2 days)**
-   - [ ] Set up Playwright visual testing
-   - [ ] Capture screenshots of key pages (check-in, dashboard, skills)
-   - [ ] Add visual diff checks to CI/CD pipeline
-   - [ ] Test across browsers (Chrome, Firefox, Safari)
-   - [ ] Test responsive layouts (mobile, tablet, desktop)
+**Implementation:**
+```typescript
+// __tests__/unlocks.test.ts
+import { checkUnlockCondition } from '@/lib/unlocks';
+
+test('unlocks knight outfit at level 5', () => {
+  const character = { level: 5, streak: 10 };
+  const cosmetic = { unlock_condition_type: 'LEVEL', unlock_threshold: 5 };
+
+  expect(checkUnlockCondition(character, cosmetic)).toBe(true);
+});
+```
+
+**Tasks:**
+- [ ] Install Vitest (fast unit test runner)
+- [ ] Write tests for combat calculations (`lib/combat.ts`)
+- [ ] Write tests for XP/leveling logic
+- [ ] Write tests for skill tree validation
+- [ ] Write tests for goal completion checks
+- [ ] Aim for 80%+ coverage on core game logic
+
+---
+
+#### 3. Visual Regression Tests (1-2 days)
+
+**Implementation:**
+```typescript
+// Example visual regression test
+import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
+
+test('sprite frames match reference', () => {
+  const reference = PNG.sync.read(fs.readFileSync('sprites/reference/hero-idle.png'));
+  const current = PNG.sync.read(fs.readFileSync('public/sprites/characters/hero-idle.png'));
+
+  const diff = new PNG({ width: reference.width, height: reference.height });
+  const numDiffPixels = pixelmatch(
+    reference.data,
+    current.data,
+    diff.data,
+    reference.width,
+    reference.height,
+    { threshold: 0.1 }
+  );
+
+  expect(numDiffPixels).toBeLessThan(10); // Allow minor anti-aliasing differences
+});
+```
+
+**Tasks:**
+- [ ] Set up Playwright visual testing
+- [ ] Capture screenshots of key pages (check-in, dashboard, skills)
+- [ ] Add visual diff checks to CI/CD pipeline
+- [ ] Test across browsers (Chrome, Firefox, Safari)
+- [ ] Test responsive layouts (mobile, tablet, desktop)
+- [ ] Add pixel-level sprite comparison with `pixelmatch`
 
 **Why This Matters:**
 - Zustand = cleaner code, easier debugging, better performance
@@ -825,38 +1318,86 @@ Color Palettes:
 - Visual tests = prevent UI bugs, ensure cross-browser compatibility
 - Automated testing = ship faster with fewer bugs
 
+---
+
 ### Priority 6: Developer Workflow & Asset Management (2-3 days)
 
 **Goal:** Efficient asset creation and version control
 
+#### 1. Aseprite Source Files in Git (1 day)
+
 **Tasks:**
+- [ ] Create `/art-src` directory in repo
+- [ ] Add `.ase` source files with layers intact
+- [ ] Add `.gitattributes` for Git LFS (large binary files)
+- [ ] Document naming conventions (`character-idle-knight.ase`)
+- [ ] Add README with export instructions
 
-1. **Aseprite Source Files in Git (1 day)**
-   - [ ] Create `/art-src` directory in repo
-   - [ ] Add `.ase` source files with layers intact
-   - [ ] Add `.gitattributes` for Git LFS (large binary files)
-   - [ ] Document naming conventions (`character-idle-knight.ase`)
-   - [ ] Add README with export instructions
+---
 
-2. **Asset Versioning & Changelog (1 day)**
-   - [ ] Create `/public/sprites/CHANGELOG.md`
-   - [ ] Track sprite updates (version, date, changes)
-   - [ ] Add sprite manifest JSON (list all sprites with metadata)
-   - [ ] Implement cache busting (version number in filename)
-   - [ ] Document when to increment sprite versions
+#### 2. Asset Versioning & Changelog (1 day)
 
-3. **Build-Time Asset Validation (1 day)**
-   - [ ] Script to verify all required sprites exist
-   - [ ] Validate sprite dimensions and frame counts
-   - [ ] Check for missing animations (idle, attack, etc.)
-   - [ ] Warn if sprites are too large (>50KB)
-   - [ ] Run validation in CI/CD pipeline
+**Asset Manifest JSON:**
+```json
+{
+  "characters": {
+    "base-body": {
+      "version": "1.2.0",
+      "path": "/sprites/characters/base-body-v1.2.0.png",
+      "metadata": "/sprites/characters/base-body-v1.2.0.json"
+    }
+  }
+}
+```
+
+**Tasks:**
+- [ ] Create `/public/sprites/CHANGELOG.md`
+- [ ] Track sprite updates (version, date, changes)
+- [ ] Add sprite manifest JSON (list all sprites with metadata)
+- [ ] Implement cache busting (version number in filename)
+- [ ] Document when to increment sprite versions
+
+---
+
+#### 3. Build-Time Asset Validation (1 day)
+
+**Implementation:**
+```typescript
+// scripts/validate-sprites.ts
+import fs from 'fs';
+import path from 'path';
+
+const requiredSprites = ['character-idle', 'character-walk', 'monster-attack'];
+
+for (const sprite of requiredSprites) {
+  const pngPath = path.join('public/sprites', `${sprite}.png`);
+  const jsonPath = path.join('public/sprites', `${sprite}.json`);
+
+  if (!fs.existsSync(pngPath)) {
+    throw new Error(`Missing sprite: ${sprite}.png`);
+  }
+  if (!fs.existsSync(jsonPath)) {
+    throw new Error(`Missing metadata: ${sprite}.json`);
+  }
+}
+
+console.log('✅ All required sprites present');
+```
+
+**Tasks:**
+- [ ] Script to verify all required sprites exist
+- [ ] Validate sprite dimensions and frame counts
+- [ ] Check for missing animations (idle, attack, etc.)
+- [ ] Warn if sprites are too large (>50KB)
+- [ ] Run validation in CI/CD pipeline
 
 **Why This Matters:**
 - Source files in Git = easier collaboration, full history
 - Asset versioning = cache invalidation, rollback capability
 - Build validation = catch missing sprites before deployment
 - Consistent workflow = faster onboarding for artists/contributors
+
+---
 
 ### Success Metrics
 
@@ -875,43 +1416,79 @@ Color Palettes:
 - [ ] Visual regression caught before production
 - [ ] Authentication "just works" (no token management headaches)
 
+**Visual Quality:**
+- [ ] Character customization clearly visible in sprites
+- [ ] No jaggies or shimmer on rotated elements
+- [ ] Consistent art style across all assets
+
+---
+
 ### Implementation Order (Recommended)
 
-**Phase 8.1: Quick Wins (Week 1-2)**
-1. Add Zustand for state management (reduce props drilling pain)
-2. Upgrade to argon2id password hashing (security improvement)
-3. Add unit tests for combat logic (prevent regressions)
+**Phase 8.1: Foundations (Week 1-2)**
+1. Pick canonical frame size: 32×32
+2. Add PixiJS for editor canvas and battle scene
+3. Introduce SpriteMeta schema
+4. Convert two cosmetics to layered PNG sheets
 
-**Phase 8.2: Rendering Upgrade (Week 3-4)**
-4. Adopt PixiJS for character rendering
-5. Standardize Aseprite workflow
-6. Commission 1 reference character sprite
+**Phase 8.2: Database & Security (Week 3-4)**
+5. Refactor database (multiple characters, inventory system)
+6. Switch auth to cookie sessions
+7. Add server-side reward computation
+8. Upgrade to argon2id password hashing
 
-**Phase 8.3: Auth & Rewards (Week 5-6)**
-7. Migrate to cookie-based sessions
-8. Make rewards server-authoritative
-9. Fix database model for multiple characters
+**Phase 8.3: Rendering & Assets (Week 5-6)**
+9. Standardize Aseprite workflow
+10. Add pixel-level visual tests using pixelmatch
+11. Create asset manifest and version system
+12. Commission/create 1 reference character sprite
 
 **Phase 8.4: Performance & Polish (Week 7-8)**
-10. Add Web Workers for heavy processing
-11. Implement texture atlases
-12. Add visual regression tests
-13. Set up asset versioning workflow
+13. Add Zustand for state management
+14. Add Web Workers for heavy processing
+15. Implement texture atlases
+16. Add unit tests for combat logic
+17. Add visual regression tests
+18. Set up asset versioning workflow
+19. Build-time sprite validation
+
+---
+
+### What to Keep, What to Drop
+
+**Keep:**
+- ✅ Next.js + TypeScript + Prisma + PostgreSQL
+- ✅ Tailwind and component library
+- ✅ Animation states already defined
+- ✅ Confetti and Recharts for player feedback
+
+**Drop or Change:**
+- ❌ Two character renderers → Pick one canonical scale (32×32)
+- ❌ Runtime rotation for pixel art → Pre-bake into frames
+- ❌ Procedural-only sprites → Hybrid pipeline (real sheets + procedural fallback)
+- ❌ JWT-only auth → Cookie sessions + argon2id
+- ❌ No state management → Add Zustand
+- ❌ Manual QA only → Add automated tests
+
+---
 
 ### When to Tackle This Phase
 
 **Build if:**
-- Internal testing reveals performance issues
-- Adding features becomes painful (props drilling, state bugs)
-- Planning to scale beyond 50 users
-- Security audit identifies auth weaknesses
-- Artists struggle with current workflow
+- ✅ Internal testing reveals performance issues
+- ✅ Adding features becomes painful (props drilling, state bugs)
+- ✅ Planning to scale beyond 50 users
+- ✅ Security audit identifies auth weaknesses
+- ✅ Artists struggle with current workflow
+- ✅ Preparing for public launch
 
 **Defer if:**
-- Core gameplay loop not validated yet
-- User feedback requests different features
-- Team size <2 (too much infrastructure work)
-- No pain points identified in current architecture
+- ❌ Core gameplay loop not validated yet
+- ❌ User feedback requests different features
+- ❌ Team size <2 (too much infrastructure work)
+- ❌ No pain points identified in current architecture
+
+**Current Recommendation:** Start Phase 8.1 (Foundations) after Phase 1 Combat Engagement is complete and validated with internal testers. Build entire Phase 8 in isolation before integrating into production.
 
 ---
 
