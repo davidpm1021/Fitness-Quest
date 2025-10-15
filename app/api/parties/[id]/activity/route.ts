@@ -23,7 +23,7 @@ interface ActivityItem {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authResult = await authenticateRequest(request);
   if (isErrorResponse(authResult)) {
@@ -31,7 +31,7 @@ export async function GET(
   }
 
   const { user } = authResult;
-  const partyId = params.id;
+  const { id: partyId } = await params;
 
   try {
     // Verify user is in this party
