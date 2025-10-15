@@ -181,7 +181,10 @@ export default function DatabaseStatusChecker({
 
             {hasReachedMaxRetries && (
               <div className="text-center">
-                <PixelPanel variant="error" title="⚠️ Connection Timeout">
+                <div className="p-4 bg-red-900/30 border-2 border-red-500 rounded-lg">
+                  <h3 className="font-pixel text-lg text-red-300 mb-4">
+                    ⚠️ Connection Timeout
+                  </h3>
                   <p className="font-retro text-sm text-red-300 mb-4">
                     Unable to connect after {MAX_RETRIES} attempts. The database
                     may be experiencing issues.
@@ -199,7 +202,7 @@ export default function DatabaseStatusChecker({
                   >
                     Start Over
                   </PixelButton>
-                </PixelPanel>
+                </div>
               </div>
             )}
 
