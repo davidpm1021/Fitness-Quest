@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useToast } from "@/lib/context/ToastContext";
@@ -99,7 +99,7 @@ export default function CheckInPage() {
       fetchCharacterAppearance();
       fetchPartyMemberData();
     }
-  }, [user, token]);
+  }, [user, token, checkWelcomeBack, fetchGoals, fetchCharacterAppearance, fetchPartyMemberData]);
 
   // Sequential reveal animation for results screen
   useEffect(() => {
@@ -116,9 +116,9 @@ export default function CheckInPage() {
     if (showResult && token) {
       fetchPartyMembers();
     }
-  }, [showResult, token]);
+  }, [showResult, token, fetchPartyMembers]);
 
-  async function checkWelcomeBack() {
+  const checkWelcomeBack = useCallback(async () => {
     try {
       const response = await fetch('/api/check-ins/welcome-back', {
         method: 'POST',
@@ -139,9 +139,9 @@ export default function CheckInPage() {
     } catch (err) {
       console.error('Error checking welcome back:', err);
     }
-  }
+  }, [token]);
 
-  async function fetchGoals() {
+  const fetchGoals = useCallback(async () => {
     try {
       const response = await fetch("/api/goals", {
         headers: {
@@ -163,9 +163,9 @@ export default function CheckInPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
 
-  async function fetchCharacterAppearance() {
+  const fetchCharacterAppearance = useCallback(async () => {
     try {
       const response = await fetch('/api/character', {
         headers: {
@@ -180,9 +180,9 @@ export default function CheckInPage() {
     } catch (err) {
       console.error('Error fetching character appearance:', err);
     }
-  }
+  }, [token]);
 
-  async function fetchPartyMemberData() {
+  const fetchPartyMemberData = useCallback(async () => {
     try {
       const response = await fetch('/api/parties/my-party', {
         headers: {
@@ -204,9 +204,9 @@ export default function CheckInPage() {
     } catch (err) {
       console.error('Error fetching party member data:', err);
     }
-  }
+  }, [token, user]);
 
-  async function fetchPartyMembers() {
+  const fetchPartyMembers = useCallback(async () => {
     try {
       const response = await fetch('/api/parties/my-party', {
         headers: {
@@ -225,7 +225,7 @@ export default function CheckInPage() {
     } catch (err) {
       console.error('Error fetching party members:', err);
     }
-  }
+  }, [token, user]);
 
   async function sendEncouragement(memberId: string) {
     setSendingEncouragement(memberId);
