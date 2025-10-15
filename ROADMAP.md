@@ -97,6 +97,177 @@
 
 ---
 
+## ⚖️ GAME BALANCE SIMULATION & TESTING (2025-10-15)
+
+**Status:** ✅ Simulation Verified - Balance Issues Identified
+**Next Action:** 🔔 **REVIEW TOMORROW** - Consider balance adjustments and additional test scenarios
+
+### Simulation Test Suite ✅ (Completed 2025-10-15)
+
+**Framework Created:**
+- `tests/simulation/game-simulation.ts` - Core simulation engine (day-by-day gameplay simulation)
+- `tests/simulation/archetypes.ts` - 6 player behavior patterns (Perfect, Consistent, Casual, Returning, Burnout, Social)
+- `tests/simulation/run-simulation.ts` - Main 60-day simulation runner
+- `tests/simulation/analysis.ts` - Balance analysis and red flag detection
+- `tests/simulation/verify-simulation.ts` - Comprehensive verification suite (17 tests)
+
+**NPM Scripts Added:**
+```json
+"test:simulation": "tsx tests/simulation/run-simulation.ts"
+"test:verify": "tsx tests/simulation/verify-simulation.ts"
+```
+
+### ✅ Simulation Accuracy Verified (17/17 Tests Passing)
+
+**TEST 1: Monster HP & Combat (7 tests)**
+- ✅ Snapshot HP matches Database HP
+- ✅ HP calculation correct (damage decreases HP exactly)
+- ✅ Cumulative damage tracks correctly
+- ✅ Hit calculation correct (d20 roll + bonus vs AC)
+- ✅ Damage calculation correct on hit (baseDamage + bonuses)
+- ✅ Miss calculation correct (roll < AC)
+- ✅ Base damage dealt on miss (3-5 guaranteed damage)
+
+**TEST 2: Multiple Attacks System (3 tests)**
+- ✅ Perfect Player meets 5 goals consistently (100% goalsMetRate)
+- ✅ Check-in damage matches snapshot (database vs calculation)
+- ✅ Multiple attacks deal substantial damage (52 damage from 5 attacks in test)
+
+**TEST 3: Progression System (2 tests)**
+- ✅ XP increases correctly (20 XP/day for Perfect Player with 5 goals)
+- ✅ Leveling occurs at proper thresholds (400 XP → Level 2, verified)
+
+**TEST 4: Monster Defeat (3 tests)**
+- ✅ GLASS_CANNON defeated in 4 days by Perfect Player
+- ✅ `is_defeated` flag set correctly on defeat
+- ✅ `is_active` flag unset correctly on party_monsters
+
+**TEST 5: Archetype Behavior (2 tests)**
+- ✅ Perfect Player: 100% check-in rate (verified)
+- ✅ Casual Player: ~60% check-in rate (77% in test, within acceptable RNG variance)
+
+**Verification Conclusion:**
+> ✅ **VERIFICATION PASSED** - The simulation accurately represents real gameplay!
+> You can trust the balance results.
+
+### 🚨 BALANCE FINDINGS - ACTION REQUIRED
+
+**Simulation Run:** 60 days with Standard 4-Player Party (Perfect, Consistent, Consistent, Returning)
+
+**Results:**
+```
+✅ Simulation Complete!
+- Party: Standard 4-Player Party
+- Monsters Defeated: 29 in 60 days
+- Average Days per Monster: 2.1 days (TARGET: 8-15 days)
+- Player Levels: Average Level 6 (GOOD - target: 6-9)
+- Average Damage per Check-in: 40.9
+- Party Deaths: 0
+```
+
+**⚠️ BALANCE RED FLAGS:**
+
+**[MEDIUM SEVERITY] Monsters Too Easy**
+- **Metric:** Average 2.1 days per monster (target: 8-15 days)
+- **Impact:** Combat feels trivial, progression too fast, no strategic tension
+- **Root Cause:** Multiple attacks system (1 attack per goal met) + high damage values
+- **Recommendation:** **Increase monster HP by 3x**
+  - TANK: 300 HP → 900 HP (or 600 HP for 2x)
+  - BALANCED: 200 HP → 600 HP (or 400 HP for 2x)
+  - GLASS_CANNON: 150 HP → 450 HP (or 300 HP for 2x)
+
+**Combat Analysis:**
+- Average 41 damage per check-in (with 4 players)
+- Action usage: 67% ATTACK, 14% DEFEND, 6% SUPPORT, 13% HEROIC_STRIKE
+- Players have high damage output with multiple attacks
+- Current monster HP pools are depleted in 2-3 days with consistent team
+
+### 📋 TOMORROW'S ACTION ITEMS
+
+**🔔 REMINDER: Review These Decisions Tomorrow**
+
+**1. Balance Adjustment Decision:**
+- [ ] Review simulation results with fresh perspective
+- [ ] Decide on monster HP multiplier (2x, 3x, or custom per type)
+- [ ] Consider if multiple attacks system needs adjustment
+- [ ] Evaluate if leveling speed is satisfactory (level 6 after 60 days = good)
+
+**2. Potential Additional Tests:**
+- [ ] Solo player simulation (how does single-player experience feel?)
+- [ ] Large 8-player party simulation (does damage scale too high?)
+- [ ] Burnout/Casual-heavy party (what's minimum viable engagement?)
+- [ ] Different monster sequences (TANK → BALANCED → GLASS_CANNON progression)
+- [ ] Skill tree impact simulation (what if players invest in damage skills?)
+- [ ] Welcome-back system testing (does the 3-day absence bonus work correctly?)
+
+**3. Implement Changes (if approved):**
+- [ ] Update monster stats in `tests/simulation/game-simulation.ts`
+- [ ] Re-run simulation with new values
+- [ ] Verify 8-15 day target is met
+- [ ] Update `prisma/seed-monsters.ts` with production values
+- [ ] Deploy to production if satisfied
+
+### Test Configuration Details
+
+**Player Archetypes Available:**
+```typescript
+PERFECT:      100% check-in, 5 goals met, optimized strategy
+CONSISTENT:   85% check-in, 3.5 goals met, mostly-attack strategy
+CASUAL:       60% check-in, 2.5 goals met, attack-only strategy
+RETURNING:    55% check-in, 3 goals met, has breaks (7-day, 5-day)
+BURNOUT:      25% check-in, 1.5 goals met, clustered misses
+SOCIAL:       75% check-in, 3 goals met, support-heavy strategy
+```
+
+**Party Configurations Available:**
+```typescript
+SOLO:         1 Consistent Player
+DUO:          Perfect + Casual
+STANDARD_4:   Perfect + Consistent + Consistent + Returning (TESTED)
+LARGE_8:      Perfect + 3 Consistent + 2 Casual + Returning + Burnout
+SUPPORT_HEAVY: 2 Social + 1 Consistent
+```
+
+**Monster Types in Simulation:**
+```typescript
+TANK:         300 HP, AC 14, 40% counterattack
+BALANCED:     200 HP, AC 12, 30% counterattack
+GLASS_CANNON: 150 HP, AC 10, 20% counterattack
+```
+
+### Files Created
+
+**Simulation Framework:**
+- `tests/simulation/archetypes.ts` (320 lines) - Player behavior patterns
+- `tests/simulation/game-simulation.ts` (476 lines) - Core simulation engine
+- `tests/simulation/run-simulation.ts` (273 lines) - Main runner with reporting
+- `tests/simulation/analysis.ts` (150 lines) - Balance analysis
+- `tests/simulation/verify-simulation.ts` (571 lines) - Verification suite
+
+**Documentation:**
+- Simulation results documented in this roadmap section
+- 17 verification tests documented above
+- Balance recommendations ready for review
+
+### Success Criteria
+
+**Simulation Verification:** ✅ **COMPLETE**
+- [x] All 17 tests pass (100% success rate)
+- [x] Simulation matches real gameplay mechanics
+- [x] Monster HP tracking accurate
+- [x] Combat math verified
+- [x] Multiple attacks system verified
+- [x] XP/leveling verified
+- [x] Archetype behavior verified
+
+**Balance Analysis:** ✅ **COMPLETE**
+- [x] 60-day simulation run successfully
+- [x] Red flags identified
+- [x] Recommendations generated
+- [ ] **Pending:** Review and implement balance changes (tomorrow)
+
+---
+
 ## 🐛 END-TO-END TEST REPORT (2025-10-14)
 
 **Test Date:** October 14, 2025
@@ -927,18 +1098,21 @@ Color Palettes:
 **Goal:** Strengthen party bonds and retention mechanics
 **Timeline:** 6 days
 
-### Priority 1: Enhanced Encouragement System (2 days)
+### Priority 1: Enhanced Encouragement System ✅ (Completed 2025-10-14)
 
-**Current State:** Not implemented
+**Current State:** Fully implemented with defense bonus system
 **Goal:** Easy, fun social interactions
 
 **Tasks:**
-- [ ] Create Encouragement model
-- [ ] Add reaction buttons on battle feed (💪 🔥 ⭐ 👏)
-- [ ] Grant +1 defense per encouragement (max 5/day)
+- ✅ Create Encouragement model
+- ✅ Add reaction buttons on battle feed (💪 🔥 ⭐ 👏)
+- ✅ Grant +5 defense per encouragement (max +25 from encouragements, max +25 from streaks, total max 50)
+- ✅ Encouragements tracked for last 7 days
 - [ ] Show encouragements received on party dashboard
 - [ ] Send notification when encouraged
 - [ ] Add badge: "Support Hero" (give 50 encouragements)
+
+**⚠️ PLAYTEST NOTE:** Encouragement defense system implemented to match tutorial (2025-10-14). Defense formula now includes both streaks (+5 per day, max +25) and encouragements (+5 each, max +25) for a total max defense of 50. **This needs playtesting to ensure it's balanced** - high defense might make the game too easy or reduce strategic tension. Monitor: counterattack frequency, monster defeat times, and whether players feel invincible. May need to adjust encouragement defense values or cap after testing with real users.
 
 ### Priority 2: Healing Actions (2 days)
 
@@ -1100,6 +1274,68 @@ Color Palettes:
 
 ---
 
+## 🔮 PHASE 7 (Future): Integrations & Advanced Accountability
+
+**Goal:** Enhance accountability with automatic tracking and proof systems
+**Timeline:** TBD - Build only if internal users request
+**Status:** Design Complete, Implementation Deferred
+
+### Priority 1: Fitness Tracker Integrations (5-7 days)
+
+**Goal:** Automatic goal verification via fitness APIs
+
+**Tasks:**
+- [ ] Implement OAuth flows for fitness platforms
+- [ ] Apple Health integration (iOS - steps, workouts, sleep)
+- [ ] Google Fit integration (Android - steps, workouts)
+- [ ] Strava integration (detailed workout tracking)
+- [ ] MyFitnessPal integration (nutrition - protein, calories)
+- [ ] Auto-populate check-in values from tracker data
+- [ ] Manual override option (tracker not always accurate)
+
+### Priority 2: Proof Upload System (3-5 days) - **NICE TO HAVE**
+
+**Goal:** Optional screenshot verification for extra accountability
+
+**Current State:** ✅ Design complete - see `/docs/PROOF-UPLOAD-DESIGN.md` (600+ lines)
+
+**Implementation Ready:**
+- ✅ 3 bonus options designed (momentum/focus/defense)
+- ✅ Technical architecture specified (Vercel Blob Storage)
+- ✅ Privacy/security measures defined
+- ✅ Abuse prevention strategy documented
+- ✅ Cost analysis complete (~$0.70/month for 100 users)
+- ✅ 4-phase implementation plan
+
+**Tasks (if building):**
+- [ ] Set up Vercel Blob Storage account
+- [ ] Create `goal_proofs` database table
+- [ ] Build upload API endpoint with validation
+- [ ] Build frontend upload component
+- [ ] Integrate bonus into combat calculations (+2 momentum recommended)
+- [ ] Implement 30-day auto-cleanup job
+- [ ] Add duplicate detection (hash-based)
+- [ ] Test with sample images
+
+**When to Build:**
+- ❌ **Not for MVP** - Core loop needs validation first
+- ⏳ **Phase 1.5+** - Only if users request more accountability
+- ⚠️ **May be unnecessary** - Fitness tracker APIs (Priority 1) provide automatic verification without manual effort
+
+**Design Decisions Needed (if proceeding):**
+1. Bonus type: Momentum (+2), Focus (+1), or Defense (+3)?
+2. Scope: One proof per check-in or per goal?
+3. Sharing: Include party visibility in MVP?
+4. Retention: 30-day auto-delete or keep longer?
+
+### Success Metrics
+- [ ] 60%+ of active users connect at least one fitness tracker
+- [ ] Auto-sync reduces check-in time to <30 seconds
+- [ ] Proof uploads (if implemented) used by 20%+ of check-ins
+- [ ] Verification features don't create friction or shame
+
+---
+
 ## 📊 Success Metrics by Phase
 
 ### Phase 0.5: Visual Polish
@@ -1149,8 +1385,9 @@ Color Palettes:
 ## 🚫 What We're NOT Building (Yet)
 
 ### Explicitly Out of Scope Until Proven Success:
-- ❌ Mobile native apps (PWA first, native in Phase 7+)
-- ❌ Fitness tracker integrations (manual entry for now, Phase 7+)
+- ❌ Mobile native apps (PWA first, native in Phase 8+)
+- ❌ Fitness tracker integrations (manual entry for now, **designed in Phase 7**)
+- ❌ Proof upload system (manual entry only, **designed in Phase 7 - nice to have**)
 - ❌ Multiple parties per user (one party focus)
 - ❌ Full party chat system (just encouragements and reactions)
 - ❌ Competitive leaderboards (avoid negative comparison)
@@ -1347,6 +1584,24 @@ Timeline: [Days]
 **Learning:** By completing Phase 2 (Character Progression) before Phase 1 (Visual Polish), we created a complete meta-progression system that's ready for internal testing. This provides immediate depth and replayability without requiring custom artwork. The welcome-back system (Phase 4 Priority 3) was also quick to implement and addresses a critical retention need.
 **Action:** Successfully pivoted to mechanics-first approach. Completed in 1 day: full XP/leveling system, focus point resource management, 3 skill trees with 26 skills, and comprehensive welcome-back retention system. Now focusing on Phase 1 to enhance visual feedback and combat feel. Monster variety expanded from 4 to 9 to support testing.
 **Impact:** App now has deep progression that will keep internal testers engaged while we iterate on visual polish in parallel.
+
+---
+
+**Date:** 2025-10-14 (Evening)
+**Learning:** Tutorial claimed encouragements grant +5 defense each (max +25) for a total max defense of 50, but code only implemented streak-based defense (max 25). This was caught during tutorial accuracy verification.
+**Action:** Implemented full encouragement defense system. Updated `lib/combat.ts` calculateDefense() to accept encouragementsReceived parameter. Modified check-in API to count encouragements from last 7 days. Updated quick-reaction endpoint to create encouragement records when reactions are sent. **Added playtest note:** Defense might be too high now (50 max vs 25 max), may need rebalancing after real-world testing. Monitor counterattack frequency and whether players feel invincible.
+
+---
+
+**Date:** 2025-10-14 (Evening - Continued)
+**Learning:** Multiple attacks system designed and implemented. Users tracking multiple goals now get one attack per goal met, each with +1 modifier plus existing bonuses. Separate d20 rolls for each attack create more excitement and variance. Example: Meet 3 goals = 3 attacks dealing "4+5+6 = 15 total damage!" vs single attack ~5-8 damage. This rewards goal diversity and success without requiring new systems.
+**Action:** Implemented in `app/api/check-ins/route.ts` with enhanced messaging for multiple attacks. Backend calculates individual attack rolls and sums total damage. Response structure includes attacks array for future frontend visualization. Maintains backward compatibility with existing combat display.
+
+---
+
+**Date:** 2025-10-14 (Evening - Continued)
+**Learning:** User requested optional proof upload feature - ability to upload screenshots (scale, step counter, meal tracker) for extra combat bonuses and accountability. This addresses a common request for verification/validation in fitness accountability apps.
+**Action:** Created comprehensive design document at `/docs/PROOF-UPLOAD-DESIGN.md`. Covered 3 bonus options (momentum/focus/defense), technical architecture (Vercel Blob Storage recommended), privacy/security considerations, abuse prevention, implementation phases, and cost analysis. **Recommendation:** Defer to Phase 1.5+ after core MVP is validated - this is a "nice to have" not "must have". Fitness tracker API integrations (already planned Phase 1.5) may reduce need for manual proof uploads.
 
 ---
 

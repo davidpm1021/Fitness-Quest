@@ -73,11 +73,15 @@ export function evaluateGoal(
 }
 
 /**
- * Calculate defense stat based on streak
+ * Calculate defense stat based on streak and encouragements
  * +5 per consecutive day (max +25 for 5 days)
+ * +5 per encouragement received (max +25 for 5 encouragements)
+ * Maximum total defense: 50
  */
-export function calculateDefense(streak: number): number {
-  return Math.min(streak * 5, 25);
+export function calculateDefense(streak: number, encouragementsReceived: number = 0): number {
+  const streakDefense = Math.min(streak * 5, 25);
+  const encouragementDefense = Math.min(encouragementsReceived * 5, 25);
+  return Math.min(streakDefense + encouragementDefense, 50);
 }
 
 /**
@@ -95,6 +99,8 @@ export function updateStreak(
 
 /**
  * Calculate total damage dealt
+ * Hit or miss, you ALWAYS deal base damage (effort counts!)
+ * On hit, you also add bonuses
  */
 export function calculateDamage(
   attackRoll: number,
@@ -106,7 +112,8 @@ export function calculateDamage(
   const hit = totalRoll >= monsterAC;
 
   if (!hit) {
-    return { hit: false, damage: 0 };
+    // Even on a miss, effort counts - deal base damage (no bonuses)
+    return { hit: false, damage: baseDamage };
   }
 
   // On hit, deal base damage + bonuses

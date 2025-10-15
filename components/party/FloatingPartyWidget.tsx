@@ -164,6 +164,12 @@ export default function FloatingPartyWidget() {
       const data = await response.json();
       if (data.success) {
         setMessages([...messages, data.data.message]);
+
+        // Show buff notification if we got one!
+        if (data.data.buff) {
+          // You could add a toast notification here
+          console.log("🎁 Buff received:", data.data.buff.notification);
+        }
       }
     } catch (err) {
       console.error("Error sending reaction:", err);

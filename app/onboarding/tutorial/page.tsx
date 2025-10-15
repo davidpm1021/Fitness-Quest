@@ -172,16 +172,15 @@ export default function TutorialPage() {
               <div className="text-sm font-retro space-y-1">
                 <p>• +2 attack bonus at 3+ day streak</p>
                 <p>• +5 defense per consecutive day (max +25)</p>
-                <p>• Unlock SUPPORT action at 3 days</p>
-                <p>• Unlock HEROIC STRIKE at 7 days</p>
+                <p>• Stronger stats = better combat performance</p>
               </div>
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3 border-l-4 border-red-500">
               <div className="font-pixel text-red-400 mb-1">💔 BREAKING STREAKS</div>
               <div className="text-sm font-retro space-y-1">
-                <p>• Streak resets to 0</p>
+                <p>• Streak resets to 1 (today counts!)</p>
                 <p>• Lose all focus points</p>
-                <p>• Defense resets to 0</p>
+                <p>• Defense drops to 5 (from streak)</p>
               </div>
             </div>
           </div>
@@ -221,11 +220,11 @@ export default function TutorialPage() {
               <p className="text-xs font-retro">50% damage, +5 defense to all party members</p>
             </div>
             <div className="bg-green-900/30 rounded-lg p-2 border-l-4 border-green-500">
-              <div className="text-xs font-pixel text-green-300">💚 SUPPORT (Costs 2 Focus, 3-day streak)</div>
+              <div className="text-xs font-pixel text-green-300">💚 SUPPORT (Costs 2 Focus)</div>
               <p className="text-xs font-retro">50% damage, heal teammate +10 HP</p>
             </div>
             <div className="bg-yellow-900/30 rounded-lg p-2 border-l-4 border-yellow-500">
-              <div className="text-xs font-pixel text-yellow-300">⚡ HEROIC STRIKE (Costs 3 Focus, 7-day streak)</div>
+              <div className="text-xs font-pixel text-yellow-300">⚡ HEROIC STRIKE (Costs 3 Focus)</div>
               <p className="text-xs font-retro">Auto-hit, double damage</p>
             </div>
           </div>
@@ -299,7 +298,7 @@ export default function TutorialPage() {
             <div className="text-sm font-retro space-y-1">
               <p>• Everyone starts with 100 HP</p>
               <p>• Monster counterattacks deal 5-15 damage</p>
-              <p>• Heal +5 HP per check-in (natural healing)</p>
+              <p>• HP recovers through SUPPORT action or victory</p>
               <p>• Low HP (&lt;50) gives +2 underdog bonus</p>
               <p>• Reaching 0 HP = mission failed (party restarts)</p>
             </div>

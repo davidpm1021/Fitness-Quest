@@ -172,7 +172,7 @@ model party_members {
   current_defense                                                     Int                    @default(0)
   current_streak                                                      Int                    @default(0)
   joined_at                                                           DateTime               @default(now())
-  focus_points                                                        Int                    @default(0)
+  focus_points                                                        Int                    @default(5)
   xp                                                                  Int                    @default(0)
   level                                                               Int                    @default(1)
   skill_points                                                        Int                    @default(0)
@@ -180,6 +180,8 @@ model party_members {
   welcome_back_remaining                                              Int                    @default(0)
   welcome_back_activated_at                                           DateTime?
   welcome_back_acknowledged                                           Boolean                @default(false)
+  active_buff_type                                                    String?
+  active_buff_value                                                   Int?
   check_ins                                                           check_ins[]
   encouragements                                                      encouragements[]
   healing_actions_healing_actions_from_party_member_idToparty_members healing_actions[]      @relation("healing_actions_from_party_member_idToparty_members")

@@ -248,9 +248,9 @@ export async function POST(request: NextRequest) {
       checkedInCount: todayCheckIns,
     });
 
-    // Roll d20 and calculate damage (modified by combat action)
-    let attackRoll = rollD20();
-    let baseDamage = rollBaseDamage();
+    // Multiple attacks system: one attack per goal met (minimum 1)
+    const numAttacks = Math.max(1, goalsMet);
+
     let focusEarned = 0;
     let damageMultiplier = 1.0;
     let autoHit = false;
@@ -296,34 +296,75 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    // Apply welcome back catch-up damage bonus (+5 damage)
-    if (activeWelcomeBackBonus) {
-      baseDamage += 5;
-    }
-
     // Use active monster's AC or default to 12
     const monsterAC = activeMonster?.monsters.armor_class || 12;
 
-    let result;
-    if (autoHit) {
-      // Heroic Strike always hits
-      result = {
-        hit: true,
-        damage: Math.floor(baseDamage * damageMultiplier),
-        roll: attackRoll,
-        targetAC: monsterAC,
-      };
-    } else {
-      result = calculateDamage(
-        attackRoll,
-        bonuses.totalBonus,
-        Math.floor(baseDamage * damageMultiplier),
-        monsterAC
-      );
+    // Roll multiple attacks (one per goal met)
+    const attacks = [];
+    let totalDamage = 0;
+
+    for (let i = 0; i < numAttacks; i++) {
+      const attackRoll = rollD20();
+      let baseDamage = rollBaseDamage();
+
+      // Apply welcome back catch-up damage bonus (+5 damage per attack)
+      if (activeWelcomeBackBonus) {
+        baseDamage += 5;
+      }
+
+      // Each attack gets +1 modifier plus existing bonuses
+      const attackBonus = bonuses.totalBonus + 1;
+
+      let attackResult;
+      if (autoHit) {
+        // Heroic Strike always hits
+        attackResult = {
+          hit: true,
+          damage: Math.floor(baseDamage * damageMultiplier),
+          roll: attackRoll,
+          bonus: attackBonus,
+        };
+      } else {
+        const damageCalc = calculateDamage(
+          attackRoll,
+          attackBonus,
+          Math.floor(baseDamage * damageMultiplier),
+          monsterAC
+        );
+        attackResult = {
+          hit: damageCalc.hit,
+          damage: damageCalc.damage,
+          roll: attackRoll,
+          bonus: attackBonus,
+        };
+      }
+
+      attacks.push(attackResult);
+      totalDamage += attackResult.damage;
     }
 
-    // Calculate new defense
-    const newDefense = calculateDefense(newStreak);
+    // Combined result for backward compatibility
+    const result = {
+      hit: attacks.some(a => a.hit),
+      damage: totalDamage,
+      attacks: attacks,
+    };
+
+    // Count recent encouragements received (last 7 days, for defense bonus)
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const recentEncouragementsCount = await prisma.encouragements.count({
+      where: {
+        to_party_member_id: partyMember.id,
+        created_at: {
+          gte: sevenDaysAgo,
+        },
+      },
+    });
+
+    // Calculate new defense (streak + encouragements)
+    const newDefense = calculateDefense(newStreak, recentEncouragementsCount);
 
     // Roll for counterattack if there's an active monster and player hit
     let wasCounterattacked = false;
@@ -376,8 +417,8 @@ export async function POST(request: NextRequest) {
           check_in_date: today,
           goals_met: goalsMet,
           is_rest_day: goalCheckIns.every((g) => g.isRestDay),
-          attack_roll: attackRoll,
-          attack_bonus: bonuses.totalBonus,
+          attack_roll: attacks[0].roll, // First attack roll for compatibility
+          attack_bonus: bonuses.totalBonus + 1, // Includes the +1 per attack modifier
           damage_dealt: result.damage,
           was_hit_by_monster: wasCounterattacked,
           damage_taken: counterattackDamage,
@@ -471,8 +512,8 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Update monster HP if hit and detect milestones
-      if (activeMonster && result.hit) {
+      // Update monster HP if damage was dealt (hit or miss, effort counts!)
+      if (activeMonster && result.damage > 0) {
         const oldHp = activeMonster.monsters.current_hp;
         const newMonsterHp = Math.max(
           0,
@@ -563,27 +604,53 @@ export async function POST(request: NextRequest) {
 
     // Build combat action result message
     let actionMessage = "";
+
+    // Build attack summary for multiple attacks
+    const attackSummary = numAttacks > 1
+      ? `${numAttacks} attacks! ${attacks.map(a => a.damage).join('+')} = ${result.damage} total damage`
+      : `${result.damage} damage`;
+
     if (selectedAction === "ATTACK") {
-      actionMessage = result.hit
-        ? wasCounterattacked
-          ? `Hit! You dealt ${result.damage} damage but the monster counterattacked for ${counterattackDamage} damage!`
-          : `Hit! You dealt ${result.damage} damage!`
-        : "Miss! Better luck tomorrow!";
+      if (numAttacks > 1) {
+        // Multiple attacks messaging
+        const hits = attacks.filter(a => a.hit).length;
+        if (hits === numAttacks) {
+          actionMessage = wasCounterattacked
+            ? `All ${numAttacks} attacks hit! ${attackSummary} but the monster counterattacked for ${counterattackDamage} damage!`
+            : `All ${numAttacks} attacks hit! ${attackSummary}!`;
+        } else if (hits > 0) {
+          actionMessage = wasCounterattacked
+            ? `${hits}/${numAttacks} attacks hit! ${attackSummary} but the monster counterattacked for ${counterattackDamage} damage!`
+            : `${hits}/${numAttacks} attacks hit! ${attackSummary}!`;
+        } else {
+          actionMessage = `All ${numAttacks} attacks missed! But your effort counts - ${attackSummary}!`;
+        }
+      } else {
+        // Single attack messaging
+        actionMessage = result.hit
+          ? wasCounterattacked
+            ? `Hit! You dealt ${result.damage} damage but the monster counterattacked for ${counterattackDamage} damage!`
+            : `Hit! You dealt ${result.damage} damage!`
+          : `Miss! But your effort counts - you still dealt ${result.damage} base damage!`;
+      }
     } else if (selectedAction === "DEFEND") {
+      const hitInfo = numAttacks > 1 ? attackSummary : `${result.damage} damage`;
       actionMessage = result.hit
         ? wasCounterattacked
-          ? `Defensive Strike! You dealt ${result.damage} damage and took only ${counterattackDamage} damage. Your party gained +5 defense!`
-          : `Defensive Strike! You dealt ${result.damage} damage and your party gained +5 defense!`
-        : `You took a defensive stance. Your party gained +5 defense!`;
+          ? `Defensive Strike! You dealt ${hitInfo} and took only ${counterattackDamage} damage. Your party gained +5 defense!`
+          : `Defensive Strike! You dealt ${hitInfo} and your party gained +5 defense!`
+        : `Defensive stance! You dealt ${hitInfo} and your party gained +5 defense!`;
     } else if (selectedAction === "SUPPORT") {
       const healMessage = healingTarget
         ? ` You healed a teammate for ${healingAmount} HP!`
         : ` No injured teammates to heal.`;
+      const hitInfo = numAttacks > 1 ? attackSummary : `${result.damage} damage`;
       actionMessage = result.hit
-        ? `Supporting Attack! You dealt ${result.damage} damage.${healMessage}`
-        : `Supporting effort! You dealt base damage.${healMessage}`;
+        ? `Supporting Attack! You dealt ${hitInfo}.${healMessage}`
+        : `Supporting effort! You dealt ${hitInfo}.${healMessage}`;
     } else if (selectedAction === "HEROIC_STRIKE") {
-      actionMessage = `HEROIC STRIKE! You unleashed devastating power for ${result.damage} damage!`;
+      const hitInfo = numAttacks > 1 ? attackSummary : `${result.damage} damage`;
+      actionMessage = `HEROIC STRIKE! You unleashed devastating power for ${hitInfo}!`;
     }
 
     return NextResponse.json(
@@ -592,9 +659,9 @@ export async function POST(request: NextRequest) {
         data: {
           checkIn: checkInResult,
           attackResult: {
-            roll: attackRoll,
+            attacks: attacks, // Individual attack details (roll, damage, hit, bonus)
+            numAttacks: numAttacks,
             bonuses: bonuses,
-            baseDamage,
             totalDamage: result.damage,
             hit: result.hit,
             wasCounterattacked,
@@ -614,12 +681,12 @@ export async function POST(request: NextRequest) {
           monster: activeMonster
             ? {
                 name: activeMonster.monsters.name,
-                currentHp: activeMonster.monsters.current_hp - (result.hit ? result.damage : 0),
+                currentHp: activeMonster.monsters.current_hp - result.damage,
                 maxHp: activeMonster.monsters.max_hp,
               }
             : null,
           monsterDefeated: activeMonster
-            ? activeMonster.monsters.current_hp - result.damage <= 0 && result.hit
+            ? activeMonster.monsters.current_hp - result.damage <= 0
             : false,
           victoryRewardId: victoryRewardId,
           milestoneCrossed: milestoneCrossed,

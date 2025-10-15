@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { authenticateRequest, isErrorResponse } from '@/lib/middleware';
 import { ApiResponse } from '@/lib/types';
+import { rollEncouragementBuff, getBuffNotification } from '@/lib/encouragementBuffs';
 
 /**
  * POST /api/parties/[id]/quick-reaction
@@ -76,25 +77,71 @@ export async function POST(
         break;
     }
 
-    // Create encouragement message
-    const newMessage = await prisma.party_messages.create({
-      data: {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    // Get all party members to send encouragement to all teammates
+    const partyMembers = await prisma.party_members.findMany({
+      where: {
         party_id: partyId,
-        user_id: user.userId,
-        message: message,
-        message_type: 'ENCOURAGEMENT',
-      },
-      include: {
-        users: {
-          select: {
-            id: true,
-            display_name: true,
-            character_name: true,
-          },
+        user_id: {
+          not: user.userId, // Don't include the sender
         },
       },
+      select: {
+        id: true,
+      },
     });
+
+    // Roll for a buff for the sender (helper's reward!)
+    const buff = rollEncouragementBuff();
+
+    // Create encouragement message and encouragement records in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the party message
+      const newMessage = await tx.party_messages.create({
+        data: {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          party_id: partyId,
+          user_id: user.userId,
+          message: message,
+          message_type: 'ENCOURAGEMENT',
+        },
+        include: {
+          users: {
+            select: {
+              id: true,
+              display_name: true,
+              character_name: true,
+            },
+          },
+        },
+      });
+
+      // Create encouragement records for all teammates (gives them defense bonus)
+      await tx.encouragements.createMany({
+        data: partyMembers.map((pm) => ({
+          id: crypto.randomUUID(),
+          from_user_id: user.userId,
+          to_party_member_id: pm.id,
+          reaction_type: reaction === '💪' ? 'MUSCLE' : reaction === '🔥' ? 'FIRE' : reaction === '⭐' ? 'STAR' : 'CLAP',
+          message: message,
+        })),
+      });
+
+      // Give the sender a buff as a reward for being supportive!
+      await tx.party_members.update({
+        where: {
+          id: partyMember.id,
+        },
+        data: {
+          active_buff_type: buff.type,
+          active_buff_value: buff.value,
+        },
+      });
+
+      return newMessage;
+    });
+
+    const newMessage = result;
+    const buffNotification = getBuffNotification(buff);
 
     return NextResponse.json({
       success: true,
@@ -106,6 +153,13 @@ export async function POST(
           message: newMessage.message,
           messageType: newMessage.message_type,
           createdAt: newMessage.created_at,
+        },
+        buff: {
+          type: buff.type,
+          value: buff.value,
+          description: buff.description,
+          icon: buff.icon,
+          notification: buffNotification,
         },
       },
     });
