@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import PixelButton from "@/components/ui/PixelButton";
@@ -19,6 +20,7 @@ export default function AuthenticatedNav({
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
     { path: "/dashboard", label: "DASHBOARD", icon: "🏠" },
@@ -26,94 +28,137 @@ export default function AuthenticatedNav({
     { path: "/goals", label: "GOALS", icon: "🎯" },
     { path: "/party/dashboard", label: "PARTY", icon: "👥" },
     { path: "/check-in", label: "CHECK-IN", icon: "⚔️" },
+    { path: "/skills", label: "SKILLS", icon: "🌟" },
     { path: "/badges", label: "BADGES", icon: "🏆" },
     { path: "/history", label: "HISTORY", icon: "📊" },
     { path: "/settings", label: "SETTINGS", icon: "⚙️" },
   ];
 
+  const handleNavClick = (path: string) => {
+    router.push(path);
+    setIsMenuOpen(false);
+  };
+
   return (
-    <nav className="relative z-10 bg-gradient-to-r from-gray-900 to-gray-800 border-b-4 border-yellow-500 shadow-[0_4px_0_0_rgba(0,0,0,0.3)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Left side - Title/Logo */}
-          <div className="flex items-center gap-4">
-            {showBackButton && (
+    <>
+      <nav className="relative z-50 bg-gradient-to-r from-gray-900 to-gray-800 border-b-4 border-yellow-500 shadow-[0_4px_0_0_rgba(0,0,0,0.3)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Left side - Hamburger + Title */}
+            <div className="flex items-center gap-4">
+              {/* Hamburger Button */}
               <button
-                onClick={() => router.push(backPath)}
-                className="text-purple-300 hover:text-white font-retro transition-colors"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-yellow-400 hover:text-yellow-300 transition-colors p-2 -ml-2"
+                aria-label="Toggle menu"
               >
-                ← BACK
-              </button>
-            )}
-            <h1 className="font-pixel text-xl md:text-2xl text-yellow-400 drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
-              {title || "FITNESS QUEST"}
-            </h1>
-            {!title && (
-              <PixelBadge variant="info" size="sm">
-                BETA
-              </PixelBadge>
-            )}
-          </div>
-
-          {/* Center - Navigation Links (hidden on mobile) */}
-          <div className="hidden lg:flex items-center gap-2">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.path;
-              return (
-                <button
-                  key={link.path}
-                  onClick={() => router.push(link.path)}
-                  className={`
-                    px-3 py-2 font-pixel text-xs rounded
-                    transition-all
-                    ${
-                      isActive
-                        ? "bg-yellow-500 text-gray-900 shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
-                        : "text-yellow-300 hover:text-yellow-100 hover:bg-gray-800"
-                    }
-                  `}
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {link.icon} {link.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right side - User info and logout */}
-          <div className="flex items-center gap-4">
-            <div className="hidden md:block text-white font-retro text-sm">
-              <span className="text-gray-400">HERO:</span> {user?.displayName}
-            </div>
-            <PixelButton variant="danger" size="sm" onClick={logout}>
-              ↩ LOGOUT
-            </PixelButton>
-          </div>
-        </div>
-
-        {/* Mobile navigation (shown on small screens) */}
-        <div className="lg:hidden flex items-center gap-2 pb-3 overflow-x-auto">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.path;
-            return (
-              <button
-                key={link.path}
-                onClick={() => router.push(link.path)}
-                className={`
-                  px-3 py-2 font-pixel text-xs rounded whitespace-nowrap
-                  transition-all flex-shrink-0
-                  ${
-                    isActive
-                      ? "bg-yellow-500 text-gray-900 shadow-[2px_2px_0_0_rgba(0,0,0,0.3)]"
-                      : "text-yellow-300 hover:text-yellow-100 hover:bg-gray-800"
-                  }
-                `}
-              >
-                {link.icon} {link.label}
+                  {isMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
               </button>
-            );
-          })}
+
+              <h1 className="font-pixel text-lg md:text-xl text-yellow-400 drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
+                {title || "FITNESS QUEST"}
+              </h1>
+            </div>
+
+            {/* Right side - User info */}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:block text-white font-retro text-xs md:text-sm">
+                <span className="text-gray-400">HERO:</span> {user?.displayName}
+              </div>
+              <PixelButton variant="danger" size="sm" onClick={logout}>
+                ↩
+              </PixelButton>
+            </div>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Slide-out Menu */}
+      {isMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            onClick={() => setIsMenuOpen(false)}
+          />
+
+          {/* Menu Panel */}
+          <div className="fixed top-16 left-0 bottom-0 w-64 bg-gradient-to-b from-gray-900 to-gray-800 border-r-4 border-yellow-500 z-40 shadow-2xl overflow-y-auto">
+            <div className="p-4">
+              {/* User Info */}
+              <div className="mb-6 pb-4 border-b-2 border-gray-700">
+                <div className="text-yellow-400 font-pixel text-sm mb-1">
+                  HERO
+                </div>
+                <div className="text-white font-retro text-lg">
+                  {user?.displayName}
+                </div>
+              </div>
+
+              {/* Navigation Links */}
+              <div className="space-y-2">
+                {navLinks.map((link) => {
+                  const isActive = pathname === link.path;
+                  return (
+                    <button
+                      key={link.path}
+                      onClick={() => handleNavClick(link.path)}
+                      className={`
+                        w-full px-4 py-3 font-pixel text-sm rounded
+                        transition-all text-left flex items-center gap-3
+                        ${
+                          isActive
+                            ? "bg-yellow-500 text-gray-900 shadow-[3px_3px_0_0_rgba(0,0,0,0.3)]"
+                            : "text-yellow-300 hover:text-yellow-100 hover:bg-gray-800"
+                        }
+                      `}
+                    >
+                      <span className="text-xl">{link.icon}</span>
+                      <span>{link.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Logout at bottom */}
+              <div className="mt-6 pt-4 border-t-2 border-gray-700">
+                <PixelButton
+                  variant="danger"
+                  size="md"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full"
+                >
+                  ↩ LOGOUT
+                </PixelButton>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
