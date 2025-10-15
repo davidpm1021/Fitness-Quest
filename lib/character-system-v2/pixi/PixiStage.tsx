@@ -83,13 +83,9 @@ export default function PixiStage({
         autoDensity,
         // Prefer WebGL, but fallback to WebGPU if needed
         preference: 'webgl',
+        // Round pixels to avoid sub-pixel rendering (PixiJS v8 config)
+        roundPixels: true,
       });
-
-      // Configure for pixel-perfect rendering
-      if (app.renderer) {
-        // Round pixels to avoid sub-pixel rendering
-        app.renderer.roundPixels = true;
-      }
 
       // Append canvas to container
       if (canvasRef.current && app.canvas) {

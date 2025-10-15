@@ -8,7 +8,11 @@
       "Bash(npx prisma migrate dev:*)",
       "mcp__ide__getDiagnostics",
       "Bash(npm run build)",
-      "Bash(npx prisma generate)"
+      "Bash(npx prisma generate)",
+      "Bash(npm install pixi.js@7.4.2)",
+      "Bash(npm install @pixi/react)",
+      "Bash(npm install pixi.js@latest @pixi/react@latest)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

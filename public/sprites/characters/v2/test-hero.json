@@ -1,0 +1,22 @@
+{
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "columns": 4,
+  "rows": 1,
+  "animations": {
+    "idle": [0, 1, 2, 3],
+    "walk": [0, 1, 2, 3],
+    "attack": [0, 1, 2, 3],
+    "hit": [0],
+    "victory": [0, 1],
+    "defend": [0],
+    "support": [0],
+    "heroic_strike": [0, 1, 2]
+  },
+  "anchors": {
+    "x": 0.5,
+    "y": 0.9
+  },
+  "version": "1.0.0",
+  "fps": 12
+}
