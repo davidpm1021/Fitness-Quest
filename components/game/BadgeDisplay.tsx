@@ -29,14 +29,17 @@ export function BadgeDisplay({ badges, title, compact = false }: BadgeDisplayPro
             className={`relative group ${
               badge.isUnlocked ? 'opacity-100' : 'opacity-30'
             }`}
-            title={badge.isUnlocked ? `${badge.name} - ${badge.description}` : '???'}
+            title={`${badge.name} - ${badge.description}`}
           >
-            <div className="text-3xl">{badge.isUnlocked ? badge.icon : '🔒'}</div>
-            {badge.isUnlocked && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                {badge.name}
+            <div className="text-3xl">{badge.icon}</div>
+            {!badge.isUnlocked && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-2xl opacity-60">🔒</div>
               </div>
             )}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              {badge.name}
+            </div>
           </div>
         ))}
       </div>
@@ -57,22 +60,34 @@ export function BadgeDisplay({ badges, title, compact = false }: BadgeDisplayPro
               ${
                 badge.isUnlocked
                   ? 'bg-white dark:bg-gray-800 border-indigo-300 dark:border-indigo-600 shadow-md hover:shadow-lg'
-                  : 'bg-gray-100 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 opacity-50'
+                  : 'bg-gray-100 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 opacity-60'
               }
             `}
           >
             <div className="flex flex-col items-center text-center space-y-2">
-              <div className="text-4xl">{badge.isUnlocked ? badge.icon : '🔒'}</div>
+              <div className="relative">
+                <div className="text-4xl">{badge.icon}</div>
+                {!badge.isUnlocked && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-3xl opacity-70">🔒</div>
+                  </div>
+                )}
+              </div>
               <div>
                 <div className="font-semibold text-gray-900 dark:text-white">
-                  {badge.isUnlocked ? badge.name : '???'}
+                  {badge.name}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  {badge.isUnlocked ? badge.description : 'Locked'}
+                  {badge.description}
                 </div>
                 {badge.isUnlocked && badge.earnedAt && (
                   <div className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
                     Earned {new Date(badge.earnedAt).toLocaleDateString()}
+                  </div>
+                )}
+                {!badge.isUnlocked && (
+                  <div className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic">
+                    Not yet earned
                   </div>
                 )}
               </div>

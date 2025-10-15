@@ -10,7 +10,8 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed-monsters.ts"
+    "db:seed": "tsx prisma/seed-monsters.ts",
+    "db:seed:skills": "tsx prisma/seed-skills.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",

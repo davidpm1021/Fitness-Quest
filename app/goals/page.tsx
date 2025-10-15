@@ -39,7 +39,7 @@ export default function GoalsPage() {
     name: "",
     targetValue: "",
     targetUnit: "",
-    flexPercentage: "10",
+    flexPercentage: "0",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -105,7 +105,7 @@ export default function GoalsPage() {
           name: "",
           targetValue: "",
           targetUnit: "",
-          flexPercentage: "10",
+          flexPercentage: "0",
         });
         setShowForm(false);
         fetchGoals();
@@ -262,25 +262,6 @@ export default function GoalsPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-sm uppercase tracking-wider mb-2 text-white">
-                    FLEX: {formData.flexPercentage}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={formData.flexPercentage}
-                    onChange={(e) =>
-                      setFormData({ ...formData, flexPercentage: e.target.value })
-                    }
-                    className="w-full h-3 bg-gray-700 rounded-sm appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-yellow-400 [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-yellow-600 [&::-webkit-slider-thumb]:rounded-sm"
-                  />
-                  <p className="text-sm text-blue-200 mt-2 font-retro">
-                    Wiggle room for your target (0-20%)
-                  </p>
-                </div>
-
                 <PixelButton
                   type="submit"
                   variant="success"
@@ -321,7 +302,7 @@ export default function GoalsPage() {
                       </div>
                       {goal.targetValue && (
                         <p className="font-retro text-lg text-blue-200 mt-2">
-                          Target: {goal.targetValue} {goal.targetUnit} (±{goal.flexPercentage}%)
+                          Target: {goal.targetValue} {goal.targetUnit}
                         </p>
                       )}
                     </div>

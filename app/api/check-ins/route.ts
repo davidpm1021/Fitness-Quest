@@ -177,13 +177,17 @@ export async function POST(request: NextRequest) {
       partyMember.current_streak
     );
 
+    // Calculate focus penalty for broken streak
+    const streakWasBroken = !previousCheckIn && partyMember.current_streak > 1;
+    const focusPenalty = streakWasBroken ? partyMember.focus_points : 0; // Lose all focus when streak breaks
+
     // Validate combat action requirements
-    if (selectedAction === "ATTACK") {
+    if (selectedAction === "DEFEND") {
       if (partyMember.focus_points < 1) {
         return NextResponse.json(
           {
             success: false,
-            error: "Not enough focus! Attack requires 1 focus point.",
+            error: "Not enough focus! Defend requires 1 focus point.",
           } as ApiResponse,
           { status: 400 }
         );
@@ -198,30 +202,12 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      if (newStreak < 3) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Support requires a 3-day streak to unlock!",
-          } as ApiResponse,
-          { status: 400 }
-        );
-      }
     } else if (selectedAction === "HEROIC_STRIKE") {
       if (partyMember.focus_points < 3) {
         return NextResponse.json(
           {
             success: false,
             error: "Not enough focus! Heroic Strike requires 3 focus points.",
-          } as ApiResponse,
-          { status: 400 }
-        );
-      }
-      if (newStreak < 7) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Heroic Strike requires a 7-day streak to unlock!",
           } as ApiResponse,
           { status: 400 }
         );
@@ -274,14 +260,14 @@ export async function POST(request: NextRequest) {
     // Apply combat action modifiers
     switch (selectedAction) {
       case "ATTACK":
-        // Standard attack - costs 1 focus
-        focusEarned = -1;
+        // Standard attack - free (no focus cost)
+        focusEarned = 0;
         break;
 
       case "DEFEND":
-        // Deal 50% damage, generates 1 focus, provides defense bonus (handled later)
+        // Deal 50% damage, costs 1 focus, provides defense bonus (handled later)
         damageMultiplier = 0.5;
-        focusEarned = 1;
+        focusEarned = -1;
         break;
 
       case "SUPPORT":
@@ -413,7 +399,7 @@ export async function POST(request: NextRequest) {
       // Calculate new focus points with base recovery and cap
       // Base recovery: +2 for checking in, +1 per goal met
       const baseFocusRecovery = 2 + goalsMet;
-      let newFocus = partyMember.focus_points + baseFocusRecovery + focusEarned;
+      let newFocus = partyMember.focus_points - focusPenalty + baseFocusRecovery + focusEarned;
 
       // Cap focus at 10 (prevents hoarding)
       newFocus = Math.min(10, Math.max(0, newFocus));
@@ -571,7 +557,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate new focus for response (same logic as in transaction)
     const baseFocusRecovery = 2 + goalsMet;
-    const calculatedNewFocus = Math.min(10, Math.max(0, partyMember.focus_points + baseFocusRecovery + focusEarned));
+    const calculatedNewFocus = Math.min(10, Math.max(0, partyMember.focus_points - focusPenalty + baseFocusRecovery + focusEarned));
 
     // Build combat action result message
     let actionMessage = "";
