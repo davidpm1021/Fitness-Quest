@@ -1,0 +1,20 @@
+# Git LFS - Large File Storage
+# Use for binary art assets to avoid bloating the repository
+
+# Aseprite source files
+*.ase filter=lfs diff=lfs merge=lfs -text
+*.aseprite filter=lfs diff=lfs merge=lfs -text
+
+# Large PNG files (> 1MB typically)
+# Uncomment if needed:
+# *.png filter=lfs diff=lfs merge=lfs -text
+
+# Ensure text files are handled correctly
+*.md text
+*.json text
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.css text
+*.html text

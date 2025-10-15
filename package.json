@@ -18,11 +18,13 @@
     "test:verify": "tsx tests/simulation/verify-simulation.ts"
   },
   "dependencies": {
+    "@pixi/react": "^8.0.3",
     "@prisma/client": "^6.17.1",
     "bcryptjs": "^3.0.2",
     "canvas-confetti": "^1.9.3",
     "jsonwebtoken": "^9.0.2",
     "next": "15.1.4",
+    "pixi.js": "^8.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.2.1"
