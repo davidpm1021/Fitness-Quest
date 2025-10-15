@@ -1,11 +1,12 @@
 import React from 'react';
 
 interface OnboardingProgressProps {
-  currentStep: 'character' | 'goals' | 'party';
+  currentStep: 'character' | 'tutorial' | 'goals' | 'party';
 }
 
 const steps = [
   { key: 'character', label: 'Character', emoji: '⚔️' },
+  { key: 'tutorial', label: 'Tutorial', emoji: '📚' },
   { key: 'goals', label: 'Goals', emoji: '🎯' },
   { key: 'party', label: 'Party', emoji: '👥' },
 ];

@@ -65,7 +65,9 @@
       "Bash(move ROADMAP-UPDATED.md archive )",
       "Bash(move GAME-ROADMAP.md archive )",
       "Bash(move:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(streaks, momentum, how they help the party. EVERYTHING they need to be)",
+      "Bash(comfortable playing.\"\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

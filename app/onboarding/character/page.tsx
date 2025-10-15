@@ -107,7 +107,7 @@ export default function CharacterOnboardingPage() {
         },
         body: JSON.stringify({
           characterName: characterName.trim(),
-          onboardingStep: 'goals',
+          onboardingStep: 'tutorial',
         }),
       });
 
@@ -115,8 +115,8 @@ export default function CharacterOnboardingPage() {
         throw new Error('Failed to update character name');
       }
 
-      // Proceed to goals step
-      router.push('/onboarding/goals');
+      // Proceed to tutorial step
+      router.push('/onboarding/tutorial');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save character');
     } finally {
