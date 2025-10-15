@@ -77,6 +77,14 @@ export default function CheckInPage() {
   const [combatAction, setCombatAction] = useState<"ATTACK" | "DEFEND" | "SUPPORT" | "HEROIC_STRIKE">("ATTACK");
   const [focusPoints, setFocusPoints] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [currentDefense, setCurrentDefense] = useState(0);
+  const [focusData, setFocusData] = useState<{
+    oldFocus: number;
+    newFocus: number;
+    change: number;
+    recovery: number;
+    cost: number;
+  } | null>(null);
   const [xpData, setXpData] = useState<{
     xpEarned: number;
     totalXP: number;
@@ -294,6 +302,23 @@ export default function CheckInPage() {
         setAttackResult(data.data.attackResult);
         setMonster(data.data.monster);
         setMilestoneCrossed(data.data.milestoneCrossed || null);
+
+        // Capture defense from response
+        if (data.data.defenseUpdated !== undefined) {
+          setCurrentDefense(data.data.defenseUpdated);
+        }
+
+        // Capture focus data from combatAction object
+        const combatActionData = data.data.combatAction;
+        if (combatActionData) {
+          setFocusData({
+            oldFocus: combatActionData.oldFocusTotal || 0,
+            newFocus: combatActionData.newFocusTotal || 0,
+            change: combatActionData.focusChange || 0,
+            recovery: combatActionData.baseFocusRecovery || 0,
+            cost: combatActionData.focusCost || 0,
+          });
+        }
 
         // Capture XP data from progression object
         const progression = data.data.progression;
@@ -555,6 +580,46 @@ export default function CheckInPage() {
               </div>
             )}
 
+            {/* Step 2.5: Defense Status */}
+            {revealStep >= 2 && currentDefense > 0 && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="menu" title="🛡️ DEFENSE STATUS">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        {/* Shield icons - 1 per 10 defense */}
+                        {Array.from({ length: Math.min(5, Math.floor(currentDefense / 10)) }).map((_, i) => (
+                          <span key={i} className="text-4xl animate-pulse" style={{ animationDelay: `${i * 0.1}s` }}>
+                            🛡️
+                          </span>
+                        ))}
+                        {currentDefense % 10 !== 0 && currentDefense < 50 && (
+                          <span className="text-2xl opacity-50">🛡️</span>
+                        )}
+                      </div>
+                      <p className="font-retro text-sm text-gray-300">
+                        {currentDefense >= 40 && "🔥 Maximum Defense! Nearly invulnerable!"}
+                        {currentDefense >= 25 && currentDefense < 40 && "💪 Strong Defense! Well protected!"}
+                        {currentDefense >= 10 && currentDefense < 25 && "⚔️ Good Defense! Building up!"}
+                        {currentDefense < 10 && "🌟 Defense Active!"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-5xl font-pixel text-blue-400 mb-1">
+                        {currentDefense}
+                      </div>
+                      <p className="font-retro text-xs text-gray-400">Total Defense</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t-2 border-gray-700">
+                    <p className="font-retro text-xs text-gray-400 text-center">
+                      Defense reduces counterattack chance • Max 50
+                    </p>
+                  </div>
+                </PixelPanel>
+              </div>
+            )}
+
             {/* Step 3: Damage Dealt (if hit) */}
             {revealStep >= 3 && attackResult.hit && (
               <div className="animate-fade-in">
@@ -582,6 +647,84 @@ export default function CheckInPage() {
                     <p className="font-retro text-lg text-red-300">
                       The monster struck back and damaged your HP!
                     </p>
+                  </div>
+                </PixelPanel>
+              </div>
+            )}
+
+            {/* Focus Points */}
+            {revealStep >= 4 && focusData && (
+              <div className="animate-fade-in">
+                <PixelPanel
+                  variant={focusData.change >= 0 ? "success" : "menu"}
+                  title="⭐ FOCUS POINTS"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center gap-6">
+                      {/* Old Focus */}
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-2">
+                          {Array.from({ length: Math.min(10, focusData.oldFocus) }).map((_, i) => (
+                            <span key={i} className="text-xl opacity-60">⭐</span>
+                          ))}
+                        </div>
+                        <p className="font-pixel text-2xl text-gray-400">{focusData.oldFocus}</p>
+                        <p className="font-retro text-xs text-gray-500">Before</p>
+                      </div>
+
+                      {/* Arrow and Change */}
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">
+                          {focusData.change > 0 ? "+" : focusData.change < 0 ? "−" : "→"}
+                        </div>
+                        <p className={`font-pixel text-3xl ${
+                          focusData.change > 0 ? "text-green-400" :
+                          focusData.change < 0 ? "text-red-400" :
+                          "text-gray-400"
+                        }`}>
+                          {Math.abs(focusData.change)}
+                        </p>
+                      </div>
+
+                      {/* New Focus */}
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-2">
+                          {Array.from({ length: Math.min(10, focusData.newFocus) }).map((_, i) => (
+                            <span
+                              key={i}
+                              className="text-xl animate-pulse"
+                              style={{ animationDelay: `${i * 0.05}s` }}
+                            >
+                              ⭐
+                            </span>
+                          ))}
+                        </div>
+                        <p className="font-pixel text-2xl text-yellow-400">{focusData.newFocus}</p>
+                        <p className="font-retro text-xs text-gray-400">Current</p>
+                      </div>
+                    </div>
+
+                    {/* Explanation */}
+                    <div className="text-center pt-4 border-t-2 border-gray-700">
+                      <p className="font-retro text-sm text-gray-300">
+                        {focusData.cost > 0 && (
+                          <span className="text-red-300">
+                            Spent {focusData.cost} focus •{" "}
+                          </span>
+                        )}
+                        <span className="text-green-300">
+                          Recovered {focusData.recovery} focus
+                        </span>
+                        {focusData.newFocus === 10 && (
+                          <span className="text-yellow-300"> • MAX!</span>
+                        )}
+                      </p>
+                      {focusData.newFocus >= 3 && (
+                        <p className="font-retro text-xs text-purple-300 mt-2">
+                          💡 You have enough focus for HEROIC STRIKE!
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </PixelPanel>
               </div>
