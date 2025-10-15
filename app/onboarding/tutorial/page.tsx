@@ -421,7 +421,7 @@ export default function TutorialPage() {
   const handleFinish = async () => {
     // Update user's onboarding step to 'goals'
     try {
-      await fetch("/api/auth/me", {
+      await fetch("/api/user", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
