@@ -20,6 +20,8 @@ export default function PartyPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [createdParty, setCreatedParty] = useState<any>(null);
+  const [currentParty, setCurrentParty] = useState<any>(null);
+  const [checkingParty, setCheckingParty] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -43,11 +45,12 @@ export default function PartyPage() {
 
       const data = await response.json();
       if (data.success && data.data.party) {
-        // User already has a party, redirect to dashboard
-        router.push("/party/dashboard");
+        setCurrentParty(data.data.party);
       }
     } catch (err) {
       console.error("Error checking party:", err);
+    } finally {
+      setCheckingParty(false);
     }
   }
 
@@ -98,6 +101,14 @@ export default function PartyPage() {
       const data = await response.json();
 
       if (data.success) {
+        // Show appropriate success message
+        if (data.data.leftParty) {
+          toast.success(
+            `Left ${data.data.leftParty} and joined ${data.data.party.name}!`
+          );
+        } else {
+          toast.success(data.message || "Successfully joined party!");
+        }
         router.push("/party/dashboard");
       } else {
         setError(data.error || "Failed to join party");
@@ -116,7 +127,7 @@ export default function PartyPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || checkingParty) {
     return (
       <div className="min-h-screen flex items-center justify-center game-bg pixel-grid-bg">
         <p className="text-white font-retro text-xl">Loading...</p>
@@ -126,6 +137,72 @@ export default function PartyPage() {
 
   if (!user) {
     return null;
+  }
+
+  // If user has a party and hasn't chosen to switch, show the current party info
+  if (currentParty && mode === "select") {
+    return (
+      <PageLayout title="👥 YOUR PARTY" showBackButton={true}>
+        <main className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <PixelPanel variant="dialog" title="👥 YOUR CURRENT PARTY">
+            <div className="text-center mb-8">
+              <div className="text-6xl mb-4">🏰</div>
+              <h2 className="font-pixel text-2xl text-white mb-3">
+                {currentParty.name}
+              </h2>
+              <PixelBadge variant="info" size="lg">
+                {currentParty.members?.length || 1} MEMBER
+                {currentParty.members?.length !== 1 ? "S" : ""}
+              </PixelBadge>
+            </div>
+
+            <div className="mb-8 p-6 bg-gray-900/50 border-4 border-blue-500 rounded-lg">
+              <p className="font-retro text-lg text-blue-200 mb-4">
+                Invite Code:
+              </p>
+              <code className="font-pixel text-3xl text-yellow-400 tracking-wider bg-gray-800 px-6 py-3 border-4 border-yellow-600 rounded-sm inline-block">
+                {currentParty.inviteCode}
+              </code>
+            </div>
+
+            <div className="space-y-4">
+              <PixelButton
+                onClick={() => router.push("/party/dashboard")}
+                variant="success"
+                size="lg"
+                className="w-full"
+              >
+                ▶ GO TO PARTY DASHBOARD
+              </PixelButton>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t-2 border-gray-700"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-800 text-gray-400 font-retro">
+                    OR
+                  </span>
+                </div>
+              </div>
+
+              <PixelButton
+                onClick={() => setMode("join")}
+                variant="warning"
+                size="md"
+                className="w-full"
+              >
+                🔄 SWITCH TO ANOTHER PARTY
+              </PixelButton>
+
+              <p className="text-center font-retro text-xs text-gray-500 mt-2">
+                Warning: Switching parties will reset your HP, streak, and progress
+              </p>
+            </div>
+          </PixelPanel>
+        </main>
+      </PageLayout>
+    );
   }
 
   return (
@@ -264,7 +341,7 @@ export default function PartyPage() {
             </form>
           </PixelPanel>
         ) : (
-          <PixelPanel variant="dialog" title="🚪 JOIN PARTY">
+          <PixelPanel variant="dialog" title={currentParty ? "🔄 SWITCH PARTY" : "🚪 JOIN PARTY"}>
             <PixelButton
               onClick={() => setMode("select")}
               variant="secondary"
@@ -274,10 +351,19 @@ export default function PartyPage() {
               ← BACK
             </PixelButton>
 
+            {currentParty && (
+              <div className="mb-6 p-4 bg-yellow-900/30 border-4 border-yellow-500/50 rounded-lg">
+                <p className="font-retro text-sm text-yellow-200">
+                  ⚠️ You will leave <strong>{currentParty.name}</strong> and join a new party.
+                  Your HP, streak, and combat stats will be reset.
+                </p>
+              </div>
+            )}
+
             <div className="text-center mb-6">
-              <div className="text-5xl mb-3">🔑</div>
+              <div className="text-5xl mb-3">{currentParty ? "🔄" : "🔑"}</div>
               <h2 className="font-pixel text-xl text-white">
-                JOIN A PARTY
+                {currentParty ? "SWITCH TO NEW PARTY" : "JOIN A PARTY"}
               </h2>
             </div>
 
@@ -311,11 +397,15 @@ export default function PartyPage() {
               <PixelButton
                 type="submit"
                 disabled={loading || inviteCode.length !== 6}
-                variant="success"
+                variant={currentParty ? "warning" : "success"}
                 size="lg"
                 className="w-full"
               >
-                {loading ? "⏳ JOINING..." : "▶ JOIN PARTY"}
+                {loading
+                  ? "⏳ SWITCHING..."
+                  : currentParty
+                    ? "🔄 SWITCH PARTY"
+                    : "▶ JOIN PARTY"}
               </PixelButton>
             </form>
           </PixelPanel>

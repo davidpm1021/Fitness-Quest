@@ -9,7 +9,6 @@ import PixelButton from "@/components/ui/PixelButton";
 import PixelPanel from "@/components/ui/PixelPanel";
 import PixelBadge from "@/components/ui/PixelBadge";
 import HPBar from "@/components/ui/HPBar";
-import ChatPanel from "@/components/party/ChatPanel";
 
 interface PartyMember {
   id: string;
@@ -144,6 +143,13 @@ export default function PartyDashboard() {
               >
                 {showInviteCode ? "🔒 HIDE CODE" : "📋 INVITE CODE"}
               </PixelButton>
+              <PixelButton
+                onClick={() => router.push("/party")}
+                variant="secondary"
+                size="md"
+              >
+                🔄 SWITCH PARTY
+              </PixelButton>
             </div>
           </div>
 
@@ -239,72 +245,64 @@ export default function PartyDashboard() {
             </PixelPanel>
           </div>
 
-          {/* Party Members and Chat Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Party Members */}
-            <div className="lg:col-span-2">
-              <h3 className="font-pixel text-2xl text-white mb-6 drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
-                ⚔️ PARTY MEMBERS
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {party.members.map((member) => (
-                  <PixelPanel key={member.id} variant="menu">
-                    <div className="flex items-center mb-4">
-                      <div className="w-12 h-12 bg-blue-600 border-4 border-blue-800 rounded-sm flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]">
-                        <span className="font-pixel text-lg text-white">
-                          {member.user.displayName.charAt(0)}
-                        </span>
+          {/* Party Members */}
+          <div className="mb-8">
+            <h3 className="font-pixel text-2xl text-white mb-6 drop-shadow-[2px_2px_0_rgba(0,0,0,0.5)]">
+              ⚔️ PARTY MEMBERS
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {party.members.map((member) => (
+                <PixelPanel key={member.id} variant="menu">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-blue-600 border-4 border-blue-800 rounded-sm flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]">
+                      <span className="font-pixel text-lg text-white">
+                        {member.user.displayName.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-pixel text-sm text-white">
+                          {member.user.displayName}
+                        </h4>
+                        <PixelBadge variant="success" size="sm">
+                          LVL {member.level || 1}
+                        </PixelBadge>
                       </div>
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-pixel text-sm text-white">
-                            {member.user.displayName}
-                          </h4>
-                          <PixelBadge variant="success" size="sm">
-                            LVL {member.level || 1}
-                          </PixelBadge>
-                        </div>
-                        <p className="font-retro text-sm text-gray-400">
-                          @{member.user.username}
+                      <p className="font-retro text-sm text-gray-400">
+                        @{member.user.username}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <HPBar
+                      current={member.currentHp}
+                      max={member.maxHp}
+                      size="sm"
+                      label="HP"
+                    />
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t-4 border-gray-700">
+                      <div className="text-center">
+                        <p className="font-retro text-xs text-gray-400 mb-1">
+                          Defense
+                        </p>
+                        <p className="font-pixel text-lg text-blue-400">
+                          +{member.currentDefense}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-retro text-xs text-gray-400 mb-1">
+                          Streak
+                        </p>
+                        <p className="font-pixel text-lg text-orange-400">
+                          {member.currentStreak}🔥
                         </p>
                       </div>
                     </div>
-
-                    <div className="space-y-4">
-                      <HPBar
-                        current={member.currentHp}
-                        max={member.maxHp}
-                        size="sm"
-                        label="HP"
-                      />
-
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t-4 border-gray-700">
-                        <div className="text-center">
-                          <p className="font-retro text-xs text-gray-400 mb-1">
-                            Defense
-                          </p>
-                          <p className="font-pixel text-lg text-blue-400">
-                            +{member.currentDefense}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-retro text-xs text-gray-400 mb-1">
-                            Streak
-                          </p>
-                          <p className="font-pixel text-lg text-orange-400">
-                            {member.currentStreak}🔥
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </PixelPanel>
-                ))}
-              </div>
-            </div>
-
-            {/* Chat Panel */}
-            <div className="lg:col-span-1">
-              <ChatPanel partyId={party.id} />
+                  </div>
+                </PixelPanel>
+              ))}
             </div>
           </div>
         </div>

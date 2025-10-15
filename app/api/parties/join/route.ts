@@ -44,16 +44,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (existingMembership) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `You are already in party "${existingMembership.parties.name}"`,
-        } as ApiResponse,
-        { status: 400 }
-      );
-    }
-
     // Find party by invite code
     const party = await prisma.parties.findUnique({
       where: {
@@ -85,22 +75,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add user to party
-    const partyMember = await prisma.party_members.create({
-      data: {
-        id: crypto.randomUUID(),
-        party_id: party.id,
-        user_id: user.userId,
-        current_hp: 100,
-        max_hp: 100,
-        current_defense: 0,
-        current_streak: 0,
-        focus_points: 5, // Start with 5 focus points
-        xp: 0,
-        level: 1,
-        skill_points: 0,
-      },
+    // Use transaction to leave old party and join new one
+    const result = await prisma.$transaction(async (tx) => {
+      // If user is in a different party, leave it first
+      if (existingMembership && existingMembership.party_id !== party.id) {
+        await tx.party_members.delete({
+          where: {
+            id: existingMembership.id,
+          },
+        });
+      } else if (existingMembership && existingMembership.party_id === party.id) {
+        // User is already in this party
+        return {
+          alreadyMember: true,
+          partyMember: existingMembership,
+        };
+      }
+
+      // Add user to new party
+      const partyMember = await tx.party_members.create({
+        data: {
+          id: crypto.randomUUID(),
+          party_id: party.id,
+          user_id: user.userId,
+          current_hp: 100,
+          max_hp: 100,
+          current_defense: 0,
+          current_streak: 0,
+          focus_points: 5, // Start with 5 focus points
+          xp: 0,
+          level: 1,
+          skill_points: 0,
+        },
+      });
+
+      return {
+        alreadyMember: false,
+        partyMember,
+        leftParty: existingMembership ? existingMembership.parties.name : null,
+      };
     });
+
+    if (result.alreadyMember) {
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            party: {
+              id: party.id,
+              name: party.name,
+              memberCount: party.party_members.length,
+            },
+            membership: result.partyMember,
+          },
+          message: `You are already in ${party.name}`,
+        } as ApiResponse,
+        { status: 200 }
+      );
+    }
+
+    const successMessage = result.leftParty
+      ? `Left ${result.leftParty} and joined ${party.name}!`
+      : `Successfully joined ${party.name}!`;
 
     return NextResponse.json(
       {
@@ -111,9 +147,10 @@ export async function POST(request: NextRequest) {
             name: party.name,
             memberCount: party.party_members.length + 1,
           },
-          membership: partyMember,
+          membership: result.partyMember,
+          leftParty: result.leftParty,
         },
-        message: `Successfully joined ${party.name}!`,
+        message: successMessage,
       } as ApiResponse,
       { status: 201 }
     );

@@ -3,26 +3,28 @@
 
 /**
  * Calculate level from total XP
- * Formula: Level = floor(sqrt(XP/100))
+ * Formula: Level = floor(sqrt(XP/100)) + 1
  *
  * Examples:
- * - 100 XP = Level 1
- * - 400 XP = Level 2
- * - 900 XP = Level 3
- * - 1600 XP = Level 4
- * - 10000 XP = Level 10
+ * - 0 XP = Level 1
+ * - 100 XP = Level 2
+ * - 400 XP = Level 3
+ * - 900 XP = Level 4
+ * - 1600 XP = Level 5
+ * - 10000 XP = Level 11
  */
 export function calculateLevelFromXP(xp: number): number {
   if (xp < 0) return 1;
-  return Math.max(1, Math.floor(Math.sqrt(xp / 100)));
+  return Math.max(1, Math.floor(Math.sqrt(xp / 100)) + 1);
 }
 
 /**
- * Calculate XP required for a specific level
+ * Calculate XP required to start a specific level
  * Inverse of calculateLevelFromXP
  */
 export function calculateXPForLevel(level: number): number {
-  return level * level * 100;
+  if (level <= 1) return 0;
+  return (level - 1) * (level - 1) * 100;
 }
 
 /**
