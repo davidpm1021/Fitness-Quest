@@ -9,11 +9,13 @@ interface DatabaseStatus {
   isHealthy: boolean;
   isWakingUp: boolean;
   retryCount: number;
+  responseTime?: number;
+  wasColdStart?: boolean;
   error?: string;
 }
 
-const MAX_RETRIES = 10; // Maximum 10 retries (10 minutes with 1-minute intervals)
-const RETRY_INTERVAL = 60000; // 60 seconds in milliseconds
+const MAX_RETRIES = 8; // Maximum 8 retries (~24 seconds total)
+const RETRY_INTERVAL = 3000; // 3 seconds in milliseconds
 
 export default function DatabaseStatusChecker({
   children,
@@ -34,22 +36,36 @@ export default function DatabaseStatusChecker({
         cache: "no-store",
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.status === "ok") {
         // Database is healthy
         setStatus({
           isChecking: false,
           isHealthy: true,
           isWakingUp: false,
           retryCount: 0,
+          responseTime: data.responseTime,
+          wasColdStart: data.coldStart,
         });
-      } else {
-        // Database is down or waking up
+      } else if (data.status === "waking_up" || data.database === "cold_start") {
+        // Database is waking up from cold start
         setStatus((prev) => ({
           isChecking: false,
           isHealthy: false,
           isWakingUp: true,
           retryCount: prev.retryCount,
-          error: `Database is waking up (Status: ${response.status})`,
+          responseTime: data.responseTime,
+          error: data.message || "Database is waking up from sleep mode",
+        }));
+      } else {
+        // Database is down or error
+        setStatus((prev) => ({
+          isChecking: false,
+          isHealthy: false,
+          isWakingUp: true,
+          retryCount: prev.retryCount,
+          error: data.message || `Database error (Status: ${response.status})`,
         }));
       }
     } catch (error) {
@@ -59,7 +75,7 @@ export default function DatabaseStatusChecker({
         isHealthy: false,
         isWakingUp: true,
         retryCount: prev.retryCount,
-        error: "Unable to connect to the database",
+        error: "Unable to connect to the server. Please check your internet connection.",
       }));
     }
   };
@@ -132,8 +148,13 @@ export default function DatabaseStatusChecker({
               </p>
               <p className="font-retro text-sm text-gray-400">
                 This happens on the free tier after 5 minutes of inactivity.
-                {!hasReachedMaxRetries && " It usually takes 30-60 seconds."}
+                {!hasReachedMaxRetries && " It usually takes 3-15 seconds."}
               </p>
+              {status.responseTime && status.responseTime > 0 && (
+                <p className="font-retro text-xs text-gray-500 mt-2">
+                  Last response: {Math.round(status.responseTime)}ms
+                </p>
+              )}
             </div>
 
             <div className="bg-gray-800 p-4 rounded border border-gray-700">

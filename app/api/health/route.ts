@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
+  const startTime = Date.now();
+
   try {
-    // Test database connection
+    // Test database connection - this will wake up Neon if it's sleeping
     await prisma.$queryRaw`SELECT 1`;
+
+    const responseTime = Date.now() - startTime;
 
     // Check if party_members table has ALL required columns
     let schemaStatus = "unknown";
@@ -39,26 +45,45 @@ export async function GET() {
       schemaStatus = "schema_check_failed";
     }
 
+    // Determine if this was a cold start (>3 seconds means database was waking up)
+    const wasColdStart = responseTime > 3000;
+
     return NextResponse.json({
       status: "ok",
-      message: "Fitness Quest API is running",
+      message: wasColdStart
+        ? "Database was cold starting, now connected"
+        : "Fitness Quest API is running",
       timestamp: new Date().toISOString(),
       database: "connected",
+      responseTime: responseTime,
+      coldStart: wasColdStart,
       schema: schemaStatus,
       missingColumns: missingColumns.length > 0 ? missingColumns : undefined,
       environment: process.env.NODE_ENV,
       hasEnvVar: !!process.env.DATABASE_URL,
     });
   } catch (error: any) {
+    const responseTime = Date.now() - startTime;
+
+    // Check if it's a timeout/connection error (indicates cold start in progress)
+    const isColdStart = responseTime > 5000 ||
+      error.message.includes("timeout") ||
+      error.message.includes("ECONNREFUSED") ||
+      error.message.includes("connect ETIMEDOUT") ||
+      error.message.includes("Connection terminated unexpectedly");
+
     return NextResponse.json(
       {
-        status: "error",
-        message: "Database connection failed",
+        status: isColdStart ? "waking_up" : "error",
+        message: isColdStart
+          ? "Database is waking up from sleep, please wait..."
+          : "Database connection failed",
         timestamp: new Date().toISOString(),
-        database: "disconnected",
+        database: isColdStart ? "cold_start" : "disconnected",
+        responseTime: responseTime,
         error: error.message,
       },
-      { status: 500 }
+      { status: isColdStart ? 503 : 500 }
     );
   }
 }
