@@ -417,28 +417,6 @@ export default function DashboardPage() {
             </PixelPanel>
           </div>
         </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8 text-center">
-          <PixelPanel variant="menu">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <PixelButton
-                variant="primary"
-                size="md"
-                onClick={() => router.push('/history')}
-              >
-                📊 VIEW CHECK-IN HISTORY
-              </PixelButton>
-              <PixelButton
-                variant="secondary"
-                size="md"
-                onClick={() => router.push('/monsters')}
-              >
-                👹 CHANGE MONSTER
-              </PixelButton>
-            </div>
-          </PixelPanel>
-        </div>
       </main>
     </PageLayout>
   );
