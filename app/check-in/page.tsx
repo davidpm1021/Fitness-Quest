@@ -580,7 +580,7 @@ export default function CheckInPage() {
                           LEVEL {xpData.oldLevel} → LEVEL {xpData.newLevel}!
                         </div>
                         <p className="font-retro text-purple-300">
-                          You've grown stronger! You earned a skill point!
+                          You&apos;ve grown stronger! You earned a skill point!
                         </p>
                       </div>
                     )}
