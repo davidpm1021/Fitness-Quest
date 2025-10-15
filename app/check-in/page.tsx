@@ -13,6 +13,7 @@ import CombatActionCard from "@/components/game/CombatActionCard";
 import PixelPanel from "@/components/ui/PixelPanel";
 import PixelButton from "@/components/ui/PixelButton";
 import ProgressionDisplay from "@/components/game/ProgressionDisplay";
+import MonsterHealthBar from "@/components/game/MonsterHealthBar";
 import { CharacterCustomization } from "@/app/components/CustomizablePixelCharacter";
 
 interface Goal {
@@ -415,6 +416,7 @@ export default function CheckInPage() {
             monsterName={monster?.name || "Training Dummy"}
             damage={attackResult.totalDamage}
             hit={attackResult.hit}
+            combatAction={combatAction}
             counterattack={
               attackResult.wasCounterattacked
                 ? {
@@ -478,6 +480,21 @@ export default function CheckInPage() {
           </div>
 
           <div className="space-y-6">
+            {/* Monster HP Bar - Show first */}
+            {revealStep >= 1 && monster && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="menu" title="👾 MONSTER STATUS">
+                  <MonsterHealthBar
+                    currentHp={monster.currentHp}
+                    maxHp={monster.maxHp}
+                    monsterName={monster.name}
+                    damageDealt={attackResult.hit ? attackResult.totalDamage : 0}
+                    animated={true}
+                  />
+                </PixelPanel>
+              </div>
+            )}
+
             {/* Step 1: Attack Roll */}
             {revealStep >= 1 && (
               <div className="animate-fade-in">
@@ -774,11 +791,12 @@ export default function CheckInPage() {
                     onClick={() => setCombatAction("ATTACK")}
                     icon="⚔️"
                     title="ATTACK"
-                    description="Standard attack with guaranteed base damage."
+                    description="Your reliable damage dealer. Never let your team down."
                     details={[
-                      "Base damage: 3-5",
-                      "Apply all bonuses",
-                      "Always costs 1 focus",
+                      "💪 Guaranteed 3-5 base damage",
+                      "📈 Full bonus damage on hit",
+                      "⭐ Costs 1 focus (recoverable)",
+                      "💡 TIP: Best for consistent damage",
                     ]}
                     focusRequired={1}
                     currentFocus={focusPoints}
@@ -790,11 +808,12 @@ export default function CheckInPage() {
                     onClick={() => setCombatAction("DEFEND")}
                     icon="🛡️"
                     title="DEFEND"
-                    description="Protect yourself and generate focus."
+                    description="Build focus for big plays while protecting your team."
                     details={[
-                      "Deal 50% damage",
-                      "Generates +1 focus",
-                      "+5 team defense bonus",
+                      "🛡️ +5 team defense for everyone",
+                      "⭐ Generates +1 focus (no cost)",
+                      "⚔️ Still deals 50% damage",
+                      "💡 TIP: Use when focus is low",
                     ]}
                   />
 
@@ -804,11 +823,12 @@ export default function CheckInPage() {
                     onClick={() => setCombatAction("SUPPORT")}
                     icon="💚"
                     title="SUPPORT"
-                    description="Heal a teammate but deal reduced damage."
+                    description="Keep your party alive with healing support."
                     details={[
-                      "Heal teammate +10 HP",
-                      "Deal 50% damage",
-                      "Requires 3-day streak",
+                      "💚 Heal weakest ally +10 HP",
+                      "⚔️ Deals 50% damage",
+                      "⭐ Costs 2 focus",
+                      "💡 TIP: Save dying teammates",
                     ]}
                     disabled={currentStreak < 3}
                     focusRequired={2}
@@ -821,11 +841,12 @@ export default function CheckInPage() {
                     onClick={() => setCombatAction("HEROIC_STRIKE")}
                     icon="⚡"
                     title="HEROIC STRIKE"
-                    description="Guaranteed critical hit!"
+                    description="Unleash devastating power with guaranteed critical damage!"
                     details={[
-                      "Automatic hit",
-                      "Double damage",
-                      "Requires 7-day streak",
+                      "⚡ Automatic hit (ignores AC)",
+                      "💥 DOUBLE damage dealt",
+                      "⭐ Costs 3 focus",
+                      "💡 TIP: Finish off low HP bosses",
                     ]}
                     disabled={currentStreak < 7}
                     focusRequired={3}

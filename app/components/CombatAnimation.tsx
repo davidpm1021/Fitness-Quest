@@ -10,6 +10,7 @@ interface CombatAnimationProps {
   monsterName: string;
   damage: number;
   hit: boolean;
+  combatAction?: 'ATTACK' | 'DEFEND' | 'SUPPORT' | 'HEROIC_STRIKE';
   counterattack?: {
     damage: number;
     happened: boolean;
@@ -23,6 +24,7 @@ export default function CombatAnimation({
   monsterName,
   damage,
   hit,
+  combatAction = 'ATTACK',
   counterattack,
   characterCustomization,
   onComplete,
@@ -48,6 +50,9 @@ export default function CombatAnimation({
   const [flashEffect, setFlashEffect] = useState(false);
   const [heroPosition, setHeroPosition] = useState(0);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [showSwordSlash, setShowSwordSlash] = useState(false);
+  const [showShield, setShowShield] = useState(false);
+  const [showHealParticles, setShowHealParticles] = useState(false);
 
   useEffect(() => {
     // EPIC Animation sequence - SLOWED DOWN for visibility
@@ -67,6 +72,16 @@ export default function CombatAnimation({
       // ATTACK: Hero lunges forward
       setPhase('attack');
       setHeroPosition(200); // Slide forward
+
+      // Show action-specific effects during attack
+      if (combatAction === 'ATTACK' || combatAction === 'HEROIC_STRIKE') {
+        setShowSwordSlash(true);
+      } else if (combatAction === 'DEFEND') {
+        setShowShield(true);
+      } else if (combatAction === 'SUPPORT') {
+        setShowHealParticles(true);
+      }
+
       await wait(1000);
 
       if (hit) {
@@ -74,10 +89,23 @@ export default function CombatAnimation({
         setPhase('impact');
         setFlashEffect(true);
         setScreenShake(true);
-        createParticles(10);
-        await wait(300);
+
+        // HEROIC_STRIKE gets extra particles and longer shake
+        if (combatAction === 'HEROIC_STRIKE') {
+          createParticles(20);
+          await wait(500);
+        } else {
+          createParticles(10);
+          await wait(300);
+        }
+
         setFlashEffect(false);
         setScreenShake(false);
+
+        // Hide action-specific effects
+        setShowSwordSlash(false);
+        setShowShield(false);
+        setShowHealParticles(false);
 
         // HIT MONSTER: Show damage
         setPhase('hit-monster');
@@ -282,6 +310,34 @@ export default function CombatAnimation({
         />
       ))}
 
+      {/* Sword Slash Effect (ATTACK / HEROIC_STRIKE) */}
+      {showSwordSlash && (
+        <div className="absolute top-1/2 left-1/3 w-64 h-2 bg-gradient-to-r from-transparent via-yellow-400 to-transparent transform -rotate-45 animate-slash" />
+      )}
+
+      {/* Shield Effect (DEFEND) */}
+      {showShield && (
+        <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 animate-shield-appear">
+          <div className="text-8xl drop-shadow-[0_0_20px_rgba(59,130,246,0.8)]">🛡️</div>
+        </div>
+      )}
+
+      {/* Healing Particles (SUPPORT) */}
+      {showHealParticles && (
+        <>
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={`heal-${i}`}
+              className="absolute top-1/2 left-1/3 w-3 h-3 bg-green-400 rounded-full animate-heal-particle"
+              style={{
+                animationDelay: `${i * 0.1}s`,
+                left: `${30 + Math.random() * 10}%`,
+              }}
+            />
+          ))}
+        </>
+      )}
+
       {/* Phase indicator - BIGGER */}
       <div
         className={`absolute top-8 left-1/2 -translate-x-1/2 text-white text-2xl font-black bg-black/80 px-8 py-4 rounded-xl border-4 transition-all duration-300 ${
@@ -294,9 +350,21 @@ export default function CombatAnimation({
       >
         {phase === 'intro' && '🎮 BATTLE START!'}
         {phase === 'ready' && '⚔️ GET READY!'}
-        {phase === 'charge' && '⚡ CHARGING ATTACK!'}
-        {phase === 'attack' && '💫 ATTACKING!'}
-        {phase === 'impact' && '💥 CRITICAL HIT!'}
+        {phase === 'charge' && (
+          combatAction === 'HEROIC_STRIKE' ? '⚡ HEROIC STRIKE CHARGING!' :
+          combatAction === 'DEFEND' ? '🛡️ DEFENSIVE STANCE!' :
+          combatAction === 'SUPPORT' ? '💚 HEALING ENERGY!' :
+          '⚡ CHARGING ATTACK!'
+        )}
+        {phase === 'attack' && (
+          combatAction === 'HEROIC_STRIKE' ? '⚡ HEROIC STRIKE!' :
+          combatAction === 'DEFEND' ? '🛡️ DEFENSIVE STRIKE!' :
+          combatAction === 'SUPPORT' ? '💚 SUPPORT ATTACK!' :
+          '💫 ATTACKING!'
+        )}
+        {phase === 'impact' && (
+          combatAction === 'HEROIC_STRIKE' ? '💥 DEVASTATING HIT!' : '💥 CRITICAL HIT!'
+        )}
         {phase === 'hit-monster' && hit && '🎯 DIRECT HIT!'}
         {phase === 'monster-react' && '😵 MONSTER STUNNED!'}
         {phase === 'counterattack-warn' && '⚠️ COUNTERATTACK INCOMING!'}
@@ -415,6 +483,44 @@ export default function CombatAnimation({
             transform: translate(var(--tx, 0), var(--ty, 0)) scale(0);
           }
         }
+        @keyframes slash {
+          0% {
+            opacity: 0;
+            transform: translateX(-100px) rotate(-45deg) scaleX(0);
+          }
+          50% {
+            opacity: 1;
+            transform: translateX(0) rotate(-45deg) scaleX(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(100px) rotate(-45deg) scaleX(0.5);
+          }
+        }
+        @keyframes shield-appear {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0);
+          }
+          50% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.2);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+        }
+        @keyframes heal-particle {
+          0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-80px) scale(0);
+          }
+        }
         .animate-shake-intense {
           animation: shake-intense 0.4s ease-in-out;
         }
@@ -441,6 +547,15 @@ export default function CombatAnimation({
         }
         .animate-particle {
           animation: particle 1s ease-out forwards;
+        }
+        .animate-slash {
+          animation: slash 0.6s ease-out forwards;
+        }
+        .animate-shield-appear {
+          animation: shield-appear 0.6s ease-out forwards;
+        }
+        .animate-heal-particle {
+          animation: heal-particle 1.5s ease-out forwards;
         }
       `}</style>
     </div>
