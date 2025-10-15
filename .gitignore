@@ -40,7 +40,8 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-/prisma/migrations
+# Note: migrations MUST be committed to git for Vercel deployments
+# /prisma/migrations
 
 /lib/generated/prisma
 nul
