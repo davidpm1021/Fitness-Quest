@@ -29,6 +29,7 @@ export default function MonstersPage() {
   const [activeMonster, setActiveMonster] = useState<Monster | null>(null);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -43,6 +44,8 @@ export default function MonstersPage() {
   }, [user, token]);
 
   async function fetchMonsters() {
+    setError(null);
+    setLoading(true);
     try {
       const response = await fetch("/api/monsters", {
         headers: {
@@ -54,9 +57,13 @@ export default function MonstersPage() {
       if (data.success) {
         setMonsters(data.data.availableMonsters);
         setActiveMonster(data.data.activeMonster);
+        setError(null);
+      } else {
+        setError(data.error || "Failed to load monsters");
       }
     } catch (err) {
       console.error("Error fetching monsters:", err);
+      setError("Unable to connect to the server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -131,6 +138,17 @@ export default function MonstersPage() {
   return (
     <PageLayout title="👹 SELECT MONSTER" showBackButton={true}>
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {error && (
+          <PixelPanel variant="warning" className="mb-6">
+            <div className="text-center">
+              <p className="text-red-300 font-pixel mb-4">⚠️ {error}</p>
+              <PixelButton variant="secondary" onClick={fetchMonsters}>
+                🔄 RETRY
+              </PixelButton>
+            </div>
+          </PixelPanel>
+        )}
+
         {activeMonster ? (
           <PixelPanel variant="warning" className="mb-8">
             <div className="text-center">
