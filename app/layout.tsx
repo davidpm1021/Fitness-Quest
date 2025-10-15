@@ -6,6 +6,10 @@ import { ToastProvider } from "@/lib/context/ToastContext";
 export const metadata: Metadata = {
   title: "Fitness Quest",
   description: "Collaborative fitness accountability with D&D-inspired mechanics",
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

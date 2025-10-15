@@ -1,0 +1,41 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pixel art sword with heart - fitness quest theme -->
+  <rect width="32" height="32" fill="transparent"/>
+
+  <!-- Sword blade (gray/silver) -->
+  <rect x="14" y="4" width="4" height="2" fill="#9ca3af"/>
+  <rect x="14" y="6" width="4" height="2" fill="#d1d5db"/>
+  <rect x="14" y="8" width="4" height="2" fill="#9ca3af"/>
+  <rect x="14" y="10" width="4" height="2" fill="#d1d5db"/>
+  <rect x="14" y="12" width="4" height="2" fill="#9ca3af"/>
+  <rect x="14" y="14" width="4" height="2" fill="#d1d5db"/>
+  <rect x="14" y="16" width="4" height="2" fill="#9ca3af"/>
+
+  <!-- Sword tip (darker) -->
+  <rect x="14" y="2" width="4" height="2" fill="#6b7280"/>
+
+  <!-- Crossguard (gold) -->
+  <rect x="10" y="18" width="12" height="2" fill="#f59e0b"/>
+  <rect x="10" y="20" width="12" height="2" fill="#d97706"/>
+
+  <!-- Handle (brown) -->
+  <rect x="14" y="22" width="4" height="2" fill="#92400e"/>
+  <rect x="14" y="24" width="4" height="2" fill="#78350f"/>
+
+  <!-- Pommel (gold) -->
+  <rect x="12" y="26" width="8" height="2" fill="#f59e0b"/>
+  <rect x="12" y="28" width="8" height="2" fill="#d97706"/>
+
+  <!-- Small heart accent (red - top right) -->
+  <rect x="20" y="8" width="2" height="2" fill="#ef4444"/>
+  <rect x="22" y="8" width="2" height="2" fill="#ef4444"/>
+  <rect x="24" y="8" width="2" height="2" fill="#ef4444"/>
+  <rect x="20" y="10" width="2" height="2" fill="#dc2626"/>
+  <rect x="22" y="10" width="2" height="2" fill="#ef4444"/>
+  <rect x="24" y="10" width="2" height="2" fill="#dc2626"/>
+  <rect x="22" y="12" width="2" height="2" fill="#dc2626"/>
+
+  <!-- Pixel art outline effect -->
+  <rect x="14" y="4" width="2" height="2" fill="#6b7280" opacity="0.3"/>
+  <rect x="16" y="4" width="2" height="2" fill="#e5e7eb" opacity="0.3"/>
+</svg>
