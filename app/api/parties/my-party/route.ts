@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
                 focus_points: true,
                 xp: true,
                 level: true,
+                skill_points: true,
                 users: {
                   select: {
                     id: true,
@@ -124,6 +125,7 @@ export async function GET(request: NextRequest) {
       focusPoints: member.focus_points,
       xp: member.xp,
       level: member.level,
+      skillPoints: member.skill_points,
       user: {
         id: member.users.id,
         username: member.users.username,

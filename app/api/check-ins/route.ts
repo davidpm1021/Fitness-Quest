@@ -359,6 +359,8 @@ export async function POST(request: NextRequest) {
     const newXP = oldXP + xpEarned;
     const newLevel = calculateLevelFromXP(newXP);
     const levelUpInfo = didLevelUp(oldXP, newXP);
+    const skillPointsEarnedFromLevelUp = calculateSkillPointsEarned(levelUpInfo.oldLevel, levelUpInfo.newLevel);
+    const totalSkillPoints = partyMember.skill_points + skillPointsEarnedFromLevelUp;
 
     // Create check-in with transaction
     let milestoneCrossed: 75 | 50 | 25 | null = null;
@@ -627,6 +629,7 @@ export async function POST(request: NextRequest) {
             xpEarned: xpEarned,
             totalXP: newXP,
             level: newLevel,
+            skillPoints: totalSkillPoints,
             leveledUp: levelUpInfo.leveledUp,
             oldLevel: levelUpInfo.oldLevel,
             newLevel: levelUpInfo.newLevel,

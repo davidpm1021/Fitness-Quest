@@ -64,7 +64,8 @@
       "Bash(dir:*)",
       "Bash(move ROADMAP-UPDATED.md archive )",
       "Bash(move GAME-ROADMAP.md archive )",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []

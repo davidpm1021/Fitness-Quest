@@ -6,18 +6,35 @@ export async function GET() {
     // Test database connection
     await prisma.$queryRaw`SELECT 1`;
 
-    // Check if party_members table has new columns
+    // Check if party_members table has ALL required columns
     let schemaStatus = "unknown";
+    let missingColumns: string[] = [];
     try {
+      const requiredColumns = [
+        'focus_points',
+        'xp',
+        'level',
+        'skill_points',
+        'welcome_back_active',
+        'welcome_back_remaining',
+        'welcome_back_activated_at',
+        'welcome_back_acknowledged'
+      ];
+
       const testQuery = await prisma.$queryRaw<any[]>`
         SELECT column_name
         FROM information_schema.columns
         WHERE table_name = 'party_members'
-        AND column_name IN ('focus_points', 'xp', 'level', 'skill_points')
         ORDER BY column_name
       `;
       const foundColumns = testQuery.map((row) => row.column_name);
-      schemaStatus = foundColumns.length === 4 ? "migrations_applied" : `missing_columns: ${4 - foundColumns.length}`;
+      missingColumns = requiredColumns.filter(col => !foundColumns.includes(col));
+
+      if (missingColumns.length === 0) {
+        schemaStatus = "all_migrations_applied";
+      } else {
+        schemaStatus = `missing_${missingColumns.length}_columns`;
+      }
     } catch (schemaError) {
       schemaStatus = "schema_check_failed";
     }
@@ -28,6 +45,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       database: "connected",
       schema: schemaStatus,
+      missingColumns: missingColumns.length > 0 ? missingColumns : undefined,
       environment: process.env.NODE_ENV,
       hasEnvVar: !!process.env.DATABASE_URL,
     });

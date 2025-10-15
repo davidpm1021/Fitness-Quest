@@ -12,6 +12,7 @@ import WelcomeBackModal from "@/components/game/WelcomeBackModal";
 import CombatActionCard from "@/components/game/CombatActionCard";
 import PixelPanel from "@/components/ui/PixelPanel";
 import PixelButton from "@/components/ui/PixelButton";
+import ProgressionDisplay from "@/components/game/ProgressionDisplay";
 import { CharacterCustomization } from "@/app/components/CustomizablePixelCharacter";
 
 interface Goal {
@@ -75,6 +76,15 @@ export default function CheckInPage() {
   const [combatAction, setCombatAction] = useState<"ATTACK" | "DEFEND" | "SUPPORT" | "HEROIC_STRIKE">("ATTACK");
   const [focusPoints, setFocusPoints] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [xpData, setXpData] = useState<{
+    xpEarned: number;
+    totalXP: number;
+    level: number;
+    skillPoints: number;
+    leveledUp: boolean;
+    oldLevel?: number;
+    newLevel?: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -281,6 +291,21 @@ export default function CheckInPage() {
         setAttackResult(data.data.attackResult);
         setMonster(data.data.monster);
         setMilestoneCrossed(data.data.milestoneCrossed || null);
+
+        // Capture XP data from progression object
+        const progression = data.data.progression;
+        if (progression) {
+          setXpData({
+            xpEarned: progression.xpEarned || 0,
+            totalXP: progression.totalXP || 0,
+            level: progression.level || 1,
+            skillPoints: progression.skillPoints || 0,
+            leveledUp: progression.leveledUp || false,
+            oldLevel: progression.oldLevel,
+            newLevel: progression.newLevel,
+          });
+        }
+
         setShowDiceRoll(true); // Show dice roll first
       } else {
         // Check if this is a duplicate check-in error
@@ -538,6 +563,56 @@ export default function CheckInPage() {
                     <p className="font-retro text-lg text-red-300">
                       The monster struck back and damaged your HP!
                     </p>
+                  </div>
+                </PixelPanel>
+              </div>
+            )}
+
+            {/* XP & Level Progress */}
+            {revealStep >= 4 && xpData && (
+              <div className="animate-fade-in">
+                <PixelPanel variant="success" title={xpData.leveledUp ? "⭐ LEVEL UP!" : "⭐ XP EARNED"}>
+                  <div className="space-y-4">
+                    {xpData.leveledUp && (
+                      <div className="text-center mb-4">
+                        <div className="text-6xl mb-2 animate-bounce">🎉</div>
+                        <div className="text-3xl font-pixel text-yellow-400 mb-2">
+                          LEVEL {xpData.oldLevel} → LEVEL {xpData.newLevel}!
+                        </div>
+                        <p className="font-retro text-purple-300">
+                          You've grown stronger! You earned a skill point!
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="text-center mb-4">
+                      <div className="text-4xl font-pixel text-green-400 mb-2">
+                        +{xpData.xpEarned} XP
+                      </div>
+                      <p className="font-retro text-sm text-gray-300">
+                        Earned from this check-in
+                      </p>
+                    </div>
+
+                    <ProgressionDisplay
+                      xp={xpData.totalXP}
+                      level={xpData.level}
+                      skillPoints={xpData.skillPoints}
+                      variant="compact"
+                      showXPBreakdown={false}
+                    />
+
+                    {xpData.skillPoints > 0 && (
+                      <div className="mt-4 text-center">
+                        <PixelButton
+                          variant="success"
+                          size="sm"
+                          onClick={() => router.push('/skills')}
+                        >
+                          🌟 SPEND SKILL POINTS
+                        </PixelButton>
+                      </div>
+                    )}
                   </div>
                 </PixelPanel>
               </div>

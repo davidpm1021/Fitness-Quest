@@ -7,6 +7,7 @@ import PageLayout from "@/components/layout/PageLayout";
 import PixelButton from "@/components/ui/PixelButton";
 import PixelPanel from "@/components/ui/PixelPanel";
 import HPBar from "@/components/ui/HPBar";
+import ProgressionDisplay from "@/components/game/ProgressionDisplay";
 
 interface PartyData {
   id: string;
@@ -18,6 +19,9 @@ interface PartyData {
     maxHp: number;
     currentDefense: number;
     currentStreak: number;
+    xp: number;
+    level: number;
+    skillPoints: number;
     user: {
       displayName: string;
       characterName?: string;
@@ -184,6 +188,15 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Progression Display */}
+                  <ProgressionDisplay
+                    xp={currentMember.xp}
+                    level={currentMember.level}
+                    skillPoints={currentMember.skillPoints}
+                    variant="compact"
+                    showXPBreakdown={true}
+                  />
                 </div>
               ) : !partyData ? (
                 <div className="text-center py-6">
