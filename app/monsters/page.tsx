@@ -8,6 +8,15 @@ import PageLayout from "@/components/layout/PageLayout";
 import PixelPanel from "@/components/ui/PixelPanel";
 import PixelButton from "@/components/ui/PixelButton";
 
+interface BattleModifier {
+  id: string;
+  modifierType: string;
+  modifierCategory: string;
+  effectDescription: string;
+  statEffect: string | null;
+  effectValue: number;
+}
+
 interface Monster {
   id: string;
   name: string;
@@ -19,6 +28,7 @@ interface Monster {
   baseDamage: number[];
   counterattackChance: number;
   isDefeated: boolean;
+  battleModifiers?: BattleModifier[];
 }
 
 export default function MonstersPage() {
@@ -121,6 +131,37 @@ export default function MonstersPage() {
     }
   }
 
+  function getModifierIcon(type: string): string {
+    const icons: Record<string, string> = {
+      INSPIRED: "✨",
+      EXHAUSTED: "😫",
+      FOCUSED: "🎯",
+      STURDY: "🛡️",
+      WEAKENED: "😓",
+      BLESSED: "🙏",
+      CURSED: "👿",
+      PRECISE: "⚡",
+      CLUMSY: "🤦",
+      ENRAGED: "🔥",
+      FEARFUL: "😰",
+      DETERMINED: "💪",
+    };
+    return icons[type] || "⭐";
+  }
+
+  function getModifierCategoryColor(category: string): string {
+    switch (category) {
+      case "POSITIVE":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "NEGATIVE":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      case "NEUTRAL":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
+  }
+
   if (isLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-900 to-indigo-900">
@@ -161,6 +202,27 @@ export default function MonstersPage() {
               <p className="text-yellow-100 font-retro">
                 Defeat this monster before selecting a new one!
               </p>
+
+              {activeMonster.battleModifiers && activeMonster.battleModifiers.length > 0 && (
+                <div className="mt-4 mb-4">
+                  <p className="text-sm text-yellow-200 font-retro mb-2">⚡ ACTIVE MODIFIERS:</p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {activeMonster.battleModifiers.map((mod) => (
+                      <div
+                        key={mod.id}
+                        className={`px-3 py-1.5 rounded text-xs font-retro ${getModifierCategoryColor(
+                          mod.modifierCategory
+                        )}`}
+                        title={mod.effectDescription}
+                      >
+                        <span className="mr-1">{getModifierIcon(mod.modifierType)}</span>
+                        <span className="font-bold">{mod.modifierType}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4">
                 <PixelButton variant="primary" onClick={() => router.push("/dashboard")}>
                   BACK TO BATTLE

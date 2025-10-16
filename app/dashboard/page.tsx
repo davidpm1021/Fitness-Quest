@@ -9,6 +9,15 @@ import PixelPanel from "@/components/ui/PixelPanel";
 import HPBar from "@/components/ui/HPBar";
 import ProgressionDisplay from "@/components/game/ProgressionDisplay";
 
+interface BattleModifier {
+  id: string;
+  modifierType: string;
+  modifierCategory: string;
+  effectDescription: string;
+  statEffect: string | null;
+  effectValue: number;
+}
+
 interface PartyData {
   id: string;
   name: string;
@@ -34,6 +43,7 @@ interface PartyData {
     currentHp: number;
     maxHp: number;
     armorClass: number;
+    battleModifiers?: BattleModifier[];
   };
 }
 
@@ -126,6 +136,37 @@ export default function DashboardPage() {
         return 'from-red-600 to-orange-600 border-red-400';
       default:
         return 'from-gray-600 to-gray-700 border-gray-400';
+    }
+  }
+
+  function getModifierIcon(type: string): string {
+    const icons: Record<string, string> = {
+      INSPIRED: "✨",
+      EXHAUSTED: "😫",
+      FOCUSED: "🎯",
+      STURDY: "🛡️",
+      WEAKENED: "😓",
+      BLESSED: "🙏",
+      CURSED: "👿",
+      PRECISE: "⚡",
+      CLUMSY: "🤦",
+      ENRAGED: "🔥",
+      FEARFUL: "😰",
+      DETERMINED: "💪",
+    };
+    return icons[type] || "⭐";
+  }
+
+  function getModifierCategoryColor(category: string): string {
+    switch (category) {
+      case "POSITIVE":
+        return "bg-green-500/20 text-green-200 border-green-500/50";
+      case "NEGATIVE":
+        return "bg-red-500/20 text-red-200 border-red-500/50";
+      case "NEUTRAL":
+        return "bg-yellow-500/20 text-yellow-200 border-yellow-500/50";
+      default:
+        return "bg-gray-500/20 text-gray-200 border-gray-500/50";
     }
   }
 
@@ -254,6 +295,27 @@ export default function DashboardPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Battle Modifiers */}
+                    {partyData.activeMonster.battleModifiers && partyData.activeMonster.battleModifiers.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-sm text-white font-retro mb-2 text-center">⚡ ACTIVE MODIFIERS:</p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {partyData.activeMonster.battleModifiers.map((mod) => (
+                            <div
+                              key={mod.id}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-retro border-2 ${getModifierCategoryColor(
+                                mod.modifierCategory
+                              )}`}
+                              title={mod.effectDescription}
+                            >
+                              <span className="mr-1">{getModifierIcon(mod.modifierType)}</span>
+                              <span className="font-bold">{mod.modifierType.replace('_', ' ')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="text-center">

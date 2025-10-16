@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
                     is_defeated: true,
                   },
                 },
+                battle_modifiers: true,
               },
               take: 1,
             },
@@ -111,8 +112,10 @@ export async function GET(request: NextRequest) {
       } as ApiResponse);
     }
 
-    // Extract active monster from optimized query result
-    const activeMonster = membership.parties.party_monsters[0]?.monsters || null;
+    // Extract active monster and modifiers from optimized query result
+    const activePartyMonster = membership.parties.party_monsters[0] || null;
+    const activeMonster = activePartyMonster?.monsters || null;
+    const battleModifiers = activePartyMonster?.battle_modifiers || [];
 
     // Map party members to camelCase
     const mappedMembers = membership.parties.party_members.map((member: any) => ({
@@ -146,6 +149,14 @@ export async function GET(request: NextRequest) {
       baseDamage: activeMonster.base_damage,
       counterattackChance: activeMonster.counterattack_chance,
       isDefeated: activeMonster.is_defeated,
+      battleModifiers: battleModifiers.map((mod: any) => ({
+        id: mod.id,
+        modifierType: mod.modifier_type,
+        modifierCategory: mod.modifier_category,
+        effectDescription: mod.effect_description,
+        statEffect: mod.stat_effect,
+        effectValue: mod.effect_value,
+      })),
     } : null;
 
     const responseData = {
