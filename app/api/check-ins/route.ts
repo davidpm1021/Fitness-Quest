@@ -38,6 +38,7 @@ import {
   applyPhaseModifiers,
   getPhaseTransitionMessage,
   type MonsterPhase,
+  type PhaseInfo,
 } from "@/lib/game/monster-phases";
 
 interface ApiResponse<T = unknown> {
@@ -509,7 +510,7 @@ export async function POST(request: NextRequest) {
 
     // Create check-in with transaction
     let milestoneCrossed: 75 | 50 | 25 | null = null;
-    let phaseTransition: ReturnType<typeof checkPhaseTransition> = null;
+    let phaseTransition: { oldPhase: MonsterPhase; newPhase: MonsterPhase; phaseInfo: PhaseInfo } | null = null;
     let monsterWasDefeated = false;
     let victoryRewardId: string | null = null;
     const checkInResult = await prisma.$transaction(async (tx) => {
