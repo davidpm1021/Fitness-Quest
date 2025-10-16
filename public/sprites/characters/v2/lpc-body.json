@@ -1,0 +1,24 @@
+{
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "columns": 13,
+  "rows": 4,
+  "animations": {
+    "idle": [0, 1, 2],
+    "walk": [26, 27, 28, 29, 30, 31, 32, 33],
+    "attack": [39, 40, 41, 42, 43],
+    "hit": [0],
+    "victory": [0, 1, 2, 3, 4, 5],
+    "defend": [13, 14, 15],
+    "support": [0, 1, 2, 3, 4, 5, 6],
+    "heroic_strike": [39, 40, 41, 42, 43, 44, 45, 46]
+  },
+  "anchors": {
+    "x": 0.5,
+    "y": 0.9
+  },
+  "version": "1.0.0",
+  "fps": 12,
+  "tags": ["lpc", "body", "64x64"],
+  "notes": "LPC sprite sheet - 64x64 frames. Row 0: spellcast, Row 1: thrust, Row 2: walk, Row 3: slash"
+}
