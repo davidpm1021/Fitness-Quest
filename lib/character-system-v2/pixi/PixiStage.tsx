@@ -19,8 +19,8 @@ export interface PixiStageProps {
   /** Enable antialiasing (default: false for pixel art) */
   antialias?: boolean;
 
-  /** Children to render (PixiJS sprites, containers, etc.) */
-  children?: React.ReactNode;
+  /** Children to render (PixiJS sprites, containers, etc.) - can be ReactNode or render prop function */
+  children?: React.ReactNode | ((app: Application) => React.ReactNode);
 
   /** Optional className for the canvas container */
   className?: string;
