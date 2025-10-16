@@ -94,57 +94,61 @@ export default function WhatsNewModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-2xl" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-        <PixelPanel variant="dialog" className="flex flex-col" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-          {/* Header - Fixed */}
-          <div className="flex-shrink-0 text-center border-b-2 border-purple-500/30 pb-4 mb-4">
-            <h2 className="text-3xl font-bold text-yellow-300 font-pixel mb-2">
-              ✨ WHAT&apos;S NEW! ✨
-            </h2>
-            <p className="text-gray-300 font-retro">
-              {announcements.length} new update{announcements.length !== 1 ? "s" : ""} since your last visit!
-            </p>
-          </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl bg-gradient-to-b from-gray-900 to-gray-800 border-4 border-purple-500 rounded-lg shadow-2xl overflow-hidden flex flex-col"
+        style={{ maxHeight: 'calc(100vh - 4rem)', height: 'auto' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header - Fixed */}
+        <div className="flex-shrink-0 text-center border-b-2 border-purple-500/30 p-6 bg-gray-900/50">
+          <h2 className="text-3xl font-bold text-yellow-300 font-pixel mb-2">
+            ✨ WHAT&apos;S NEW! ✨
+          </h2>
+          <p className="text-gray-300 font-retro">
+            {announcements.length} new update{announcements.length !== 1 ? "s" : ""} since your last visit!
+          </p>
+        </div>
 
-          {/* Announcements List - Scrollable */}
-          <div
-            className="overflow-y-auto space-y-4 mb-4 pr-2"
-            style={{ maxHeight: 'calc(100vh - 20rem)' }}
-          >
-            {announcements.map((announcement) => (
-              <div key={announcement.id} className="bg-gray-900/50 border-2 border-purple-500/30 rounded p-4">
-                <div className="mb-3">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span
-                      className={`px-3 py-1 rounded text-xs font-bold font-pixel border-2 ${getCategoryColor(
-                        announcement.category
-                      )}`}
-                    >
-                      {getCategoryIcon(announcement.category)} {getCategoryLabel(announcement.category)}
+        {/* Announcements List - Scrollable */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-4">
+          {announcements.map((announcement) => (
+            <div key={announcement.id} className="bg-gray-900/50 border-2 border-purple-500/30 rounded p-4">
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span
+                    className={`px-3 py-1 rounded text-xs font-bold font-pixel border-2 ${getCategoryColor(
+                      announcement.category
+                    )}`}
+                  >
+                    {getCategoryIcon(announcement.category)} {getCategoryLabel(announcement.category)}
+                  </span>
+                  {announcement.version && (
+                    <span className="px-2 py-1 bg-indigo-900/50 text-indigo-300 text-xs font-pixel rounded">
+                      v{announcement.version}
                     </span>
-                    {announcement.version && (
-                      <span className="px-2 py-1 bg-indigo-900/50 text-indigo-300 text-xs font-pixel rounded">
-                        v{announcement.version}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-bold text-white font-pixel">{announcement.title}</h3>
+                  )}
                 </div>
-
-                <p className="text-gray-300 font-retro text-sm whitespace-pre-wrap">
-                  {announcement.description}
-                </p>
-
-                <div className="mt-3 text-xs text-gray-400 font-retro">
-                  Released: {new Date(announcement.releaseDate).toLocaleDateString()}
-                </div>
+                <h3 className="text-lg font-bold text-white font-pixel">{announcement.title}</h3>
               </div>
-            ))}
-          </div>
 
-          {/* Footer Buttons - Fixed */}
-          <div className="flex-shrink-0 flex gap-3 border-t-2 border-purple-500/30 pt-4">
+              <p className="text-gray-300 font-retro text-sm whitespace-pre-wrap">
+                {announcement.description}
+              </p>
+
+              <div className="mt-3 text-xs text-gray-400 font-retro">
+                Released: {new Date(announcement.releaseDate).toLocaleDateString()}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer - Fixed */}
+        <div className="flex-shrink-0 p-6 bg-gray-900/50 border-t-2 border-purple-500/30">
+          <div className="flex gap-3 mb-3">
             <PixelButton
               variant="secondary"
               onClick={onClose}
@@ -162,9 +166,7 @@ export default function WhatsNewModal({
               {isMarking ? "MARKING..." : "GOT IT! ✓"}
             </PixelButton>
           </div>
-
-          {/* Link - Fixed */}
-          <div className="flex-shrink-0 mt-3 text-center">
+          <div className="text-center">
             <a
               href="/news"
               className="text-blue-400 hover:text-blue-300 font-retro text-sm underline"
@@ -173,7 +175,7 @@ export default function WhatsNewModal({
               View Full Changelog →
             </a>
           </div>
-        </PixelPanel>
+        </div>
       </div>
     </div>
   );
