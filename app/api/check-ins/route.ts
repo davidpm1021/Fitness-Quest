@@ -730,8 +730,8 @@ export async function POST(request: NextRequest) {
     } | null = null;
 
     if (phaseTransition) {
-      // Type assertion after null check
-      const transition = phaseTransition as NonNullable<typeof phaseTransition>;
+      // Direct type cast to known type
+      const transition = phaseTransition as { oldPhase: MonsterPhase; newPhase: MonsterPhase; phaseInfo: PhaseInfo };
       phaseTransitionData = {
         oldPhase: transition.oldPhase,
         newPhase: transition.newPhase,
