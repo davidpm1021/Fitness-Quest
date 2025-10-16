@@ -1,4 +1,4 @@
-import { Assets, Texture } from 'pixi.js';
+import { Assets, Texture, Rectangle } from 'pixi.js';
 import type { SpriteMeta } from '../types';
 
 /**
@@ -140,15 +140,10 @@ export function getFrameTexture(
   const y = row * frameHeight;
 
   // PixiJS v8: Create new texture from source with specific frame region
-  // Instead of clone(), use the Texture constructor with frame parameter
+  // Instead of clone(), use the Texture constructor with Rectangle frame parameter
   const frameTexture = new Texture({
     source: texture.source,
-    frame: {
-      x,
-      y,
-      width: frameWidth,
-      height: frameHeight,
-    },
+    frame: new Rectangle(x, y, frameWidth, frameHeight),
   });
 
   return frameTexture;
