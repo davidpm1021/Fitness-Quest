@@ -820,7 +820,7 @@ export async function POST(request: NextRequest) {
             : false,
           victoryRewardId: victoryRewardId,
           milestoneCrossed: milestoneCrossed,
-          phaseTransition: phaseTransition
+          phaseTransition: phaseTransition !== null
             ? {
                 oldPhase: phaseTransition.oldPhase,
                 newPhase: phaseTransition.newPhase,
