@@ -277,6 +277,7 @@ model users {
   character_name             String?
   onboarding_completed_at    DateTime?
   onboarding_step            String                      @default("character")
+  last_seen_announcement_at  DateTime?
   badges                     badges[]
   character_appearances      character_appearances?
   encouragements             encouragements[]
@@ -285,6 +286,7 @@ model users {
   party_messages             party_messages[]
   user_cosmetic_unlocks      user_cosmetic_unlocks[]
   user_sprite_customizations user_sprite_customizations?
+  announcement_views         announcement_views[]
 
   @@index([email])
   @@index([username])
@@ -515,4 +517,42 @@ enum BattleModifierCategory {
   POSITIVE
   NEGATIVE
   NEUTRAL
+}
+
+model feature_announcements {
+  id                  String                @id
+  title               String
+  description         String
+  category            AnnouncementCategory
+  version             String?
+  release_date        DateTime              @default(now())
+  is_published        Boolean               @default(false)
+  sort_order          Int                   @default(0)
+  created_at          DateTime              @default(now())
+  updated_at          DateTime
+  announcement_views  announcement_views[]
+
+  @@index([is_published, release_date])
+  @@index([category])
+}
+
+model announcement_views {
+  id                String                 @id
+  user_id           String
+  announcement_id   String
+  viewed_at         DateTime               @default(now())
+  users             users                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  announcements     feature_announcements  @relation(fields: [announcement_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, announcement_id])
+  @@index([user_id])
+  @@index([announcement_id])
+}
+
+enum AnnouncementCategory {
+  NEW_FEATURE
+  IMPROVEMENT
+  BUG_FIX
+  COMING_SOON
+  MAINTENANCE
 }

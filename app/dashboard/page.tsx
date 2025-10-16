@@ -8,6 +8,7 @@ import PixelButton from "@/components/ui/PixelButton";
 import PixelPanel from "@/components/ui/PixelPanel";
 import HPBar from "@/components/ui/HPBar";
 import ProgressionDisplay from "@/components/game/ProgressionDisplay";
+import WhatsNewModal from "@/components/ui/WhatsNewModal";
 
 interface BattleModifier {
   id: string;
@@ -65,6 +66,15 @@ interface GoalData {
   targetUnit: string;
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  description: string;
+  category: "NEW_FEATURE" | "IMPROVEMENT" | "BUG_FIX" | "COMING_SOON" | "MAINTENANCE";
+  version: string | null;
+  releaseDate: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
@@ -72,6 +82,8 @@ export default function DashboardPage() {
   const [partyData, setPartyData] = useState<PartyData | null>(null);
   const [goals, setGoals] = useState<GoalData[]>([]);
   const [badgeProgress, setBadgeProgress] = useState({ earned: 0, total: 20 });
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [newAnnouncements, setNewAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -129,10 +141,39 @@ export default function DashboardPage() {
           });
         }
       }
+
+      // Fetch new announcements
+      const announcementsResponse = await fetch('/api/announcements', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (announcementsResponse.ok) {
+        const announcementsResult = await announcementsResponse.json();
+        if (announcementsResult.success && announcementsResult.data.newAnnouncements.length > 0) {
+          setNewAnnouncements(announcementsResult.data.newAnnouncements);
+          setShowWhatsNew(true); // Auto-show modal if there are new announcements
+        }
+      }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleMarkAnnouncementsRead() {
+    try {
+      await fetch('/api/announcements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          announcementIds: newAnnouncements.map((a) => a.id),
+        }),
+      });
+    } catch (error) {
+      console.error('Error marking announcements as read:', error);
     }
   }
 
@@ -241,6 +282,14 @@ export default function DashboardPage() {
 
   return (
     <PageLayout>
+      {/* What's New Modal */}
+      <WhatsNewModal
+        isOpen={showWhatsNew}
+        announcements={newAnnouncements}
+        onClose={() => setShowWhatsNew(false)}
+        onMarkAsRead={handleMarkAnnouncementsRead}
+      />
+
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Welcome Header */}
         <div className="mb-8 text-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import PixelButton from "@/components/ui/PixelButton";
@@ -19,11 +19,36 @@ export default function AuthenticatedNav({
 }: AuthenticatedNavProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user && token) {
+      fetchUnreadCount();
+    }
+  }, [user, token, pathname]); // Refetch when pathname changes
+
+  async function fetchUnreadCount() {
+    try {
+      const response = await fetch("/api/announcements", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setUnreadCount(data.data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  }
 
   const navLinks = [
     { path: "/dashboard", label: "DASHBOARD", icon: "🏠" },
+    { path: "/news", label: "NEWS", icon: "📰", badge: unreadCount },
     { path: "/character", label: "CHARACTER", icon: "🎨" },
     { path: "/goals", label: "GOALS", icon: "🎯" },
     { path: "/party/dashboard", label: "PARTY", icon: "👥" },
@@ -126,7 +151,7 @@ export default function AuthenticatedNav({
                       onClick={() => handleNavClick(link.path)}
                       className={`
                         w-full px-4 py-3 font-pixel text-sm rounded
-                        transition-all text-left flex items-center gap-3
+                        transition-all text-left flex items-center gap-3 relative
                         ${
                           isActive
                             ? "bg-yellow-500 text-gray-900 shadow-[3px_3px_0_0_rgba(0,0,0,0.3)]"
@@ -136,6 +161,11 @@ export default function AuthenticatedNav({
                     >
                       <span className="text-xl">{link.icon}</span>
                       <span>{link.label}</span>
+                      {link.badge && link.badge > 0 && (
+                        <span className="ml-auto px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] text-center">
+                          {link.badge}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
