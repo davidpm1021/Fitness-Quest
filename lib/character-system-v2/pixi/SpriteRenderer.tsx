@@ -75,6 +75,7 @@ export function useSpriteRenderer(
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const metadataRef = useRef<SpriteMeta | null>(null);
+  const fullTextureRef = useRef<Texture | null>(null); // Keep original texture for frame extraction
   const animStateRef = useRef(createAnimationState(initialAnimation, fps, loop));
   const lastTimeRef = useRef(Date.now());
 
@@ -84,14 +85,25 @@ export function useSpriteRenderer(
 
     (async () => {
       try {
+        console.log('[SpriteRenderer] Loading sprite:', spritePath, metadataPath);
         const { texture, metadata } = await loadSprite(spritePath, metadataPath);
 
         if (cancelled) return;
 
-        metadataRef.current = metadata;
+        console.log('[SpriteRenderer] Sprite loaded successfully:', {
+          textureSize: { width: texture.width, height: texture.height },
+          metadata,
+        });
 
-        // Create sprite
-        const sprite = new Sprite(texture);
+        metadataRef.current = metadata;
+        fullTextureRef.current = texture; // Store original texture for frame extraction
+
+        // Get the first frame of the initial animation
+        const initialFrameIndex = getCurrentFrameIndex(animStateRef.current, metadata);
+        const initialFrameTexture = getFrameTexture(texture, metadata, initialFrameIndex);
+
+        // Create sprite with the first frame
+        const sprite = new Sprite(initialFrameTexture);
         sprite.x = x;
         sprite.y = y;
         sprite.scale.set(scale);
@@ -100,12 +112,35 @@ export function useSpriteRenderer(
         const anchor = metadata.anchors || { x: 0.5, y: 0.9 };
         sprite.anchor.set(anchor.x, anchor.y);
 
+        console.log('[SpriteRenderer] Sprite created:', {
+          position: { x: sprite.x, y: sprite.y },
+          scale: sprite.scale.x,
+          anchor: { x: sprite.anchor.x, y: sprite.anchor.y },
+          visible: sprite.visible,
+        });
+
         // Add to stage
         app.stage.addChild(sprite);
         spriteRef.current = sprite;
 
+        // Force a manual render to ensure the sprite appears
+        app.renderer.render(app.stage);
+
         setIsLoaded(true);
+        console.log('[SpriteRenderer] Sprite added to stage', {
+          spriteAlpha: sprite.alpha,
+          spriteVisible: sprite.visible,
+          spriteWidth: sprite.width,
+          spriteHeight: sprite.height,
+          textureWidth: sprite.texture.width,
+          textureHeight: sprite.texture.height,
+          stageChildren: app.stage.children.length,
+          rendererType: app.renderer.type,
+          canvasWidth: app.canvas.width,
+          canvasHeight: app.canvas.height,
+        });
       } catch (err) {
+        console.error('[SpriteRenderer] Error loading sprite:', err);
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load sprite');
         }
@@ -146,14 +181,26 @@ export function useSpriteRenderer(
       animStateRef.current = newState;
 
       // Update sprite texture to current frame
-      if (spriteRef.current && metadataRef.current) {
+      if (spriteRef.current && metadataRef.current && fullTextureRef.current) {
         const frameIndex = getCurrentFrameIndex(newState, metadataRef.current);
         const frameTexture = getFrameTexture(
-          spriteRef.current.texture,
+          fullTextureRef.current, // Use original full texture for frame extraction
           metadataRef.current,
           frameIndex
         );
         spriteRef.current.texture = frameTexture;
+
+        // Debug log first few frames
+        if (newState.currentFrame < 3) {
+          console.log('[Animation] Frame update:', {
+            animation: newState.currentAnimation,
+            currentFrame: newState.currentFrame,
+            frameIndex,
+            textureFrame: frameTexture.frame,
+            spritePosition: { x: spriteRef.current.x, y: spriteRef.current.y },
+            spriteVisible: spriteRef.current.visible,
+          });
+        }
       }
     };
 

@@ -74,10 +74,14 @@ export default function PixiStage({
 
     // Initialize the app
     (async () => {
+      // Convert hex string to number for PixiJS v8
+      const bgColor = backgroundColor || '#1a1a1a';
+      const bgColorNumber = parseInt(bgColor.replace('#', ''), 16);
+
       await app.init({
         width,
         height,
-        backgroundColor: backgroundColor || '#1a1a1a',
+        background: bgColorNumber, // PixiJS v8 uses 'background' instead of 'backgroundColor'
         antialias,
         resolution: resolution ?? window.devicePixelRatio,
         autoDensity,
@@ -89,22 +93,43 @@ export default function PixiStage({
 
       // Append canvas to container
       if (canvasRef.current && app.canvas) {
+        // Ensure canvas has proper CSS for visibility
+        app.canvas.style.display = 'block';
+        app.canvas.style.width = `${width}px`;
+        app.canvas.style.height = `${height}px`;
         canvasRef.current.appendChild(app.canvas);
       }
 
       // Store app reference
       appRef.current = app;
+
+      // PixiJS v8: Set up manual render loop
+      // Start the ticker and add render call
+      app.ticker.add(() => {
+        app.renderer.render(app.stage);
+      });
+      app.ticker.start();
+
       setIsReady(true);
 
       // Notify parent component
       if (onAppReady) {
         onAppReady(app);
       }
+
+      console.log('[PixiStage] App initialized and started:', {
+        width: app.renderer.width,
+        height: app.renderer.height,
+        stageChildren: app.stage.children.length,
+        tickerStarted: app.ticker.started,
+      });
     })();
 
     // Cleanup on unmount
     return () => {
       if (appRef.current) {
+        // Stop the ticker before destroying
+        appRef.current.ticker.stop();
         appRef.current.destroy(true, {
           children: true,
           texture: true,

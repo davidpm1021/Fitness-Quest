@@ -63,41 +63,39 @@ export default function CharacterSystemV2TestPage() {
               <PixiStage
                 width={400}
                 height={400}
-                backgroundColor="#1a1a1a"
+                backgroundColor="#FFFFFF"
                 className="rounded-lg"
                 onAppReady={setAppInstance}
+                autoDensity={false}
+                resolution={1}
               >
-                {(app) => (
-                  <>
-                    {/* Placeholder: We'll add actual sprite rendering here */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center text-white font-retro">
-                        <div className="text-6xl mb-4">🎨</div>
-                        <p className="text-sm">PixiJS Stage Ready</p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          Sprite sheet placeholder
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Create sprite assets to test rendering
-                        </p>
-                      </div>
-                    </div>
-                    {/*
-                    Uncomment when sprite assets are available:
-                    <SpriteRenderer
-                      app={app}
-                      spritePath="/sprites/characters/v2/hero-base.png"
-                      metadataPath="/sprites/characters/v2/hero-base.json"
-                      animation={currentAnimation}
-                      fps={fps}
-                      scale={scale}
-                      x={200}
-                      y={300}
-                      loop={true}
-                    />
-                    */}
-                  </>
-                )}
+                {(app) => {
+                  // Minimal test: Draw a red rectangle
+                  (async () => {
+                    const { Graphics } = await import('pixi.js');
+                    const rect = new Graphics();
+                    rect.rect(50, 50, 100, 100);
+                    rect.fill(0xff0000);
+                    app.stage.addChild(rect);
+                    console.log('[Test] Red rectangle added to stage');
+                  })();
+
+                  return (
+                    <>
+                      <SpriteRenderer
+                        app={app}
+                        spritePath="/sprites/characters/v2/lpc-body.png"
+                        metadataPath="/sprites/characters/v2/lpc-body.json"
+                        animation={currentAnimation}
+                        fps={fps}
+                        scale={scale}
+                        x={200}
+                        y={350}
+                        loop={true}
+                      />
+                    </>
+                  );
+                }}
               </PixiStage>
             </div>
 
@@ -106,6 +104,7 @@ export default function CharacterSystemV2TestPage() {
               <p>✅ WebGL Renderer: {appInstance?.renderer ? 'Active' : 'Pending'}</p>
               <p>✅ Round Pixels: Enabled</p>
               <p>✅ Nearest-Neighbor Filtering: Enabled</p>
+              <p className="text-yellow-400 mt-2">🔍 Check browser console (F12) for sprite loading logs</p>
             </div>
           </div>
 

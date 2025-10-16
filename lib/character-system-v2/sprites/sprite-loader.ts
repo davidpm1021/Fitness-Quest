@@ -31,7 +31,12 @@ export async function loadSprite(
       throw new Error(`Failed to load metadata: ${metadataResponse.statusText}`);
     }
 
-    const metadata = (await metadataResponse.json()) as SpriteMeta;
+    const text = await metadataResponse.text();
+    if (!text || text.trim().length === 0) {
+      throw new Error(`Metadata file is empty: ${metadataPath}`);
+    }
+
+    const metadata = JSON.parse(text) as SpriteMeta;
 
     // Validate metadata
     validateSpriteMeta(metadata);
@@ -134,14 +139,17 @@ export function getFrameTexture(
   const x = col * frameWidth;
   const y = row * frameHeight;
 
-  // Clone the texture with the specific frame region
-  const frameTexture = texture.clone();
-  frameTexture.frame = {
-    x,
-    y,
-    width: frameWidth,
-    height: frameHeight,
-  };
+  // PixiJS v8: Create new texture from source with specific frame region
+  // Instead of clone(), use the Texture constructor with frame parameter
+  const frameTexture = new Texture({
+    source: texture.source,
+    frame: {
+      x,
+      y,
+      width: frameWidth,
+      height: frameHeight,
+    },
+  });
 
   return frameTexture;
 }
