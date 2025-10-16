@@ -719,6 +719,19 @@ export async function POST(request: NextRequest) {
     const baseFocusRecovery = 2 + goalsMet;
     const calculatedNewFocus = Math.min(10, Math.max(0, partyMember.focus_points - focusPenalty + baseFocusRecovery + focusEarned));
 
+    // Prepare phase transition data for response
+    const phaseTransitionData = phaseTransition !== null ? {
+      oldPhase: phaseTransition.oldPhase,
+      newPhase: phaseTransition.newPhase,
+      phaseName: phaseTransition.phaseInfo.name,
+      phaseIcon: phaseTransition.phaseInfo.icon,
+      phaseColor: phaseTransition.phaseInfo.color,
+      message: getPhaseTransitionMessage(
+        phaseTransition.phaseInfo,
+        activeMonster?.monsters.name || "Monster"
+      ),
+    } : null;
+
     // Build combat action result message
     let actionMessage = "";
 
@@ -820,19 +833,7 @@ export async function POST(request: NextRequest) {
             : false,
           victoryRewardId: victoryRewardId,
           milestoneCrossed: milestoneCrossed,
-          phaseTransition: phaseTransition !== null
-            ? {
-                oldPhase: phaseTransition.oldPhase,
-                newPhase: phaseTransition.newPhase,
-                phaseName: phaseTransition.phaseInfo.name,
-                phaseIcon: phaseTransition.phaseInfo.icon,
-                phaseColor: phaseTransition.phaseInfo.color,
-                message: getPhaseTransitionMessage(
-                  phaseTransition.phaseInfo,
-                  activeMonster?.monsters.name || "Monster"
-                ),
-              }
-            : null,
+          phaseTransition: phaseTransitionData,
           streakUpdated: newStreak,
           defenseUpdated: newDefense,
           progression: {
