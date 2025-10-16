@@ -729,15 +729,17 @@ export async function POST(request: NextRequest) {
       message: string;
     } | null = null;
 
-    if (phaseTransition !== null) {
+    if (phaseTransition) {
+      // Type assertion after null check
+      const transition = phaseTransition as NonNullable<typeof phaseTransition>;
       phaseTransitionData = {
-        oldPhase: phaseTransition.oldPhase,
-        newPhase: phaseTransition.newPhase,
-        phaseName: phaseTransition.phaseInfo.name,
-        phaseIcon: phaseTransition.phaseInfo.icon,
-        phaseColor: phaseTransition.phaseInfo.color,
+        oldPhase: transition.oldPhase,
+        newPhase: transition.newPhase,
+        phaseName: transition.phaseInfo.name,
+        phaseIcon: transition.phaseInfo.icon,
+        phaseColor: transition.phaseInfo.color,
         message: getPhaseTransitionMessage(
-          phaseTransition.phaseInfo,
+          transition.phaseInfo,
           activeMonster?.monsters.name || "Monster"
         ),
       };
