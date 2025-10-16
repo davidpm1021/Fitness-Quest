@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
 import { cache, CacheKeys } from "@/lib/cache";
+import { generateRandomModifiers } from "@/lib/game/battle-modifiers";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
       },
       include: {
         monsters: true,
+        battle_modifiers: true,
       },
     });
 
@@ -88,6 +90,14 @@ export async function GET(request: NextRequest) {
           baseDamage: activeMonster.monsters.base_damage,
           counterattackChance: activeMonster.monsters.counterattack_chance,
           isDefeated: activeMonster.monsters.is_defeated,
+          battleModifiers: activeMonster.battle_modifiers.map((mod) => ({
+            id: mod.id,
+            modifierType: mod.modifier_type,
+            modifierCategory: mod.modifier_category,
+            effectDescription: mod.effect_description,
+            statEffect: mod.stat_effect,
+            effectValue: mod.effect_value,
+          })),
         }
       : null;
 
@@ -183,6 +193,29 @@ export async function POST(request: NextRequest) {
         monsters: true,
       },
     });
+
+    // Generate and save random battle modifiers for this monster
+    const modifiers = generateRandomModifiers();
+    const modifierRecords = await Promise.all(
+      modifiers.map((modifier) =>
+        prisma.battle_modifiers.create({
+          data: {
+            id: crypto.randomUUID(),
+            party_monster_id: partyMonster.id,
+            modifier_type: modifier.type,
+            modifier_category: modifier.category,
+            effect_description: modifier.description,
+            stat_effect: modifier.statEffect,
+            effect_value: modifier.effectValue,
+          },
+        })
+      )
+    );
+
+    console.log(
+      `[Battle Modifiers] Generated ${modifierRecords.length} modifiers for ${monster.name}:`,
+      modifiers.map((m) => `${m.icon} ${m.name}`).join(", ")
+    );
 
     // Invalidate party dashboard cache for all party members
     try {

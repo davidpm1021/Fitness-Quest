@@ -27,6 +27,11 @@ import {
   getBuffNotification,
   type BuffType,
 } from "@/lib/encouragementBuffs";
+import {
+  calculateCombatModifiers,
+  BATTLE_MODIFIERS,
+  type BattleModifier,
+} from "@/lib/game/battle-modifiers";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -245,7 +250,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get active monster for the party
+    // Get active monster for the party with battle modifiers
     const activeMonster = await prisma.party_monsters.findFirst({
       where: {
         party_id: partyMember.party_id,
@@ -253,8 +258,24 @@ export async function POST(request: NextRequest) {
       },
       include: {
         monsters: true,
+        battle_modifiers: true,
       },
     });
+
+    // Calculate battle modifier effects
+    const battleModifiers: BattleModifier[] = activeMonster
+      ? activeMonster.battle_modifiers.map((dbMod) => {
+          const modifierDef = BATTLE_MODIFIERS[dbMod.modifier_type];
+          return modifierDef;
+        })
+      : [];
+
+    const combatMods = calculateCombatModifiers(battleModifiers);
+
+    console.log(
+      "[Battle Modifiers] Active modifiers:",
+      battleModifiers.map((m) => `${m.icon} ${m.name}`).join(", ")
+    );
 
     // Check for active welcome back bonus
     const activeWelcomeBackBonus =
@@ -262,14 +283,17 @@ export async function POST(request: NextRequest) {
         ? partyMember.welcome_back_bonuses[0]
         : null;
 
-    // Calculate attack bonuses
+    // Calculate attack bonuses (with battle modifier bonuses)
     const bonuses = calculateAttackBonuses({
       goalsMet,
       currentStreak: newStreak,
       currentHp: partyMember.current_hp,
-      maxHp: partyMember.max_hp,
+      maxHp: partyMember.max_hp + combatMods.maxHpModifier, // Apply max HP modifier
       checkedInCount: todayCheckIns,
     });
+
+    // Add battle modifier attack bonus
+    bonuses.totalBonus += combatMods.attackBonusModifier;
 
     // Multiple attacks system: one attack per goal met (minimum 1)
     const numAttacks = Math.max(1, goalsMet);
@@ -347,6 +371,9 @@ export async function POST(request: NextRequest) {
         baseDamage += 5;
       }
 
+      // Apply battle modifier damage bonus
+      baseDamage += combatMods.damageBonus;
+
       // Apply buff to damage (ENERGIZED = +3)
       // Only apply buff to first attack
       const damageWithBuff = i === 0 && activeBuff
@@ -388,6 +415,11 @@ export async function POST(request: NextRequest) {
       totalDamage += attackResult.damage;
     }
 
+    // Apply battle modifier damage multiplier (ENRAGED)
+    if (combatMods.damageMultiplier !== 1.0) {
+      totalDamage = Math.floor(totalDamage * combatMods.damageMultiplier);
+    }
+
     // Combined result for backward compatibility
     const result = {
       hit: attacks.some(a => a.hit),
@@ -427,16 +459,24 @@ export async function POST(request: NextRequest) {
         counterattackChance = Math.floor(counterattackChance * 0.5);
       }
 
+      // Apply battle modifier counterattack chance modifier
+      counterattackChance += combatMods.counterattackChanceModifier;
+
       wasCounterattacked = rollCounterattack(counterattackChance, newDefense);
       if (wasCounterattacked) {
-        counterattackDamage = calculateCounterattackDamage(
+        let monsterDamage = calculateCounterattackDamage(
           activeMonster.monsters.base_damage
         );
 
+        // Apply battle modifier monster damage modifier
+        monsterDamage += combatMods.monsterDamageModifier;
+
         // DEFEND action also reduces damage taken by 50%
         if (selectedAction === "DEFEND") {
-          counterattackDamage = Math.floor(counterattackDamage * 0.5);
+          monsterDamage = Math.floor(monsterDamage * 0.5);
         }
+
+        counterattackDamage = Math.max(1, monsterDamage); // Minimum 1 damage
       }
     }
 
