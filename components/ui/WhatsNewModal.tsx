@@ -94,9 +94,9 @@ export default function WhatsNewModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-hidden">
-      <div className="max-w-2xl w-full max-h-[90vh] flex flex-col">
-        <PixelPanel variant="dialog" className="flex flex-col h-full">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-2xl" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+        <PixelPanel variant="dialog" className="flex flex-col" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
           {/* Header - Fixed */}
           <div className="flex-shrink-0 text-center border-b-2 border-purple-500/30 pb-4 mb-4">
             <h2 className="text-3xl font-bold text-yellow-300 font-pixel mb-2">
@@ -108,7 +108,10 @@ export default function WhatsNewModal({
           </div>
 
           {/* Announcements List - Scrollable */}
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 min-h-0">
+          <div
+            className="overflow-y-auto space-y-4 mb-4 pr-2"
+            style={{ maxHeight: 'calc(100vh - 20rem)' }}
+          >
             {announcements.map((announcement) => (
               <div key={announcement.id} className="bg-gray-900/50 border-2 border-purple-500/30 rounded p-4">
                 <div className="mb-3">
