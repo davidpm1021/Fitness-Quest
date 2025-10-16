@@ -12,7 +12,15 @@
       "Bash(npm install pixi.js@7.4.2)",
       "Bash(npm install @pixi/react)",
       "Bash(npm install pixi.js@latest @pixi/react@latest)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Read(//c/Users/david/Desktop/lpc_entry/png/bow/**)",
+      "Bash(cat:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_network_requests"
     ],
     "deny": [],
     "ask": []

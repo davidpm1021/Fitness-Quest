@@ -47,6 +47,16 @@ interface PartyData {
   };
 }
 
+type MonsterPhase = 1 | 2 | 3 | 4;
+
+interface PhaseInfo {
+  phase: MonsterPhase;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
 interface GoalData {
   id: string;
   name: string;
@@ -168,6 +178,49 @@ export default function DashboardPage() {
       default:
         return "bg-gray-500/20 text-gray-200 border-gray-500/50";
     }
+  }
+
+  function calculateMonsterPhase(currentHp: number, maxHp: number): MonsterPhase {
+    if (maxHp <= 0) return 1;
+    const hpPercentage = (currentHp / maxHp) * 100;
+    if (hpPercentage > 75) return 1;
+    if (hpPercentage > 50) return 2;
+    if (hpPercentage > 25) return 3;
+    return 4;
+  }
+
+  function getPhaseInfo(phase: MonsterPhase): PhaseInfo {
+    const phases: Record<MonsterPhase, PhaseInfo> = {
+      1: {
+        phase: 1,
+        name: 'Normal',
+        description: 'The monster is at full strength.',
+        icon: '👹',
+        color: 'text-gray-400',
+      },
+      2: {
+        phase: 2,
+        name: 'Bloodied',
+        description: 'The monster is wounded and fighting more aggressively!',
+        icon: '💢',
+        color: 'text-yellow-400',
+      },
+      3: {
+        phase: 3,
+        name: 'Enraged',
+        description: 'The monster has entered a furious rage!',
+        icon: '🔥',
+        color: 'text-orange-400',
+      },
+      4: {
+        phase: 4,
+        name: 'Desperate',
+        description: 'The monster fights with desperate ferocity!',
+        icon: '💀',
+        color: 'text-red-400',
+      },
+    };
+    return phases[phase];
   }
 
   if (isLoading || loading) {
@@ -316,6 +369,36 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Monster Phase */}
+                    {(() => {
+                      const currentPhase = calculateMonsterPhase(
+                        partyData.activeMonster.currentHp,
+                        partyData.activeMonster.maxHp
+                      );
+                      const phaseInfo = getPhaseInfo(currentPhase);
+
+                      if (currentPhase > 1) {
+                        return (
+                          <div className="mt-4">
+                            <div className={`bg-black/30 rounded-lg p-3 border-2 border-white/20`}>
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="text-3xl">{phaseInfo.icon}</span>
+                                <div className="text-center">
+                                  <p className={`text-sm font-retro ${phaseInfo.color} font-bold`}>
+                                    PHASE {currentPhase}: {phaseInfo.name.toUpperCase()}
+                                  </p>
+                                  <p className="text-xs text-white/70 font-retro mt-1">
+                                    {phaseInfo.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   <div className="text-center">

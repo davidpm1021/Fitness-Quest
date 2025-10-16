@@ -32,6 +32,13 @@ import {
   BATTLE_MODIFIERS,
   type BattleModifier,
 } from "@/lib/game/battle-modifiers";
+import {
+  calculateMonsterPhase,
+  checkPhaseTransition,
+  applyPhaseModifiers,
+  getPhaseTransitionMessage,
+  type MonsterPhase,
+} from "@/lib/game/monster-phases";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -444,12 +451,24 @@ export async function POST(request: NextRequest) {
     const baseDefense = calculateDefense(newStreak, recentEncouragementsCount);
     const newDefense = applyBuffToDefense(baseDefense, activeBuff);
 
+    // Calculate monster's current phase for phase-based modifiers
+    const currentPhase = activeMonster
+      ? calculateMonsterPhase(activeMonster.monsters.current_hp, activeMonster.monsters.max_hp)
+      : 1;
+
     // Roll for counterattack if there's an active monster and player hit
     let wasCounterattacked = false;
     let counterattackDamage = 0;
     if (activeMonster && result.hit) {
-      // Apply welcome back bonus: reduce counterattack chance by 50%
+      // Start with base counterattack chance
       let counterattackChance = activeMonster.monsters.counterattack_chance;
+      let baseDamage = activeMonster.monsters.base_damage;
+
+      // Apply phase modifiers FIRST (this is the monster's inherent state)
+      const phaseModified = applyPhaseModifiers(currentPhase, counterattackChance, baseDamage[0]);
+      counterattackChance = phaseModified.counterattackChance;
+
+      // Apply welcome back bonus: reduce counterattack chance by 50%
       if (activeWelcomeBackBonus) {
         counterattackChance = Math.floor(counterattackChance * 0.5);
       }
@@ -464,9 +483,8 @@ export async function POST(request: NextRequest) {
 
       wasCounterattacked = rollCounterattack(counterattackChance, newDefense);
       if (wasCounterattacked) {
-        let monsterDamage = calculateCounterattackDamage(
-          activeMonster.monsters.base_damage
-        );
+        // Use phase-modified damage as base
+        let monsterDamage = phaseModified.damage;
 
         // Apply battle modifier monster damage modifier
         monsterDamage += combatMods.monsterDamageModifier;
@@ -491,6 +509,7 @@ export async function POST(request: NextRequest) {
 
     // Create check-in with transaction
     let milestoneCrossed: 75 | 50 | 25 | null = null;
+    let phaseTransition: ReturnType<typeof checkPhaseTransition> = null;
     let monsterWasDefeated = false;
     let victoryRewardId: string | null = null;
     const checkInResult = await prisma.$transaction(async (tx) => {
@@ -621,6 +640,14 @@ export async function POST(request: NextRequest) {
             milestoneCrossed = milestone;
             break; // Only celebrate the highest milestone crossed
           }
+        }
+
+        // Check for phase transition
+        phaseTransition = checkPhaseTransition(oldHp, newMonsterHp, activeMonster.monsters.max_hp);
+        if (phaseTransition) {
+          console.log(
+            `[Monster Phase] ${activeMonster.monsters.name} entered phase ${phaseTransition.newPhase}: ${phaseTransition.phaseInfo.name}`
+          );
         }
 
         await tx.monsters.update({
@@ -781,6 +808,10 @@ export async function POST(request: NextRequest) {
                 name: activeMonster.monsters.name,
                 currentHp: activeMonster.monsters.current_hp - result.damage,
                 maxHp: activeMonster.monsters.max_hp,
+                currentPhase: calculateMonsterPhase(
+                  activeMonster.monsters.current_hp - result.damage,
+                  activeMonster.monsters.max_hp
+                ),
               }
             : null,
           monsterDefeated: activeMonster
@@ -788,6 +819,19 @@ export async function POST(request: NextRequest) {
             : false,
           victoryRewardId: victoryRewardId,
           milestoneCrossed: milestoneCrossed,
+          phaseTransition: phaseTransition
+            ? {
+                oldPhase: phaseTransition.oldPhase,
+                newPhase: phaseTransition.newPhase,
+                phaseName: phaseTransition.phaseInfo.name,
+                phaseIcon: phaseTransition.phaseInfo.icon,
+                phaseColor: phaseTransition.phaseInfo.color,
+                message: getPhaseTransitionMessage(
+                  phaseTransition.phaseInfo,
+                  activeMonster?.monsters.name || "Monster"
+                ),
+              }
+            : null,
           streakUpdated: newStreak,
           defenseUpdated: newDefense,
           progression: {
