@@ -69,33 +69,21 @@ export default function CharacterSystemV2TestPage() {
                 autoDensity={false}
                 resolution={1}
               >
-                {(app) => {
-                  // Minimal test: Draw a red rectangle
-                  (async () => {
-                    const { Graphics } = await import('pixi.js');
-                    const rect = new Graphics();
-                    rect.rect(50, 50, 100, 100);
-                    rect.fill(0xff0000);
-                    app.stage.addChild(rect);
-                    console.log('[Test] Red rectangle added to stage');
-                  })();
-
-                  return (
-                    <>
-                      <SpriteRenderer
-                        app={app}
-                        spritePath="/sprites/characters/v2/lpc-body.png"
-                        metadataPath="/sprites/characters/v2/lpc-body.json"
-                        animation={currentAnimation}
-                        fps={fps}
-                        scale={scale}
-                        x={200}
-                        y={350}
-                        loop={true}
-                      />
-                    </>
-                  );
-                }}
+                {(app) => (
+                  <>
+                    <SpriteRenderer
+                      app={app}
+                      spritePath="/sprites/characters/v2/lpc-body.png"
+                      metadataPath="/sprites/characters/v2/lpc-body.json"
+                      animation={currentAnimation}
+                      fps={fps}
+                      scale={scale}
+                      x={200}
+                      y={350}
+                      loop={true}
+                    />
+                  </>
+                )}
               </PixiStage>
             </div>
 
