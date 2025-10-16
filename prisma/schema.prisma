@@ -211,16 +211,31 @@ model party_messages {
 }
 
 model party_monsters {
-  id         String   @id
-  party_id   String
-  monster_id String
-  is_active  Boolean  @default(false)
-  votes      Int      @default(0)
-  created_at DateTime @default(now())
-  monsters   monsters @relation(fields: [monster_id], references: [id], onDelete: Cascade)
-  parties    parties  @relation(fields: [party_id], references: [id], onDelete: Cascade)
+  id               String             @id
+  party_id         String
+  monster_id       String
+  is_active        Boolean            @default(false)
+  votes            Int                @default(0)
+  created_at       DateTime           @default(now())
+  monsters         monsters           @relation(fields: [monster_id], references: [id], onDelete: Cascade)
+  parties          parties            @relation(fields: [party_id], references: [id], onDelete: Cascade)
+  battle_modifiers battle_modifiers[]
 
   @@index([party_id, is_active])
+}
+
+model battle_modifiers {
+  id                  String                   @id
+  party_monster_id    String
+  modifier_type       BattleModifierType
+  modifier_category   BattleModifierCategory
+  effect_description  String
+  stat_effect         String?
+  effect_value        Int
+  created_at          DateTime                 @default(now())
+  party_monsters      party_monsters           @relation(fields: [party_monster_id], references: [id], onDelete: Cascade)
+
+  @@index([party_monster_id])
 }
 
 model user_cosmetic_unlocks {
@@ -479,4 +494,25 @@ enum SkillEffectType {
   TEAM_DAMAGE_BOOST
   TEAM_DEFENSE_BOOST
   XP_BOOST
+}
+
+enum BattleModifierType {
+  INSPIRED
+  EXHAUSTED
+  FOCUSED
+  STURDY
+  WEAKENED
+  BLESSED
+  CURSED
+  PRECISE
+  CLUMSY
+  ENRAGED
+  FEARFUL
+  DETERMINED
+}
+
+enum BattleModifierCategory {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
 }
