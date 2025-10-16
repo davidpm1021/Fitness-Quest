@@ -2,6 +2,8 @@
  * Combat and dice rolling utilities for Fitness Quest
  */
 
+import type { CombatModifiers } from './game/battle-modifiers';
+
 /**
  * Roll a d20 (20-sided die)
  */
@@ -17,7 +19,7 @@ export function rollBaseDamage(): number {
 }
 
 /**
- * Calculate attack bonuses based on game state
+ * Calculate attack bonuses based on game state and battle modifiers
  */
 export function calculateAttackBonuses(params: {
   goalsMet: number;
@@ -25,14 +27,16 @@ export function calculateAttackBonuses(params: {
   currentHp: number;
   maxHp: number;
   checkedInCount: number;
+  combatModifiers?: CombatModifiers | null;
 }): {
   goalBonus: number;
   streakBonus: number;
   teamBonus: number;
   underdogBonus: number;
+  modifierBonus: number;
   totalBonus: number;
 } {
-  const { goalsMet, currentStreak, currentHp, maxHp, checkedInCount } = params;
+  const { goalsMet, currentStreak, currentHp, maxHp, checkedInCount, combatModifiers } = params;
 
   // +1 per goal met (max 5 goals)
   const goalBonus = Math.min(goalsMet, 5);
@@ -46,13 +50,17 @@ export function calculateAttackBonuses(params: {
   // +2 underdog bonus if HP < 50
   const underdogBonus = currentHp < 50 ? 2 : 0;
 
-  const totalBonus = goalBonus + streakBonus + teamBonus + underdogBonus;
+  // Battle modifier bonus (e.g., DETERMINED: +1, CLUMSY: -1)
+  const modifierBonus = combatModifiers?.attackBonusModifier ?? 0;
+
+  const totalBonus = goalBonus + streakBonus + teamBonus + underdogBonus + modifierBonus;
 
   return {
     goalBonus,
     streakBonus,
     teamBonus,
     underdogBonus,
+    modifierBonus,
     totalBonus,
   };
 }
@@ -101,35 +109,68 @@ export function updateStreak(
  * Calculate total damage dealt
  * Hit or miss, you ALWAYS deal base damage (effort counts!)
  * On hit, you also add bonuses
+ * Battle modifiers can affect damage and critical hit chance
  */
 export function calculateDamage(
   attackRoll: number,
   bonuses: number,
   baseDamage: number,
-  monsterAC: number = 12
-): { hit: boolean; damage: number } {
+  monsterAC: number = 12,
+  combatModifiers?: CombatModifiers | null
+): { hit: boolean; damage: number; critical: boolean } {
   const totalRoll = attackRoll + bonuses;
   const hit = totalRoll >= monsterAC;
 
+  // Check for critical hit (natural 20 by default, or threshold from PRECISE modifier)
+  const critThreshold = combatModifiers?.critThreshold ?? 20;
+  const critical = attackRoll >= critThreshold;
+
   if (!hit) {
     // Even on a miss, effort counts - deal base damage (no bonuses)
-    return { hit: false, damage: baseDamage };
+    const missModifier = combatModifiers?.damageBonus ?? 0;
+    const finalDamage = Math.max(1, baseDamage + missModifier);
+    return { hit: false, damage: finalDamage, critical: false };
   }
 
-  // On hit, deal base damage + bonuses
-  const damage = baseDamage + bonuses;
-  return { hit: true, damage };
+  // On hit, deal base damage + bonuses + modifier bonuses
+  let damage = baseDamage + bonuses;
+
+  // Apply damage modifier (e.g., INSPIRED: +2, WEAKENED: -1)
+  if (combatModifiers?.damageBonus) {
+    damage += combatModifiers.damageBonus;
+  }
+
+  // Apply damage multiplier (e.g., ENRAGED: 1.5x)
+  if (combatModifiers?.damageMultiplier && combatModifiers.damageMultiplier !== 1.0) {
+    damage = Math.floor(damage * combatModifiers.damageMultiplier);
+  }
+
+  // Critical hit doubles damage
+  if (critical) {
+    damage *= 2;
+  }
+
+  // Ensure minimum 1 damage
+  damage = Math.max(1, damage);
+
+  return { hit: true, damage, critical };
 }
 
 /**
  * Roll for monster counterattack
  * Counterattack chance is reduced by player defense
+ * Battle modifiers can increase or decrease counterattack chance
  */
 export function rollCounterattack(
   counterattackChance: number,
-  playerDefense: number
+  playerDefense: number,
+  combatModifiers?: CombatModifiers | null
 ): boolean {
-  const adjustedChance = Math.max(0, counterattackChance - playerDefense);
+  // Apply modifier bonus/penalty (e.g., CURSED: +10%)
+  const modifierAdjustment = combatModifiers?.counterattackChanceModifier ?? 0;
+  const baseChance = counterattackChance + modifierAdjustment;
+
+  const adjustedChance = Math.max(0, baseChance - playerDefense);
   const roll = Math.random() * 100;
   return roll < adjustedChance;
 }

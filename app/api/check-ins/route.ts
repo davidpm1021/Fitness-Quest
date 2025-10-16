@@ -298,10 +298,8 @@ export async function POST(request: NextRequest) {
       currentHp: partyMember.current_hp,
       maxHp: partyMember.max_hp + combatMods.maxHpModifier, // Apply max HP modifier
       checkedInCount: todayCheckIns,
+      combatModifiers: combatMods, // Pass combat modifiers
     });
-
-    // Add battle modifier attack bonus
-    bonuses.totalBonus += combatMods.attackBonusModifier;
 
     // Multiple attacks system: one attack per goal met (minimum 1)
     const numAttacks = Math.max(1, goalsMet);
@@ -355,7 +353,7 @@ export async function POST(request: NextRequest) {
     const monsterAC = activeMonster?.monsters.armor_class || 12;
 
     // Roll multiple attacks (one per goal met)
-    const attacks: Array<{ hit: boolean; damage: number; roll: number; bonus: number }> = [];
+    const attacks: Array<{ hit: boolean; damage: number; roll: number; bonus: number; critical?: boolean }> = [];
     let totalDamage = 0;
     let buffWasUsed = false;
 
@@ -403,19 +401,22 @@ export async function POST(request: NextRequest) {
           damage: Math.floor(damageWithBuff.damage * damageMultiplier),
           roll: rollWithBuff.roll,
           bonus: attackBonus,
+          critical: false,
         };
       } else {
         const damageCalc = calculateDamage(
           rollWithBuff.roll,
           attackBonus,
           Math.floor(damageWithBuff.damage * damageMultiplier),
-          monsterAC
+          monsterAC,
+          combatMods // Pass combat modifiers for critical hits and damage bonuses
         );
         attackResult = {
           hit: damageCalc.hit,
           damage: damageCalc.damage,
           roll: rollWithBuff.roll,
           bonus: attackBonus,
+          critical: damageCalc.critical,
         };
       }
 
@@ -482,7 +483,7 @@ export async function POST(request: NextRequest) {
       // Apply battle modifier counterattack chance modifier
       counterattackChance += combatMods.counterattackChanceModifier;
 
-      wasCounterattacked = rollCounterattack(counterattackChance, newDefense);
+      wasCounterattacked = rollCounterattack(counterattackChance, newDefense, combatMods);
       if (wasCounterattacked) {
         // Use phase-modified damage as base
         let monsterDamage = phaseModified.damage;

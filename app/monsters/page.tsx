@@ -231,17 +231,54 @@ export default function MonstersPage() {
             </div>
           </PixelPanel>
         ) : (
-          <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold text-white font-pixel mb-3">
-              ⚔️ CHOOSE YOUR CHALLENGE
-            </h2>
-            <p className="text-gray-300 font-retro mb-2 text-lg">
-              Select a monster for your party to fight
-            </p>
-            <p className="text-sm text-gray-400 font-retro">
-              💡 Each type has different stats and strategies!
-            </p>
-          </div>
+          <>
+            <div className="mb-8 text-center">
+              <h2 className="text-3xl font-bold text-white font-pixel mb-3">
+                ⚔️ CHOOSE YOUR CHALLENGE
+              </h2>
+              <p className="text-gray-300 font-retro mb-2 text-lg">
+                Select a monster for your party to fight
+              </p>
+              <p className="text-sm text-gray-400 font-retro">
+                💡 Each type has different stats and strategies!
+              </p>
+            </div>
+
+            {/* Battle Modifiers Explanation */}
+            <PixelPanel variant="dialog" className="mb-8">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-blue-200 font-pixel mb-3">
+                  ⚡ BATTLE MODIFIERS SYSTEM
+                </h3>
+                <p className="text-blue-100 font-retro mb-4">
+                  Each monster battle comes with <span className="font-bold text-white">2-3 random modifiers</span> that change how combat works!
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                  <div className="bg-green-900/30 border-2 border-green-500/50 rounded p-3">
+                    <p className="text-green-400 font-pixel text-sm mb-2">✨ POSITIVE</p>
+                    <p className="text-green-100 font-retro text-xs">
+                      Examples: +2 damage, +10 HP, attack bonuses
+                    </p>
+                  </div>
+                  <div className="bg-red-900/30 border-2 border-red-500/50 rounded p-3">
+                    <p className="text-red-400 font-pixel text-sm mb-2">😫 NEGATIVE</p>
+                    <p className="text-red-100 font-retro text-xs">
+                      Examples: -10 HP, -1 damage, +10% counterattacks
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/30 border-2 border-blue-500/50 rounded p-3">
+                    <p className="text-blue-400 font-pixel text-sm mb-2">🎯 NEUTRAL</p>
+                    <p className="text-blue-100 font-retro text-xs">
+                      Examples: Critical hits, roll advantages, HP/damage trades
+                    </p>
+                  </div>
+                </div>
+                <p className="text-blue-200 font-retro text-sm mt-4">
+                  🎲 Modifiers are revealed when you select a monster!
+                </p>
+              </div>
+            </PixelPanel>
+          </>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
