@@ -244,16 +244,11 @@ export default function NewsPage() {
                   {announcement.description}
                 </p>
 
-                <div className="flex items-center justify-between text-xs text-gray-400 font-retro">
-                  <span>
-                    Released: {new Date(announcement.releaseDate).toLocaleDateString()}
-                  </span>
-                  {announcement.viewedAt && (
-                    <span className="text-green-400">
-                      ✓ Viewed {new Date(announcement.viewedAt).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
+                {announcement.viewedAt && (
+                  <div className="text-xs text-green-400 font-retro">
+                    ✓ Viewed {new Date(announcement.viewedAt).toLocaleDateString()}
+                  </div>
+                )}
               </PixelPanel>
             ))
           )}

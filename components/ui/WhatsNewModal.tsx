@@ -138,10 +138,6 @@ export default function WhatsNewModal({
               <p className="text-gray-300 font-retro text-sm whitespace-pre-wrap">
                 {announcement.description}
               </p>
-
-              <div className="mt-3 text-xs text-gray-400 font-retro">
-                Released: {new Date(announcement.releaseDate).toLocaleDateString()}
-              </div>
             </div>
           ))}
         </div>

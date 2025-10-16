@@ -5,7 +5,7 @@
 
 INSERT INTO feature_announcements (id, title, description, category, version, release_date, is_published, sort_order, created_at, updated_at)
 VALUES
-  -- 1. Battle Modifiers (Most Recent - 2025-10-16)
+  -- 1. Battle Modifiers
   (
     'ann-battle-modifiers',
     'Battle Modifiers System Released!',
@@ -16,14 +16,14 @@ Positive modifiers like "Inspired" grant +2 damage, while negative modifiers lik
 Look for the modifier indicators on the monster selection screen to plan your strategy!',
     'NEW_FEATURE',
     '1.1.0',
-    '2025-10-16 00:00:00',
+    NOW(),
     true,
     10,
     NOW(),
     NOW()
   ),
 
-  -- 2. Monster Phases (2025-10-15)
+  -- 2. Monster Phases
   (
     'ann-monster-phases',
     'Dynamic Monster Difficulty System',
@@ -36,14 +36,14 @@ Phase 3 (25-0% HP): Desperate and dangerous!
 Tank monsters gain rage damage, Balanced monsters counterattack more, and Glass Cannons unleash devastating area attacks. Stay alert as the tide of battle shifts!',
     'NEW_FEATURE',
     '1.0.0',
-    '2025-10-15 00:00:00',
+    NOW(),
     true,
     20,
     NOW(),
     NOW()
   ),
 
-  -- 3. Character Progression System (2025-10-14)
+  -- 3. Character Progression System
   (
     'ann-character-progression',
     'Full Character Progression System',
@@ -57,14 +57,14 @@ Tank monsters gain rage damage, Balanced monsters counterattack more, and Glass 
 26 unique skills await, including powerful ultimates at higher levels. Will you become a damage dealer, a team healer, or a tactical genius?',
     'NEW_FEATURE',
     '1.0.0',
-    '2025-10-14 00:00:00',
+    NOW(),
     true,
     30,
     NOW(),
     NOW()
   ),
 
-  -- 4. Welcome-Back System (2025-10-14)
+  -- 4. Welcome-Back System
   (
     'ann-welcome-back',
     'Welcome Back Bonus System',
@@ -77,14 +77,14 @@ Tank monsters gain rage damage, Balanced monsters counterattack more, and Glass 
 No judgment, no penalties - just support to help you rejoin your party''s adventure!',
     'NEW_FEATURE',
     '1.0.0',
-    '2025-10-14 00:00:00',
+    NOW(),
     true,
     40,
     NOW(),
     NOW()
   ),
 
-  -- 5. Enhanced Encouragement Defense (2025-10-14)
+  -- 5. Enhanced Encouragement Defense
   (
     'ann-encouragement-defense',
     'Encouragements Now Grant Defense',
@@ -93,7 +93,7 @@ No judgment, no penalties - just support to help you rejoin your party''s advent
 React to your teammates'' attacks with 💪 🔥 ⭐ 👏 to boost their defense and help them survive monster counterattacks. Teamwork makes the dream work!',
     'IMPROVEMENT',
     '1.0.0',
-    '2025-10-14 00:00:00',
+    NOW(),
     true,
     50,
     NOW(),
@@ -119,7 +119,7 @@ Earn Victory Tokens by defeating monsters, then spend them in the upgrade shop f
 Each monster defeated makes your party permanently stronger!',
     'COMING_SOON',
     NULL,
-    '2025-10-20 00:00:00',
+    NOW(),
     true,
     100,
     NOW(),
@@ -139,28 +139,25 @@ Two healing options will be available:
 Strategic healing can mean the difference between victory and defeat. Will you take the offensive or play support?',
     'COMING_SOON',
     NULL,
-    '2025-10-22 00:00:00',
+    NOW(),
     true,
     110,
     NOW(),
     NOW()
   ),
 
-  -- 3. Monster Voting System
+  -- 3. Combat System Overhaul
   (
-    'ann-monster-voting',
-    'Democratic Monster Selection',
-    'Let your party choose the next challenge together!
+    'ann-combat-overhaul',
+    'Combat System Refinement',
+    'We are exploring improvements to make combat feel more rewarding and consistent!
 
-After defeating a monster, vote on which of 3 new monsters to face next:
-• 48-hour voting period
-• See what your party prefers
-• Most votes wins (random tiebreaker)
+The current D20 dice roll system can feel too random. We are considering changes that reward successful check-ins more reliably while maintaining strategic depth and excitement.
 
-No more "first person picks" - everyone has a voice in the adventure!',
+Your feedback matters! This system is core to the game experience, and we want to get it right. Let us know your thoughts as you play!',
     'COMING_SOON',
     NULL,
-    '2025-10-25 00:00:00',
+    NOW(),
     true,
     120,
     NOW(),
