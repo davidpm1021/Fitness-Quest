@@ -12,10 +12,11 @@ interface MonsterTemplate {
   counterattackChance: number;
 }
 
-// Monster stats by type (from SPRINT-PLAN.md):
-// TANK: AC 10, HP 600, 20% counterattack
-// BALANCED: AC 12, HP 400, 40% counterattack
-// GLASS_CANNON: AC 15, HP 300, 60% counterattack
+// Monster stats by type (UPDATED - Game Balance Phase 1):
+// TANK: AC 10, HP 2100, 20% counterattack, damage [8-15]
+// BALANCED: AC 12, HP 1400, 40% counterattack, damage [8-15]
+// GLASS_CANNON: AC 15, HP 1050, 60% counterattack, damage [8-15]
+// Target: 8-15 day defeat time for 4-person party
 
 const monsters: MonsterTemplate[] = [
   // TANK Monsters
@@ -24,9 +25,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A massive, lumbering creature made of old couch cushions and TV remotes. It moves slowly but has immense durability. Its favorite attack is the 'Netflix Binge Beam' that drains motivation.",
     monsterType: MonsterType.TANK,
-    maxHp: 600,
+    maxHp: 2100,
     armorClass: 10,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 20,
   },
   {
@@ -34,9 +35,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "An ancient wyrm that feeds on delayed tasks and abandoned goals. Its scales are made of unread emails and expired gym memberships. Slow but incredibly resilient.",
     monsterType: MonsterType.TANK,
-    maxHp: 600,
+    maxHp: 2100,
     armorClass: 10,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 20,
   },
   {
@@ -44,9 +45,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A towering giant wrapped in a blanket of complacency. It's hard to hurt because it's so well-padded with excuses and rationalizations.",
     monsterType: MonsterType.TANK,
-    maxHp: 600,
+    maxHp: 2100,
     armorClass: 10,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 20,
   },
 
@@ -56,9 +57,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A mesmerizing entity that constantly whispers 'just one more scroll.' It balances alluring distractions with punishing time-wasting attacks.",
     monsterType: MonsterType.BALANCED,
-    maxHp: 400,
+    maxHp: 1400,
     armorClass: 12,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 40,
   },
   {
@@ -66,9 +67,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A mechanical beast that produces an endless supply of reasons not to work out. Neither too tough nor too fragile, but always annoying.",
     monsterType: MonsterType.BALANCED,
-    maxHp: 400,
+    maxHp: 1400,
     armorClass: 12,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 40,
   },
   {
@@ -76,9 +77,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A mischievous fiend that appears every morning, whispering 'five more minutes.' It's moderately difficult to defeat and strikes back often.",
     monsterType: MonsterType.BALANCED,
-    maxHp: 400,
+    maxHp: 1400,
     armorClass: 12,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 40,
   },
   {
@@ -86,9 +87,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A ghostly apparition that smells like french fries and regret. Well-balanced in defense and counterattacks, making it a challenging foe.",
     monsterType: MonsterType.BALANCED,
-    maxHp: 400,
+    maxHp: 1400,
     armorClass: 12,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 40,
   },
 
@@ -98,9 +99,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A lightning-fast shadow that strikes with crippling self-doubt. Fragile but deadly, it counterattacks frequently with devastating psychological damage.",
     monsterType: MonsterType.GLASS_CANNON,
-    maxHp: 300,
+    maxHp: 1050,
     armorClass: 15,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 60,
   },
   {
@@ -108,9 +109,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A wailing spirit that screams 'You're doing too much!' Very hard to hit, but shatters quickly under sustained pressure. Retaliates with exhaustion.",
     monsterType: MonsterType.GLASS_CANNON,
-    maxHp: 300,
+    maxHp: 1050,
     armorClass: 15,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 60,
   },
   {
@@ -118,9 +119,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "An elusive ghost that whispers 'It's not good enough yet.' Extremely difficult to land a hit on, but crumbles once you break through its defenses.",
     monsterType: MonsterType.GLASS_CANNON,
-    maxHp: 300,
+    maxHp: 1050,
     armorClass: 15,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 60,
   },
 
@@ -130,9 +131,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A colossal stone giant that hasn't moved in years. It's incredibly hard to budge, representing the raw weight of old habits and routines that refuse to change.",
     monsterType: MonsterType.TANK,
-    maxHp: 600,
+    maxHp: 2100,
     armorClass: 10,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 20,
   },
 
@@ -142,9 +143,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A one-eyed giant fueled by energy drinks and candy bars. Its unpredictable energy spikes make it a formidable opponent with balanced stats.",
     monsterType: MonsterType.BALANCED,
-    maxHp: 400,
+    maxHp: 1400,
     armorClass: 12,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 40,
   },
   {
@@ -152,9 +153,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A shadowy figure that steals your plans for 'starting tomorrow.' It's moderately tough and has a knack for striking back when you least expect it.",
     monsterType: MonsterType.BALANCED,
-    maxHp: 400,
+    maxHp: 1400,
     armorClass: 12,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 40,
   },
 
@@ -164,9 +165,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A wispy specter that shows you everyone else's highlight reel. Lightning-fast and evasive, but shatters under focused, consistent effort.",
     monsterType: MonsterType.GLASS_CANNON,
-    maxHp: 300,
+    maxHp: 1050,
     armorClass: 15,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 60,
   },
   {
@@ -174,9 +175,9 @@ const monsters: MonsterTemplate[] = [
     description:
       "A perfectionist assassin that demands 100% or nothing. Extremely hard to hit, but once you land a blow, it crumbles quickly.",
     monsterType: MonsterType.GLASS_CANNON,
-    maxHp: 300,
+    maxHp: 1050,
     armorClass: 15,
-    baseDamage: [3, 5],
+    baseDamage: [8, 15],
     counterattackChance: 60,
   },
 ];
