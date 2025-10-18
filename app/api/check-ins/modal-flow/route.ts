@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
+import { calculateCheckInXP, calculateLevelFromXP, didLevelUp, calculateSkillPointsEarned } from "@/lib/progression";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -205,14 +206,14 @@ export async function POST(request: NextRequest) {
     const newDefense = Math.min(50, partyMember.current_defense + totalDefenseBonus);
     const newStreak = partyMember.current_streak + 1;
 
-    // Calculate XP
-    const xpEarned = goalsMetCount * 2 + totalDamageDealt;
-    const newXP = (partyMember.xp || 0) + xpEarned;
-    const currentLevel = partyMember.level || 1;
-    const xpForNextLevel = currentLevel * 100;
-    const leveledUp = newXP >= xpForNextLevel;
-    const newLevel = leveledUp ? currentLevel + 1 : currentLevel;
-    const newSkillPoints = leveledUp ? (partyMember.skill_points || 0) + 1 : (partyMember.skill_points || 0);
+    // Calculate XP (using standard progression system: 10 base + 2 per goal)
+    const xpEarned = calculateCheckInXP(goalsMetCount);
+    const oldXP = partyMember.xp || 0;
+    const newXP = oldXP + xpEarned;
+    const newLevel = calculateLevelFromXP(newXP);
+    const levelUpInfo = didLevelUp(oldXP, newXP);
+    const skillPointsEarned = calculateSkillPointsEarned(levelUpInfo.oldLevel, levelUpInfo.newLevel);
+    const newSkillPoints = (partyMember.skill_points || 0) + skillPointsEarned;
 
     await prisma.party_members.update({
       where: { id: partyMember.id },
@@ -292,9 +293,9 @@ export async function POST(request: NextRequest) {
           totalXP: newXP,
           level: newLevel,
           skillPoints: newSkillPoints,
-          leveledUp,
-          oldLevel: currentLevel,
-          newLevel: newLevel,
+          leveledUp: levelUpInfo.leveledUp,
+          oldLevel: levelUpInfo.oldLevel,
+          newLevel: levelUpInfo.newLevel,
         },
         focusData: {
           oldFocus,

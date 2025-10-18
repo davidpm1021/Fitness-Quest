@@ -14,12 +14,15 @@
 **Current Phase:** Phase 1 - Core Engagement Loop
 **Strategy:** Deep game mechanics first → Visual polish later → Iterate based on internal feedback
 
-**Recent Progress (2025-01-18):**
+**Recent Progress (2025-10-18):**
+- ✅ Fixed XP calculation bug in modal-flow check-ins (was 2 XP per goal, now 10 base + 2 per goal = consistent with regular check-ins)
+- ✅ Modal-flow now uses standard progression system for proper XP rewards
+
+**Previous Progress (2025-01-18):**
 - ✅ Check-in UX overhaul: New modal-based flow with anticipation building (show d20 roll + AC, hide result until end)
 - ✅ Goal measurement types: Added armorClass to Monster interface for proper AC display
 - ✅ Fixed Prisma schema sync issues and removed deprecated flex_percentage field
 - ✅ Deployed multiple iterations to fix TypeScript compilation errors in production
-- 🚧 Modal-based check-in flow in progress (replacing old single-page flow)
 
 **Previous Milestones:**
 - Phase 3.2 (Monster Phases) complete with dynamic monster difficulty system
