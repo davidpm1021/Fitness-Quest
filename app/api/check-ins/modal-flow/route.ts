@@ -110,15 +110,9 @@ export async function POST(request: NextRequest) {
 
     // Helper function to calculate monster damage
     const calculateMonsterDamage = (): number => {
-      const diceCount = monster.damage_dice_count || 2;
-      const diceSides = monster.damage_dice_sides || 6;
-      const damageBonus = monster.damage_bonus || 0;
-
-      let totalDamage = 0;
-      for (let i = 0; i < diceCount; i++) {
-        totalDamage += Math.floor(Math.random() * diceSides) + 1;
-      }
-      return totalDamage + damageBonus;
+      // base_damage is an array [min, max]
+      const [minDamage, maxDamage] = monster.base_damage;
+      return Math.floor(Math.random() * (maxDamage - minDamage + 1)) + minDamage;
     };
 
     // Process each goal result
