@@ -101,18 +101,18 @@ model goal_check_ins {
 }
 
 model goals {
-  id              String           @id
-  user_id         String
-  goal_type       GoalType
-  name            String
-  target_value    Float?
-  target_unit     String?
-  flex_percentage Int              @default(10)
-  is_active       Boolean          @default(true)
-  created_at      DateTime         @default(now())
-  updated_at      DateTime
-  goal_check_ins  goal_check_ins[]
-  users           users            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id                    String                @id
+  user_id               String
+  goal_type             GoalType
+  goal_measurement_type GoalMeasurementType   @default(TARGET_VALUE)
+  name                  String
+  target_value          Float?
+  target_unit           String?
+  is_active             Boolean               @default(true)
+  created_at            DateTime              @default(now())
+  updated_at            DateTime
+  goal_check_ins        goal_check_ins[]
+  users                 users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model healing_actions {
@@ -555,4 +555,11 @@ enum AnnouncementCategory {
   BUG_FIX
   COMING_SOON
   MAINTENANCE
+}
+
+enum GoalMeasurementType {
+  TARGET_VALUE
+  UNDER_LIMIT
+  BOOLEAN
+  PROGRESS_TRACKING
 }
