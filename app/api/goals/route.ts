@@ -34,9 +34,9 @@ export async function GET(request: NextRequest) {
       id: goal.id,
       name: goal.name,
       goalType: goal.goal_type,
+      goalMeasurementType: goal.goal_measurement_type,
       targetValue: goal.target_value,
       targetUnit: goal.target_unit,
-      flexPercentage: goal.flex_percentage,
       isActive: goal.is_active,
       createdAt: goal.created_at,
       updatedAt: goal.updated_at,
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { goalType, name, targetValue, targetUnit, flexPercentage } = body;
+    const { goalType, goalMeasurementType, name, targetValue, targetUnit } = body;
 
     // Validate required fields
     if (!goalType || !name) {
@@ -81,6 +81,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Default to TARGET_VALUE if not specified
+    const measurementType = goalMeasurementType || 'TARGET_VALUE';
 
     // Check user doesn't have more than 5 active goals
     const activeGoalsCount = await prisma.goals.count({
@@ -107,10 +110,10 @@ export async function POST(request: NextRequest) {
         id: goalId,
         user_id: user.userId,
         goal_type: goalType.toUpperCase(),
+        goal_measurement_type: measurementType,
         name,
         target_value: targetValue ? parseFloat(targetValue) : null,
         target_unit: targetUnit || null,
-        flex_percentage: flexPercentage ? parseInt(flexPercentage) : 10,
         is_active: true,
         updated_at: new Date(),
       },
@@ -121,9 +124,9 @@ export async function POST(request: NextRequest) {
       id: goal.id,
       name: goal.name,
       goalType: goal.goal_type,
+      goalMeasurementType: goal.goal_measurement_type,
       targetValue: goal.target_value,
       targetUnit: goal.target_unit,
-      flexPercentage: goal.flex_percentage,
       isActive: goal.is_active,
       createdAt: goal.created_at,
       updatedAt: goal.updated_at,

@@ -12,10 +12,10 @@ import PixelBadge from "@/components/ui/PixelBadge";
 interface Goal {
   id: string;
   goalType: string;
+  goalMeasurementType: string;
   name: string;
   targetValue: number | null;
   targetUnit: string | null;
-  flexPercentage: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -29,6 +29,29 @@ const GOAL_TYPES = [
   { value: "custom", label: "Custom", unit: "" },
 ];
 
+const MEASUREMENT_TYPES = [
+  {
+    value: 'TARGET_VALUE',
+    label: 'Exceed a daily target',
+    example: 'e.g., Exceed the number of steps',
+  },
+  {
+    value: 'UNDER_LIMIT',
+    label: 'Stay under a limit',
+    example: 'e.g., Stay under a calorie limit',
+  },
+  {
+    value: 'BOOLEAN',
+    label: 'Complete a habit',
+    example: 'e.g., Take your vitamins',
+  },
+  {
+    value: 'PROGRESS_TRACKING',
+    label: 'Track your progress',
+    example: 'e.g., Weigh yourself and enter it',
+  },
+];
+
 export default function GoalsPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
@@ -36,10 +59,10 @@ export default function GoalsPage() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     goalType: "",
+    goalMeasurementType: "TARGET_VALUE",
     name: "",
     targetValue: "",
     targetUnit: "",
-    flexPercentage: "0",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -86,6 +109,14 @@ export default function GoalsPage() {
       return;
     }
 
+    // BOOLEAN goals don't need target values
+    if (formData.goalMeasurementType !== 'BOOLEAN') {
+      if (!formData.targetValue || parseFloat(formData.targetValue) <= 0) {
+        setError("Please enter a valid target value");
+        return;
+      }
+    }
+
     try {
       const response = await fetch("/api/goals", {
         method: "POST",
@@ -93,7 +124,11 @@ export default function GoalsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          targetValue: formData.goalMeasurementType === 'BOOLEAN' ? null : formData.targetValue,
+          targetUnit: formData.goalMeasurementType === 'BOOLEAN' ? null : formData.targetUnit,
+        }),
       });
 
       const data = await response.json();
@@ -102,10 +137,10 @@ export default function GoalsPage() {
         setSuccess("Goal created successfully!");
         setFormData({
           goalType: "",
+          goalMeasurementType: "TARGET_VALUE",
           name: "",
           targetValue: "",
           targetUnit: "",
-          flexPercentage: "0",
         });
         setShowForm(false);
         fetchGoals();
@@ -150,6 +185,11 @@ export default function GoalsPage() {
       goalType: type,
       targetUnit: goalType?.unit || "",
     });
+  }
+
+  function getMeasurementTypeLabel(type: string): string {
+    const measurementType = MEASUREMENT_TYPES.find((t) => t.value === type);
+    return measurementType?.label || type;
   }
 
   if (isLoading || loading) {
@@ -228,6 +268,43 @@ export default function GoalsPage() {
                   </select>
                 </div>
 
+                <div>
+                  <label className="block font-bold text-sm uppercase tracking-wider mb-2 text-white">
+                    HOW DO YOU MEASURE SUCCESS?
+                  </label>
+                  <div className="space-y-2">
+                    {MEASUREMENT_TYPES.map((type) => (
+                      <label
+                        key={type.value}
+                        className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          formData.goalMeasurementType === type.value
+                            ? 'bg-blue-900/50 border-blue-400'
+                            : 'bg-gray-800/50 border-gray-700 hover:border-blue-500/50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="measurementType"
+                          value={type.value}
+                          checked={formData.goalMeasurementType === type.value}
+                          onChange={(e) =>
+                            setFormData({ ...formData, goalMeasurementType: e.target.value })
+                          }
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="text-white font-bold font-retro text-sm">
+                            {type.label}
+                          </div>
+                          <div className="text-gray-400 font-retro text-xs mt-1">
+                            {type.example}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 <PixelInput
                   label="QUEST NAME"
                   type="text"
@@ -239,28 +316,38 @@ export default function GoalsPage() {
                   required
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <PixelInput
-                    label="TARGET VALUE"
-                    type="number"
-                    step="0.1"
-                    value={formData.targetValue}
-                    onChange={(e) =>
-                      setFormData({ ...formData, targetValue: e.target.value })
-                    }
-                    placeholder="e.g., 30"
-                  />
+                {formData.goalMeasurementType !== 'BOOLEAN' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <PixelInput
+                      label="TARGET VALUE"
+                      type="number"
+                      step="0.1"
+                      value={formData.targetValue}
+                      onChange={(e) =>
+                        setFormData({ ...formData, targetValue: e.target.value })
+                      }
+                      placeholder="e.g., 30"
+                    />
 
-                  <PixelInput
-                    label="UNIT"
-                    type="text"
-                    value={formData.targetUnit}
-                    onChange={(e) =>
-                      setFormData({ ...formData, targetUnit: e.target.value })
-                    }
-                    placeholder="e.g., minutes"
-                  />
-                </div>
+                    <PixelInput
+                      label="UNIT"
+                      type="text"
+                      value={formData.targetUnit}
+                      onChange={(e) =>
+                        setFormData({ ...formData, targetUnit: e.target.value })
+                      }
+                      placeholder="e.g., minutes"
+                    />
+                  </div>
+                )}
+
+                {formData.goalMeasurementType === 'BOOLEAN' && (
+                  <div className="p-4 bg-green-900/30 border-2 border-green-500/50 rounded-lg">
+                    <p className="text-green-200 font-retro text-sm">
+                      ✓ <strong>Habit Goal:</strong> No target value needed - just check it off daily!
+                    </p>
+                  </div>
+                )}
 
                 <PixelButton
                   type="submit"
@@ -292,7 +379,7 @@ export default function GoalsPage() {
                 <PixelPanel key={goal.id} variant="menu">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="font-pixel text-lg text-white">
                           {goal.name}
                         </h3>
@@ -300,8 +387,11 @@ export default function GoalsPage() {
                           {GOAL_TYPES.find((t) => t.value === goal.goalType)?.label}
                         </PixelBadge>
                       </div>
+                      <p className="font-retro text-sm text-gray-400 mb-1">
+                        {getMeasurementTypeLabel(goal.goalMeasurementType)}
+                      </p>
                       {goal.targetValue && (
-                        <p className="font-retro text-lg text-blue-200 mt-2">
+                        <p className="font-retro text-lg text-blue-200">
                           Target: {goal.targetValue} {goal.targetUnit}
                         </p>
                       )}

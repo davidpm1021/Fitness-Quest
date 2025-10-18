@@ -401,18 +401,20 @@ export default function DashboardPage() {
                     {/* Battle Modifiers */}
                     {partyData.activeMonster.battleModifiers && partyData.activeMonster.battleModifiers.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-sm text-white font-retro mb-2 text-center">⚡ ACTIVE MODIFIERS:</p>
-                        <div className="flex flex-wrap justify-center gap-2">
+                        <p className="text-sm text-white font-retro mb-3 text-center">⚡ ACTIVE MODIFIERS:</p>
+                        <div className="space-y-2">
                           {partyData.activeMonster.battleModifiers.map((mod) => (
                             <div
                               key={mod.id}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-retro border-2 ${getModifierCategoryColor(
+                              className={`px-3 py-2 rounded-lg text-xs font-retro border-2 ${getModifierCategoryColor(
                                 mod.modifierCategory
                               )}`}
-                              title={mod.effectDescription}
                             >
-                              <span className="mr-1">{getModifierIcon(mod.modifierType)}</span>
-                              <span className="font-bold">{mod.modifierType.replace('_', ' ')}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">{getModifierIcon(mod.modifierType)}</span>
+                                <span className="font-bold uppercase">{mod.modifierType.replace('_', ' ')}</span>
+                              </div>
+                              <p className="text-xs mt-1 opacity-90">{mod.effectDescription}</p>
                             </div>
                           ))}
                         </div>

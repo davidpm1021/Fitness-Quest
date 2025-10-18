@@ -65,6 +65,7 @@ export default function CombatActionCard({
       onClick={cannotUse ? undefined : onClick}
       className={`
         relative rounded-lg border-4 p-4 transition-all cursor-pointer
+        bg-gray-800/80 backdrop-blur-sm
         ${selected ? "ring-4 ring-white scale-105" : "scale-100"}
         ${cannotUse ? "opacity-50 cursor-not-allowed" : ""}
         ${getActionColor()}

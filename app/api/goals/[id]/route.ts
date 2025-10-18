@@ -49,16 +49,16 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, targetValue, targetUnit, flexPercentage, isActive } = body;
+    const { name, targetValue, targetUnit, isActive } = body;
 
     // Update the goal
+    // Note: goalMeasurementType is locked at creation and cannot be changed
     const goal = await prisma.goals.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
         ...(targetValue !== undefined && { target_value: parseFloat(targetValue) }),
         ...(targetUnit !== undefined && { target_unit: targetUnit }),
-        ...(flexPercentage !== undefined && { flex_percentage: parseInt(flexPercentage) }),
         ...(isActive !== undefined && { is_active: isActive }),
         updated_at: new Date(),
       },

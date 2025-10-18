@@ -16,10 +16,38 @@ const GOAL_TYPES = [
   { value: 'CUSTOM', label: 'Custom Goal', icon: '🎯', unit: '', placeholder: 'Your goal' },
 ];
 
+const MEASUREMENT_TYPES = [
+  {
+    value: 'TARGET_VALUE',
+    label: 'Exceed a daily target',
+    example: 'e.g., Exceed the number of steps',
+    description: 'Meet or exceed a specific target value',
+  },
+  {
+    value: 'UNDER_LIMIT',
+    label: 'Stay under a limit',
+    example: 'e.g., Stay under a calorie limit',
+    description: 'Stay below a maximum value',
+  },
+  {
+    value: 'BOOLEAN',
+    label: 'Complete a habit',
+    example: 'e.g., Take your vitamins',
+    description: 'Simple yes/no - did you do it?',
+  },
+  {
+    value: 'PROGRESS_TRACKING',
+    label: 'Track your progress',
+    example: 'e.g., Weigh yourself and enter it',
+    description: 'Any entry counts as success - rewards tracking',
+  },
+];
+
 export default function GoalsOnboardingPage() {
   const router = useRouter();
   const { user, isLoading, token } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('');
+  const [measurementType, setMeasurementType] = useState<string>('TARGET_VALUE');
   const [goalName, setGoalName] = useState('');
   const [targetValue, setTargetValue] = useState('');
   const [targetUnit, setTargetUnit] = useState('');
@@ -55,9 +83,12 @@ export default function GoalsOnboardingPage() {
       return;
     }
 
-    if (!targetValue || parseFloat(targetValue) <= 0) {
-      setError('Please enter a valid target value');
-      return;
+    // BOOLEAN goals don't need target values
+    if (measurementType !== 'BOOLEAN') {
+      if (!targetValue || parseFloat(targetValue) <= 0) {
+        setError('Please enter a valid target value');
+        return;
+      }
     }
 
     setSaving(true);
@@ -73,10 +104,10 @@ export default function GoalsOnboardingPage() {
         },
         body: JSON.stringify({
           goalType: selectedType,
+          goalMeasurementType: measurementType,
           name: goalName.trim(),
-          targetValue: parseFloat(targetValue),
-          targetUnit: targetUnit || 'units',
-          flexPercentage: 10,
+          targetValue: measurementType === 'BOOLEAN' ? null : parseFloat(targetValue),
+          targetUnit: measurementType === 'BOOLEAN' ? null : (targetUnit || 'units'),
         }),
       });
 
@@ -192,6 +223,40 @@ export default function GoalsOnboardingPage() {
             <div className="space-y-6 animate-fade-in">
               <div className="border-t-4 border-gray-700 pt-6">
                 <h3 className="text-xl font-bold text-white mb-4 font-pixel">
+                  HOW DO YOU MEASURE SUCCESS?
+                </h3>
+
+                <div className="space-y-3 mb-6">
+                  {MEASUREMENT_TYPES.map((type) => (
+                    <label
+                      key={type.value}
+                      className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        measurementType === type.value
+                          ? 'bg-blue-900/50 border-blue-400'
+                          : 'bg-gray-800/50 border-gray-700 hover:border-blue-500/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="measurementType"
+                        value={type.value}
+                        checked={measurementType === type.value}
+                        onChange={(e) => setMeasurementType(e.target.value)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="text-white font-bold font-retro text-sm">
+                          {type.label}
+                        </div>
+                        <div className="text-gray-400 font-retro text-xs mt-1">
+                          {type.example}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <h3 className="text-xl font-bold text-white mb-4 font-pixel">
                   GOAL DETAILS
                 </h3>
 
@@ -211,44 +276,54 @@ export default function GoalsOnboardingPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <PixelInput
-                    label="TARGET VALUE"
-                    id="targetValue"
-                    name="targetValue"
-                    type="number"
-                    required
-                    placeholder={selectedGoalType?.placeholder || '0'}
-                    value={targetValue}
-                    onChange={(e) => setTargetValue(e.target.value)}
-                    className="bg-gray-800 text-white"
-                  />
-
-                  {selectedType === 'CUSTOM' && (
+                {measurementType !== 'BOOLEAN' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <PixelInput
-                      label="UNIT"
-                      id="targetUnit"
-                      name="targetUnit"
-                      type="text"
+                      label="TARGET VALUE"
+                      id="targetValue"
+                      name="targetValue"
+                      type="number"
                       required
-                      placeholder="e.g., steps, glasses"
-                      value={targetUnit}
-                      onChange={(e) => setTargetUnit(e.target.value)}
+                      placeholder={selectedGoalType?.placeholder || '0'}
+                      value={targetValue}
+                      onChange={(e) => setTargetValue(e.target.value)}
                       className="bg-gray-800 text-white"
                     />
-                  )}
 
-                  {selectedType !== 'CUSTOM' && (
-                    <div>
-                      <label className="block font-bold text-sm uppercase tracking-wider mb-2 text-white">
-                        UNIT
-                      </label>
-                      <div className="px-4 py-3 bg-gray-800 border-4 border-gray-700 rounded-sm text-white font-retro">
-                        {selectedGoalType?.unit}
+                    {selectedType === 'CUSTOM' && (
+                      <PixelInput
+                        label="UNIT"
+                        id="targetUnit"
+                        name="targetUnit"
+                        type="text"
+                        required
+                        placeholder="e.g., steps, glasses"
+                        value={targetUnit}
+                        onChange={(e) => setTargetUnit(e.target.value)}
+                        className="bg-gray-800 text-white"
+                      />
+                    )}
+
+                    {selectedType !== 'CUSTOM' && (
+                      <div>
+                        <label className="block font-bold text-sm uppercase tracking-wider mb-2 text-white">
+                          UNIT
+                        </label>
+                        <div className="px-4 py-3 bg-gray-800 border-4 border-gray-700 rounded-sm text-white font-retro">
+                          {selectedGoalType?.unit}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
+
+                {measurementType === 'BOOLEAN' && (
+                  <div className="p-4 bg-green-900/30 border-2 border-green-500/50 rounded-lg">
+                    <p className="text-green-200 font-retro text-sm">
+                      ✓ <strong>Habit Goal:</strong> No target value needed - just check it off daily!
+                    </p>
+                  </div>
+                )}
 
                 <div className="mt-6 p-4 bg-blue-900/30 border-2 border-blue-500/50 rounded-lg">
                   <p className="text-blue-200 font-retro text-sm">
@@ -274,7 +349,12 @@ export default function GoalsOnboardingPage() {
 
           <PixelButton
             onClick={handleCreateGoal}
-            disabled={saving || !selectedType || !goalName.trim() || !targetValue}
+            disabled={
+              saving ||
+              !selectedType ||
+              !goalName.trim() ||
+              (measurementType !== 'BOOLEAN' && !targetValue)
+            }
             variant="success"
             size="lg"
           >

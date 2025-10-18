@@ -66,18 +66,40 @@ export function calculateAttackBonuses(params: {
 }
 
 /**
- * Evaluate if a goal was met considering flex percentage
+ * Evaluate if a goal was met based on its measurement type
+ * NO WIGGLE ROOM - strict evaluation
  */
 export function evaluateGoal(
-  actualValue: number,
-  targetValue: number,
-  flexPercentage: number
+  actualValue: number | null,
+  targetValue: number | null,
+  goalMeasurementType: 'TARGET_VALUE' | 'UNDER_LIMIT' | 'BOOLEAN' | 'PROGRESS_TRACKING'
 ): boolean {
-  const flexAmount = (targetValue * flexPercentage) / 100;
-  const minAcceptable = targetValue - flexAmount;
-  const maxAcceptable = targetValue + flexAmount;
+  // PROGRESS_TRACKING always counts as met (rewards the act of tracking)
+  if (goalMeasurementType === 'PROGRESS_TRACKING') {
+    return true;
+  }
 
-  return actualValue >= minAcceptable && actualValue <= maxAcceptable;
+  // BOOLEAN goals are handled by checkbox (actualValue will be 1 for checked, 0 for unchecked)
+  if (goalMeasurementType === 'BOOLEAN') {
+    return actualValue === 1;
+  }
+
+  // For numeric goals, both values must exist
+  if (actualValue === null || targetValue === null) {
+    return false;
+  }
+
+  // TARGET_VALUE: meet or exceed the target (strict, no wiggle room)
+  if (goalMeasurementType === 'TARGET_VALUE') {
+    return actualValue >= targetValue;
+  }
+
+  // UNDER_LIMIT: must be strictly under the limit
+  if (goalMeasurementType === 'UNDER_LIMIT') {
+    return actualValue < targetValue;
+  }
+
+  return false;
 }
 
 /**

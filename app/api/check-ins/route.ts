@@ -176,11 +176,12 @@ export async function POST(request: NextRequest) {
       let wasMet = false;
       if (checkIn.isRestDay) {
         wasMet = true; // Rest days count as met
-      } else if (checkIn.actualValue !== null && goal.target_value !== null) {
+      } else {
+        // Use new evaluateGoal function with goal measurement type
         wasMet = evaluateGoal(
           checkIn.actualValue,
           goal.target_value,
-          goal.flex_percentage
+          goal.goal_measurement_type as 'TARGET_VALUE' | 'UNDER_LIMIT' | 'BOOLEAN' | 'PROGRESS_TRACKING'
         );
       }
 
