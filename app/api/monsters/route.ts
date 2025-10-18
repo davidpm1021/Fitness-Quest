@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { authenticateRequest, isErrorResponse } from "@/lib/middleware";
 import { cache, CacheKeys } from "@/lib/cache";
 import { generateRandomModifiers } from "@/lib/game/battle-modifiers";
+import {
+  calculateScaledMonsterHp,
+  getScalingDescription,
+} from "@/lib/game/party-scaling";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -181,6 +185,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Count active party members for HP scaling
+    const partyMemberCount = await prisma.party_members.count({
+      where: {
+        party_id: partyMember.party_id,
+      },
+    });
+
+    // Calculate scaled HP based on party size
+    const scaledHp = calculateScaledMonsterHp(monster.max_hp, partyMemberCount);
+    const scalingDesc = getScalingDescription(partyMemberCount);
+
+    console.log(
+      `[Party Scaling] ${monster.name} HP: ${monster.max_hp} → ${scaledHp} (${scalingDesc} for ${partyMemberCount} members)`
+    );
+
+    // Update monster HP with scaled values
+    await prisma.monsters.update({
+      where: { id: monster.id },
+      data: {
+        max_hp: scaledHp,
+        current_hp: scaledHp,
+      },
+    });
+
     // Create party monster relationship and activate it
     const partyMonster = await prisma.party_monsters.create({
       data: {
@@ -236,8 +264,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: { partyMonster },
-        message: `${monster.name} is now active!`,
+        data: {
+          partyMonster,
+          scaling: {
+            partySize: partyMemberCount,
+            description: scalingDesc,
+            originalHp: monster.max_hp,
+            scaledHp: scaledHp,
+          },
+        },
+        message: `${monster.name} is now active! (${scalingDesc})`,
       } as ApiResponse,
       { status: 201 }
     );
