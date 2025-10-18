@@ -49,6 +49,7 @@ interface Monster {
   name: string;
   currentHp: number;
   maxHp: number;
+  armorClass: number;
 }
 
 type Stage = "loading" | "checking_in" | "goal_result" | "monster_attack" | "processing" | "results";
@@ -151,6 +152,7 @@ export default function CheckInPage() {
               name: partyWithMonster.activeMonster.name,
               currentHp: partyWithMonster.activeMonster.currentHp,
               maxHp: partyWithMonster.activeMonster.maxHp,
+              armorClass: partyWithMonster.activeMonster.armorClass || 12,
             });
           } else {
             console.warn('[CheckIn] No active monster in party - will still allow check-in');
@@ -159,6 +161,7 @@ export default function CheckInPage() {
               name: "Training Dummy",
               currentHp: 100,
               maxHp: 100,
+              armorClass: 10,
             });
           }
         } else {
@@ -366,41 +369,37 @@ export default function CheckInPage() {
                   </h2>
                 </div>
 
-                {/* Combat Results */}
+                {/* Combat Preview - Show roll and AC, build anticipation */}
                 {currentGoalResult.goalMet && currentGoalResult.d20Roll !== undefined && (
                   <div className="space-y-4">
                     <div className="bg-gray-800/50 rounded-lg p-4">
                       <div className="text-center mb-3">
                         <span className="font-pixel text-xl text-white">🎲 Attack Roll</span>
                       </div>
-                      <div className="text-center text-4xl font-pixel text-yellow-400 mb-2">
-                        {currentGoalResult.d20Roll} + {currentGoalResult.bonusApplied || 0} = {currentGoalResult.finalRoll}
+                      <div className="text-center mb-4">
+                        <div className="text-6xl font-pixel text-yellow-400 mb-2">
+                          {currentGoalResult.d20Roll}
+                        </div>
+                        <p className="text-sm font-retro text-gray-400">You rolled a {currentGoalResult.d20Roll}</p>
                       </div>
-                      {currentGoalResult.hit ? (
-                        <div className="text-center">
-                          <p className="text-2xl font-pixel text-green-400 mb-2">⚔️ HIT!</p>
-                          <p className="text-xl font-retro text-white">
-                            Dealt <span className="text-red-400 font-pixel">{currentGoalResult.damageDealt}</span> damage!
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <p className="text-2xl font-pixel text-yellow-400 mb-2">✗ MISS</p>
-                          <p className="text-sm font-retro text-gray-300">
-                            But your effort still counts!
-                          </p>
-                        </div>
-                      )}
-                    </div>
 
-                    {currentGoalResult.counterattackDamage && currentGoalResult.counterattackDamage > 0 && (
-                      <div className="bg-red-900/30 border-2 border-red-500 rounded-lg p-4 text-center">
-                        <p className="text-xl font-pixel text-red-400 mb-2">💥 COUNTERATTACK!</p>
-                        <p className="font-retro text-white">
-                          The monster struck back for <span className="text-red-400 font-pixel">{currentGoalResult.counterattackDamage}</span> damage!
+                      <div className="bg-gray-900/50 rounded-lg p-3 mb-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-retro text-gray-300">Monster AC:</span>
+                          <span className="font-pixel text-2xl text-red-400">{monster?.armorClass || 12}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-center">
+                        <p className="text-lg font-retro text-yellow-400 mb-2">⏳ Result Pending...</p>
+                        <p className="text-sm font-retro text-gray-300">
+                          Your final bonuses from goals, streak, and party momentum will be added at the end.
+                        </p>
+                        <p className="text-sm font-retro text-purple-400 mt-2">
+                          Will it be enough to hit?
                         </p>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
 
