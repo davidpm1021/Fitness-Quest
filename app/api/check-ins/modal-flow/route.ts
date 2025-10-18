@@ -19,6 +19,10 @@ interface GoalResult {
   d20Roll?: number;
   monsterAttackDamage?: number;
   counterattackDamage?: number;
+  bonusApplied?: number;
+  finalRoll?: number;
+  hit?: boolean;
+  damageDealt?: number;
 }
 
 // POST /api/check-ins/modal-flow - Handle new modal-based check-in flow
