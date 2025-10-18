@@ -135,8 +135,10 @@ export async function POST(request: NextRequest) {
 
           if (result.action === "HEROIC_STRIKE") {
             damageDealt = (baseDamage + totalBonus) * 2; // Double damage - always hits, no counterattack
-          } else if (result.action === "DEFEND" || result.action === "SUPPORT") {
-            damageDealt = Math.floor((baseDamage + totalBonus) * 0.5); // 50% damage
+          } else if (result.action === "DEFEND") {
+            damageDealt = Math.floor((baseDamage + totalBonus) * 0.6); // 60% damage
+          } else if (result.action === "SUPPORT") {
+            damageDealt = Math.floor((baseDamage + totalBonus) * 0.7); // 70% damage
           } else {
             damageDealt = baseDamage + totalBonus;
           }

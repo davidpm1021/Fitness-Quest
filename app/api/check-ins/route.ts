@@ -319,14 +319,14 @@ export async function POST(request: NextRequest) {
         break;
 
       case "DEFEND":
-        // Deal 50% damage, costs 1 focus, provides defense bonus (handled later)
-        damageMultiplier = 0.5;
+        // Deal 60% damage, costs 1 focus, provides defense bonus (handled later)
+        damageMultiplier = 0.6;
         focusEarned = -1;
         break;
 
       case "SUPPORT":
-        // Deal 50% damage, heal a teammate, costs 2 focus
-        damageMultiplier = 0.5;
+        // Deal 70% damage, heal a teammate for 15 HP, costs 2 focus
+        damageMultiplier = 0.7;
         focusEarned = -2;
 
         // Find a random teammate with less than max HP
@@ -338,7 +338,7 @@ export async function POST(request: NextRequest) {
           const randomTeammate =
             injuredTeammates[Math.floor(Math.random() * injuredTeammates.length)];
           healingTarget = randomTeammate.id;
-          healingAmount = 10;
+          healingAmount = 15;
         }
         break;
 
