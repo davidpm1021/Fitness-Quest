@@ -348,7 +348,7 @@ export default function CheckInPage() {
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
           <div className="max-w-2xl w-full">
             <PixelPanel
-              variant={currentGoalResult.goalMet ? "success" : "danger"}
+              variant={currentGoalResult.goalMet ? "success" : "warning"}
               title={`Goal ${currentGoalIndex + 1} of ${goals.length}: ${currentGoalResult.goalName}`}
             >
               <div className="space-y-6">
