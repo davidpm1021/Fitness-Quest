@@ -274,11 +274,12 @@ export default function CheckInPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Show error message from API
-        alert(data.error || "Failed to submit check-in");
+        // Show error in UI instead of alert
+        console.error('[CheckIn] Submit failed:', data.error);
         setStage("checking_in");
         setCurrentGoalIndex(0);
         setGoalResults([]);
+        // You could add a toast notification here if desired
         return;
       }
 
@@ -287,7 +288,7 @@ export default function CheckInPage() {
       setStage("results");
     } catch (error) {
       console.error('[CheckIn] Submit error:', error);
-      alert("An error occurred while submitting your check-in. Please try again.");
+      // Error handled, reset to check-in state
       setStage("checking_in");
       setCurrentGoalIndex(0);
       setGoalResults([]);

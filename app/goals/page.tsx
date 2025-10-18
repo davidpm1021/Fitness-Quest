@@ -67,6 +67,7 @@ export default function GoalsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{goalId: string, goalName: string} | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -152,13 +153,15 @@ export default function GoalsPage() {
     }
   }
 
-  async function handleDelete(goalId: string) {
-    if (!confirm("Are you sure you want to remove this goal?")) {
-      return;
-    }
+  function handleDeleteClick(goalId: string, goalName: string) {
+    setDeleteConfirmation({goalId, goalName});
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirmation) return;
 
     try {
-      const response = await fetch(`/api/goals/${goalId}`, {
+      const response = await fetch(`/api/goals/${deleteConfirmation.goalId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -175,6 +178,8 @@ export default function GoalsPage() {
       }
     } catch (err) {
       setError("Failed to remove goal");
+    } finally {
+      setDeleteConfirmation(null);
     }
   }
 
@@ -397,7 +402,7 @@ export default function GoalsPage() {
                       )}
                     </div>
                     <button
-                      onClick={() => handleDelete(goal.id)}
+                      onClick={() => handleDeleteClick(goal.id, goal.name)}
                       className="ml-4 px-3 py-2 bg-red-600 border-4 border-red-800 text-white font-bold rounded-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.4)] hover:translate-y-[-2px] transition-all"
                     >
                       ✖
@@ -421,6 +426,45 @@ export default function GoalsPage() {
           )}
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="max-w-md w-full">
+            <PixelPanel variant="warning" title="⚠️ CONFIRM DELETION">
+              <div className="space-y-4">
+                <p className="font-retro text-lg text-white text-center">
+                  Are you sure you want to remove this goal?
+                </p>
+                <p className="font-pixel text-xl text-yellow-400 text-center">
+                  {deleteConfirmation.goalName}
+                </p>
+                <p className="font-retro text-sm text-gray-300 text-center">
+                  This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <PixelButton
+                    onClick={() => setDeleteConfirmation(null)}
+                    variant="secondary"
+                    size="lg"
+                    fullWidth
+                  >
+                    ✖ CANCEL
+                  </PixelButton>
+                  <PixelButton
+                    onClick={confirmDelete}
+                    variant="danger"
+                    size="lg"
+                    fullWidth
+                  >
+                    ✓ DELETE
+                  </PixelButton>
+                </div>
+              </div>
+            </PixelPanel>
+          </div>
+        </div>
+      )}
     </PageLayout>
   );
 }
